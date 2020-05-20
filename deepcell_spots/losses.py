@@ -1,0 +1,132 @@
+# loss:
+# focal loss for classification of pixels
+# L1 loss for regression of the point coordinates
+
+import tensorflow as tf
+from tensorflow.python.keras import backend as K
+
+from deepcell import losses
+
+
+# DIFFERENCE FROM DEEPCELL.losses: doesn't sum over channel axis.
+def smooth_l1(y_true, y_pred, sigma=3.0): #, axis=None):
+    """Compute the smooth L1 loss of y_pred w.r.t. y_true.
+    Args:
+        y_true: Tensor from the generator of shape (B, ? , ?).
+            The last value for each box is the state of the anchor
+            (ignore, negative, positive).
+        y_pred: Tensor from the network of shape (B, ?, ?). Same shape as y_true.
+        sigma: The point where the loss changes from L2 to L1.
+    Returns:
+        The pixelwise smooth L1 loss of y_pred w.r.t. y_true.
+        Has same shape as each of the inputs: (B, ?, ?).
+    """
+    # TO DELETE LATER - only support channels_first=='False' in dotnet
+    #if axis is None:
+    #    axis = 1 if K.image_data_format() == 'channels_first' else K.ndim(y_pred) - 1
+
+    sigma_squared = sigma ** 2
+
+    # compute smooth L1 loss
+    # f(x) = 0.5 * (sigma * x)^2          if |x| < 1 / sigma^2
+    #        |x| - 0.5 / sigma^2            otherwise
+    regression_diff = K.abs(y_true - y_pred)  # |y - f(x)|
+
+    regression_loss = tf.where(
+        K.less(regression_diff, 1.0 / sigma_squared),
+        0.5 * sigma_squared * K.pow(regression_diff, 2),
+        regression_diff - 0.5 / sigma_squared)
+    # return K.sum(regression_loss, axis=axis)
+    return regression_loss
+
+
+class DotNetLosses(object):
+    def __init__(self, alpha=0.25, gamma=2.0, sigma=3.0, n_classes=2, focal=False):
+        self.alpha = alpha
+        self.gamma = gamma
+        self.sigma = sigma
+        self.n_classes = n_classes
+        self.focal = focal
+
+    def regression_loss(self, y_true, y_pred, d_pixels=1):
+        """
+        Calculates the regression loss of the shift from pixel center, only for pixels containing a dot (true regression
+        shifts smaller in absolute value than 0.5). Returns
+
+        Args:
+            y_true, y_pred: tensors of shape (batch, Ly, Lx, 2)
+            Ly * Lx - the dimensions of a single image, dimension 3 contains delta_y and delta_x
+            d_pixels (non-negative integer): the number of pixels on each side of a point containing pixels over which to calculate
+            the regression loss for the offset image (0 = calculate for point containing pixels only, 
+            1 = calculate for 8-nearest neighbors, ...)
+
+        Returns:
+            float number
+            the normalized smooth  L1 loss over all the input pixels with regressed
+            point within the same pixel, i.e. delta_y = y(...,0) and delta_x = y(...,1)
+            <= 0.5 in absolute value.
+
+        """
+
+        # separate x and y offset 
+        y_offset_true = y_true[..., 0]
+        x_offset_true = y_true[..., 1]
+
+        y_offset_pred = y_pred[..., 0]
+        x_offset_pred = y_pred[..., 1]
+
+        # calculate the loss only over pixels that contain a point
+        d = 0.5 + d_pixels  # threshold delta_x & delta_y offset of pixel center from point for inclusion in regression loss
+        contain_y = tf.math.logical_and(K.less_equal(-d, y_offset_true), K.less(y_offset_true, d))
+        contain_x = tf.math.logical_and(K.less_equal(-d, x_offset_true), K.less(x_offset_true, d))
+        contain_pt_indices = tf.where(tf.math.logical_and(contain_y, contain_x))
+        # Classification of half-integer coordinates is inconsistent with the generator. This is negligile for random positions
+        # The generator uses python's round which is banker's rounding (to nearest even number)
+
+        y_offset_true_cp = tf.gather_nd(y_offset_true, contain_pt_indices)
+        x_offset_true_cp = tf.gather_nd(x_offset_true, contain_pt_indices)
+
+        y_offset_pred_cp = tf.gather_nd(y_offset_pred, contain_pt_indices)
+        x_offset_pred_cp = tf.gather_nd(x_offset_pred, contain_pt_indices)
+
+        # use smooth l1 loss on the offsets
+        pixelwise_loss_y = smooth_l1(y_offset_true_cp, y_offset_pred_cp, sigma=self.sigma)
+        pixelwise_loss_x = smooth_l1(x_offset_true_cp, x_offset_pred_cp, sigma=self.sigma)
+
+        # compute the normalizer: the number of positive pixels
+        # can change line below to use the shape of contain_pt_indices instead of re-calculating
+        normalizer = K.maximum(1, K.shape(contain_pt_indices)[0])
+        normalizer = K.cast(normalizer, dtype=K.floatx())
+
+        loss = tf.concat([pixelwise_loss_y, pixelwise_loss_x], axis=-1)
+
+        return K.sum(loss) / normalizer
+
+    def classification_loss(self, y_true, y_pred):
+        """
+        Args:
+            y_true, y_pred of size (batch, Ly, Lx, 2) - one hot encoded pixel classification
+
+        Returns:
+            float number: focal / weighted categorical cross entropy loss
+        """
+        if self.focal:
+            # loss = losses.weighted_focal_loss(
+            #    y_true, y_pred, gamma=self.gamma, n_classes=n_classes)
+            #loss = losses.focal(y_true, y_pred, alpha=self.alpha, gamma=self.gamma, axis=None)
+
+            # compute the normalizer: the number of points containing pixels
+            #normalizer = tf.where(K.equal(y_true, 1))
+            #normalizer = K.cast(K.shape(normalizer)[0], K.floatx())
+
+            #normalizer = K.maximum(K.cast_to_floatx(1.0), normalizer)
+            #loss = K.sum(loss) / normalizer
+
+            loss = losses.weighted_focal_loss(y_true, y_pred, gamma=self.gamma, n_classes=self.n_classes)
+
+        else:
+            loss = losses.weighted_categorical_crossentropy(
+                y_true, y_pred, n_classes=self.n_classes)
+            loss = K.mean(loss)
+
+        return loss
