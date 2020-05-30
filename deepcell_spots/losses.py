@@ -9,7 +9,7 @@ from deepcell import losses
 
 
 # DIFFERENCE FROM DEEPCELL.losses: doesn't sum over channel axis.
-def smooth_l1(y_true, y_pred, sigma=3.0): #, axis=None):
+def smooth_l1(y_true, y_pred, sigma=3.0):  # , axis=None):
     """Compute the smooth L1 loss of y_pred w.r.t. y_true.
     Args:
         y_true: Tensor from the generator of shape (B, ? , ?).
@@ -22,7 +22,7 @@ def smooth_l1(y_true, y_pred, sigma=3.0): #, axis=None):
         Has same shape as each of the inputs: (B, ?, ?).
     """
     # TO DELETE LATER - only support channels_first=='False' in dotnet
-    #if axis is None:
+    # if axis is None:
     #    axis = 1 if K.image_data_format() == 'channels_first' else K.ndim(y_pred) - 1
 
     sigma_squared = sigma ** 2
@@ -41,14 +41,18 @@ def smooth_l1(y_true, y_pred, sigma=3.0): #, axis=None):
 
 
 class DotNetLosses(object):
-    def __init__(self, alpha=0.25, gamma=2.0, sigma=3.0, n_classes=2, focal=False):
+    def __init__(self, alpha=0.25, gamma=2.0, sigma=3.0, n_classes=2, focal=False, d_pixels=1, mu=0, beta=0):
         self.alpha = alpha
         self.gamma = gamma
         self.sigma = sigma
         self.n_classes = n_classes
         self.focal = focal
+        self.d_pixels = d_pixels
+        self.mu = mu
+        self.beta = beta
 
-    def regression_loss(self, y_true, y_pred, d_pixels=1):
+
+    def regression_loss(self, y_true, y_pred):
         """
         Calculates the regression loss of the shift from pixel center, only for pixels containing a dot (true regression
         shifts smaller in absolute value than 0.5). Returns
@@ -57,7 +61,7 @@ class DotNetLosses(object):
             y_true, y_pred: tensors of shape (batch, Ly, Lx, 2)
             Ly * Lx - the dimensions of a single image, dimension 3 contains delta_y and delta_x
             d_pixels (non-negative integer): the number of pixels on each side of a point containing pixels over which to calculate
-            the regression loss for the offset image (0 = calculate for point containing pixels only, 
+            the regression loss for the offset image (0 = calculate for point containing pixels only,
             1 = calculate for 8-nearest neighbors, ...)
 
         Returns:
@@ -67,6 +71,8 @@ class DotNetLosses(object):
             <= 0.5 in absolute value.
 
         """
+        # get class parameter
+        d_pixels = self.d_pixels
 
         # separate x and y offset 
         y_offset_true = y_true[..., 0]
@@ -113,14 +119,14 @@ class DotNetLosses(object):
         if self.focal:
             # loss = losses.weighted_focal_loss(
             #    y_true, y_pred, gamma=self.gamma, n_classes=n_classes)
-            #loss = losses.focal(y_true, y_pred, alpha=self.alpha, gamma=self.gamma, axis=None)
+            # loss = losses.focal(y_true, y_pred, alpha=self.alpha, gamma=self.gamma, axis=None)
 
             # compute the normalizer: the number of points containing pixels
-            #normalizer = tf.where(K.equal(y_true, 1))
-            #normalizer = K.cast(K.shape(normalizer)[0], K.floatx())
+            # normalizer = tf.where(K.equal(y_true, 1))
+            # normalizer = K.cast(K.shape(normalizer)[0], K.floatx())
 
-            #normalizer = K.maximum(K.cast_to_floatx(1.0), normalizer)
-            #loss = K.sum(loss) / normalizer
+            # normalizer = K.maximum(K.cast_to_floatx(1.0), normalizer)
+            # loss = K.sum(loss) / normalizer
 
             loss = losses.weighted_focal_loss(y_true, y_pred, gamma=self.gamma, n_classes=self.n_classes)
 
@@ -130,3 +136,41 @@ class DotNetLosses(object):
             loss = K.mean(loss)
 
         return loss
+
+    def classification_loss_regularized(self, y_true, y_pred):
+        """
+        Args:
+            y_true, y_pred of size (batch, Ly, Lx, 2) - one hot encoded pixel classification
+            mu (float): weight of regularization term
+        Returns:
+            float number: focal / weighted categorical cross entropy loss
+        """
+        # get class parameters
+        mu = self.mu
+        beta = self.beta
+
+        if self.focal:
+            loss = losses.weighted_focal_loss(y_true, y_pred, gamma=self.gamma, n_classes=self.n_classes)
+
+        else:
+            loss = losses.weighted_categorical_crossentropy(
+                y_true, y_pred, n_classes=self.n_classes)
+            loss = K.mean(loss)
+
+        # L2 penalize a difference in total number of spots in each image of the batch
+        #N_diff = K.sum(y_pred[..., 1], axis=[1, 2]) - K.sum(y_true[..., 1], axis=[1, 2])  # shape: batch
+        # replace sum by mean to prevent divergence (mean = sum / (Ly*Lx))
+        N_diff = K.mean(y_pred[..., 1], axis=[1, 2]) - K.mean(y_true[..., 1], axis=[1, 2])
+        N_loss = K.mean(K.square(N_diff))
+
+        # interaction term to reduce tendency to produce false positives near every
+        # true point-containing pixel
+        # interaction term = mean over all neighbor pairs (i,j) of y_pred_i * y_pred_j
+        y_pred_padded = K.spatial_2d_padding(y_pred, padding=((1, 1), (1, 1)))
+        inter_loss = K.sum(y_pred_padded[:, 1:, :, 1] * y_pred_padded[:, :-1, :, 1]) + \
+            K.sum(y_pred_padded[:, :, 1:, 1] * y_pred_padded[:, :, :-1, 1])
+
+        normalizer = K.cast(K.shape(y_pred)[0]*K.shape(y_pred)[1]*K.shape(y_pred)[2], K.floatx())
+        inter_loss = inter_loss / normalizer
+
+        return loss + mu * N_loss + beta * inter_loss
