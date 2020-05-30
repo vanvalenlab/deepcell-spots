@@ -172,7 +172,7 @@ def stats_points(points_true, points_pred, threshold):
         dictionary: containing the calculated statistics
     """
 
-    d_md = sum_of_min_distance(points_true, points_pred, normalized=False)
+    d_md = sum_of_min_distance(points_true, points_pred, normalized=True)
     p = point_precision(points_true, points_pred, threshold)
     r = point_recall(points_true, points_pred, threshold)
 
