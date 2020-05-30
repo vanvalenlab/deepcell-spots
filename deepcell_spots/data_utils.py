@@ -5,7 +5,7 @@ from tensorflow.python.keras import backend as K
 from sklearn.model_selection import train_test_split
 
 
-def slice_image(X, reshape_size, overlap):
+def slice_image(X, reshape_size, overlap=0):
     ''' 
     Slice images in X into smaller parts. similar to deepcell.utils.data_utils reshape_matrix
     
@@ -56,7 +56,7 @@ def slice_image(X, reshape_size, overlap):
     return new_X  
     
     
-def stitch_image(X_sliced, image_size, reshape_size, overlap):
+def stitch_image(X_sliced, image_size, reshape_size, overlap=0):
     '''stitch an image from pieces as those created by slice_image(X, reshape_size, overlap)
     pixels from overlapping region will be taken from the slice where they are farthest from the edge'''
     
@@ -114,9 +114,71 @@ def stitch_image(X_sliced, image_size, reshape_size, overlap):
                 counter += 1
 
     print('Stitched data from {} to {}'.format(X_sliced.shape, stitched_X.shape))
-    return stitched_X  
-    
-    
+    return stitched_X
+
+
+def slice_annotated_image(X, y, reshape_size, overlap=0):
+    '''
+    Slice images in X into smaller parts. similar to deepcell.utils.data_utils reshape_matrix
+
+    Args:
+        X (np.array) containing images: has shape (img_number, y, x, channel)
+        reshape_size: list of 2 values: y_size, x_size
+        overlap (int): number of pixels overlapping in each row/column with the pixels from the same row/column in the neighboring slice
+        y (list / np.array) containing coordinate annotations: has length (img_number),
+        each element of the list is a (N,2) np.array where N=the number of points in the image
+
+    Returns:
+        new_X: stack of reshaped images in order of small to large y, then small to large x position in the original image
+        np.array of size (n*img_number, y_size, x_size, channel)
+        where n = number of images each image in X was sliced into
+        if the original image lengths aren't divisible by y_size, x_size, the last image in each row / column overlaps with the one before
+
+        new_y: list of length n*img_number
+    '''
+    image_size_y = X.shape[1]
+    image_size_x = X.shape[2]
+
+    L_y = reshape_size[0]  # y length of each slice
+    L_x = reshape_size[1]  # x length of each slice
+
+    n_y = np.int(np.ceil((image_size_y - 2 * L_y + overlap) / (L_y - overlap)) + 2)  # number of slices along y axis
+    n_x = np.int(np.ceil((image_size_x - 2 * L_x + overlap) / (L_x - overlap)) + 2)  # number of slices along x axis
+
+    new_batch_size = X.shape[0] * n_y * n_x  # number of images in output
+
+    new_X_shape = (new_batch_size, L_y, L_x, X.shape[3])
+    new_X = np.zeros(new_X_shape, dtype=K.floatx())
+
+    new_y = [None] * new_batch_size
+
+    counter = 0
+    for b in range(X.shape[0]):
+        for i in range(n_y):
+            for j in range(n_x):
+                _axis = 1
+                if i != n_y - 1:
+                    y_start, y_end = i * (L_y - overlap), i * (L_y - overlap) + L_y
+                else:
+                    y_start, y_end = X.shape[_axis]-L_y, X.shape[_axis]
+
+                if j != n_x - 1:
+                    x_start, x_end = j * (L_x - overlap), j * (L_x - overlap) + L_x
+                else:
+                    x_start, x_end = X.shape[_axis + 1]-L_x, X.shape[_axis + 1]
+
+                new_X[counter] = X[b, y_start:y_end, x_start:x_end, :]
+
+                new_y[counter] = np.array(
+                    [[y0-y_start, x0-x_start] for y0, x0 in y[b] if (y_start-0.5) <= y0 < (y_end-0.5) and
+                     (x_start-0.5) <= x0 < (x_end-0.5)])
+
+                counter += 1
+
+    print('Sliced data from {} to {}'.format(X.shape, new_X.shape))
+    return new_X, new_y
+
+
 def get_data(file_name, test_size=.2, seed=0, allow_pickle=False):
     """Load data from NPZ file and split into train and test sets
     This is a copy of deepcell's utils.data_utils.get_data, with allow_pickle added and mode removed
