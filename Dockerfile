@@ -22,10 +22,10 @@ WORKDIR /notebooks
 # Copy the setup.py and requirements.txt and install the deepcell-spots dependencies
 COPY requirements.txt /opt/deepcell-spots/
 
-# Clone and install deepcell-tf (don't use requirements.txt to install it to prevent double installation of tensorflow)
+# Clone and install deepcell-tf (don't use requirements.txt to install it to prevent reinstallation of tensorflow)
 RUN cd /opt && \        
-           git clone https://github.com/vanvalenlab/deepcell-tf.git && \
-           cd /opt/deepcell-tf
+    git clone https://github.com/vanvalenlab/deepcell-tf.git && \
+    cd /opt/deepcell-tf
 
 # Prevent reinstallation of tensorflow and install all other requirements.
 RUN sed -i "/tensorflow/d" /opt/deepcell-tf/requirements.txt && \
