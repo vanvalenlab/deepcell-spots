@@ -13,12 +13,29 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
     /usr/local/bin/pip install --upgrade pip
 
 # installs git into the Docker image
-RUN apt-get install git -y
+RUN apt-get update && \
+    apt-get upgrade -y && \
+    apt-get install git -y
 
 WORKDIR /notebooks
 
 # Copy the setup.py and requirements.txt and install the deepcell-spots dependencies
 COPY requirements.txt /opt/deepcell-spots/
+
+# Clone and install deepcell-tf (don't use requirements.txt to install it to prevent double installation of tensorflow)
+RUN cd /opt && \        
+           git clone https://github.com/vanvalenlab/deepcell-tf.git && \
+           cd /opt/deepcell-tf
+
+# Prevent reinstallation of tensorflow and install all other requirements.
+RUN sed -i "/tensorflow/d" /opt/deepcell-tf/requirements.txt && \
+    pip install -r /opt/deepcell-tf/requirements.txt
+
+# Install deepcell via setup.py
+RUN pip install /opt/deepcell-tf && \
+    cd /opt/deepcell-tf && \
+    python setup.py build_ext --inplace
+
 
 # Prevent reinstallation of tensorflow and install all other requirements.
 RUN sed -i "/tensorflow/d" /opt/deepcell-spots/requirements.txt && \
