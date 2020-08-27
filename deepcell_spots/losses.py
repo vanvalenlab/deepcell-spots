@@ -81,27 +81,27 @@ class DotNetLosses(object):
         y_offset_pred = y_pred[..., 0]
         x_offset_pred = y_pred[..., 1]
 
-        # calculate the loss only over pixels that contain a point
+        # calculate the loss only over d_pixels around pixels that contain a point
         d = 0.5 + d_pixels  # threshold delta_x & delta_y offset of pixel center from point for inclusion in regression loss
-        contain_y = tf.math.logical_and(K.less_equal(-d, y_offset_true), K.less(y_offset_true, d))
-        contain_x = tf.math.logical_and(K.less_equal(-d, x_offset_true), K.less(x_offset_true, d))
-        contain_pt_indices = tf.where(tf.math.logical_and(contain_y, contain_x))
+        near_pt_y = tf.math.logical_and(K.less_equal(-d, y_offset_true), K.less(y_offset_true, d)) # true if y value is within range d from point containing pixel
+        near_pt_x = tf.math.logical_and(K.less_equal(-d, x_offset_true), K.less(x_offset_true, d)) # true if x value is within range d from point containing pixel
+        near_pt_indices = tf.where(tf.math.logical_and(near_pt_y, near_pt_x))
         # Classification of half-integer coordinates is inconsistent with the generator. This is negligile for random positions
         # The generator uses python's round which is banker's rounding (to nearest even number)
 
-        y_offset_true_cp = tf.gather_nd(y_offset_true, contain_pt_indices)
-        x_offset_true_cp = tf.gather_nd(x_offset_true, contain_pt_indices)
+        y_offset_true_cp = tf.gather_nd(y_offset_true, near_pt_indices)
+        x_offset_true_cp = tf.gather_nd(x_offset_true, near_pt_indices)
 
-        y_offset_pred_cp = tf.gather_nd(y_offset_pred, contain_pt_indices)
-        x_offset_pred_cp = tf.gather_nd(x_offset_pred, contain_pt_indices)
+        y_offset_pred_cp = tf.gather_nd(y_offset_pred, near_pt_indices)
+        x_offset_pred_cp = tf.gather_nd(x_offset_pred, near_pt_indices)
 
         # use smooth l1 loss on the offsets
         pixelwise_loss_y = smooth_l1(y_offset_true_cp, y_offset_pred_cp, sigma=self.sigma)
         pixelwise_loss_x = smooth_l1(x_offset_true_cp, x_offset_pred_cp, sigma=self.sigma)
 
         # compute the normalizer: the number of positive pixels
-        # can change line below to use the shape of contain_pt_indices instead of re-calculating
-        normalizer = K.maximum(1, K.shape(contain_pt_indices)[0])
+        # can change line below to use the shape of near_pt_indices instead of re-calculating
+        normalizer = K.maximum(1, K.shape(near_pt_indices)[0])
         normalizer = K.cast(normalizer, dtype=K.floatx())
 
         loss = tf.concat([pixelwise_loss_y, pixelwise_loss_x], axis=-1)
