@@ -192,10 +192,13 @@ def maximum_likelihood_loss_fn(y_true, y_pred, parallel_iterations=32, epsilon=1
         return D
 
     def _get_min_distance(obs, pred):
-        valid_indices = tf.where(pred != -1)
-        valid_pred = tf.gather_nd(pred, valid_indices)
+        valid_pred_indices = tf.where(pred != -1)
+        valid_pred = tf.gather_nd(pred, valid_pred_indices)
 
-        distance = _pairwise_dist(obs, valid_pred)
+        valid_obs_indices = tf.where(obs != -1)
+        valid_obs = tf.gather_nd(obs, valid_obs_indices)
+
+        distance = _pairwise_dist(valid_obs, valid_pred)
         min_distance = tf.reduce_min(distance, axis=1)
 
         return min_distance
