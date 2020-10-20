@@ -1,6 +1,6 @@
 import numpy as np
 
-from tensorflow.python.keras import backend as K
+from tensorflow.keras import backend as K
 
 from sklearn.model_selection import train_test_split
 

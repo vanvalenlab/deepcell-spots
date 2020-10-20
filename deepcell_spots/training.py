@@ -6,9 +6,9 @@ import datetime
 import os
 
 import numpy as np
-from tensorflow.python.keras import backend as K
-from tensorflow.python.keras import callbacks
-from tensorflow.python.keras.optimizers import SGD
+from tensorflow.keras import backend as K
+from tensorflow.keras import callbacks
+from tensorflow.keras.optimizers import SGD
 
 #import deepcell.losses
 from deepcell.utils import train_utils

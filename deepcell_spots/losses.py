@@ -3,7 +3,7 @@
 # L1 loss for regression of the point coordinates
 
 import tensorflow as tf
-from tensorflow.python.keras import backend as K
+from tensorflow.keras import backend as K
 
 from deepcell import losses
 
