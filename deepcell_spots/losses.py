@@ -174,3 +174,38 @@ class DotNetLosses(object):
         inter_loss = inter_loss / normalizer
 
         return loss + mu * N_loss + beta * inter_loss
+
+def maximum_likelihood_loss_fn(y_true, y_pred, parallel_iterations=32):
+    obs_coords = y_true
+    pred_coords = y_pred.mean()
+    sigma = y_pred.stddev()[:, 0]
+
+    def _pairwise_dist(a, b):
+        na = tf.reduce_sum(tf.square(a), 1)
+        nb = tf.reduce_sum(tf.square(b), 1)
+
+        na = tf.reshape(na, [-1, 1])
+        nb = tf.reshape(nb, [1, -1])
+
+        D = tf.sqrt(tf.maximum(na - 2*tf.matmul(a, b, False, True) + nb, 0.0))
+
+        return D
+
+    def _get_min_distance(obs, pred):
+        valid_indices = tf.where(pred != -1)
+        valid_pred = tf.gather_nd(pred, valid_indices)
+
+        distance = _pairwise_dist(obs, valid_pred)
+        min_distance = tf.reduce_min(distance, axis=1)
+
+        return min_distance
+
+    distance_batch = tf.map_fn(_get_min_distance,
+                               elems=[obs_coords, pred_coords],
+                               dtype=K.floatx()
+                               parallel_iterations=parallel_iterations)
+
+    loss = distance_batch**2 / sigma**2
+
+    return loss
+
