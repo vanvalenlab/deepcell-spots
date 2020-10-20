@@ -175,7 +175,7 @@ class DotNetLosses(object):
 
         return loss + mu * N_loss + beta * inter_loss
 
-def maximum_likelihood_loss_fn(y_true, y_pred, parallel_iterations=32):
+def maximum_likelihood_loss_fn(y_true, y_pred, parallel_iterations=32, epsilon=1e-4):
     obs_coords = y_true
     pred_coords = y_pred.mean()
     sigma = y_pred.stddev()[:, 0]
@@ -205,7 +205,7 @@ def maximum_likelihood_loss_fn(y_true, y_pred, parallel_iterations=32):
                                dtype=K.floatx()
                                parallel_iterations=parallel_iterations)
 
-    loss = distance_batch**2 / sigma**2
+    loss = distance_batch**2 / (sigma**2 + epsilon)
 
     return loss
 
