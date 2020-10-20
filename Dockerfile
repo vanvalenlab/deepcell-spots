@@ -1,7 +1,7 @@
 # Use tensorflow/tensorflow as the base image
 # Change the build arg to edit the tensorflow version.
 # Only supporting python3.
-ARG TF_VERSION=1.15.0-gpu
+ARG TF_VERSION=2.3.0-gpu
 
 FROM tensorflow/tensorflow:${TF_VERSION}-py3
 
@@ -25,7 +25,8 @@ COPY requirements.txt /opt/deepcell-spots/
 # Clone and install deepcell-tf (don't use requirements.txt to install it to prevent reinstallation of tensorflow)
 RUN cd /opt && \        
     git clone https://github.com/vanvalenlab/deepcell-tf.git && \
-    cd /opt/deepcell-tf
+    cd /opt/deepcell-tf && \
+    git checkout tf2-migration
 
 # Prevent reinstallation of tensorflow and install all other requirements.
 RUN sed -i "/tensorflow/d" /opt/deepcell-tf/requirements.txt && \
@@ -36,10 +37,8 @@ RUN pip install /opt/deepcell-tf && \
     cd /opt/deepcell-tf && \
     python setup.py build_ext --inplace
 
-
-# Prevent reinstallation of tensorflow and install all other requirements.
-RUN sed -i "/tensorflow/d" /opt/deepcell-spots/requirements.txt && \
-    pip install -r /opt/deepcell-spots/requirements.txt
+# Install all other requirements.
+RUN pip install -r /opt/deepcell-spots/requirements.txt
 
 # Copy the rest of the package code and its scripts
 COPY deepcell_spots /opt/deepcell-spots/deepcell_spots

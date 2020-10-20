@@ -4,16 +4,16 @@
 
 import numpy as np
 
-from tensorflow.python.keras import backend as K
-from tensorflow.python.keras.models import Model
-from tensorflow.python.keras.layers import Input, Concatenate
-from tensorflow.python.keras.layers import Flatten
-from tensorflow.python.keras.layers import Conv2D
-from tensorflow.python.keras.layers import Permute, Reshape
-from tensorflow.python.keras.layers import Activation, Softmax, Lambda
-from tensorflow.python.keras.layers import BatchNormalization
-from tensorflow.python.keras.initializers import RandomNormal
-from tensorflow.python.keras.regularizers import l2
+from tensorflow.keras import backend as K
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import Input, Concatenate
+from tensorflow.keras.layers import Flatten
+from tensorflow.keras.layers import Conv2D
+from tensorflow.keras.layers import Permute, Reshape
+from tensorflow.keras.layers import Activation, Softmax, Lambda
+from tensorflow.keras.layers import BatchNormalization
+from tensorflow.keras.initializers import RandomNormal
+from tensorflow.keras.regularizers import l2
 
 ### for running on my laptop:
 import sys
