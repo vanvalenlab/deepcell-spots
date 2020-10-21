@@ -28,6 +28,7 @@
 import numpy as np
 import tensorflow as tf
 
+from tensorflow.keras import backend as K
 from keras_preprocessing.image.affine_transformations import apply_affine_transform as affine_transform_image
 from keras_preprocessing.image.affine_transformations import flip_axis
 from deepcell_spots.utils import affine_transform_points
@@ -43,108 +44,139 @@ class SpotDatasetBuilder(object):
                                       'horizontal_flip': True,
                                       'vertical_flip': True}):
 
-    # Load training data
-    X = train_dict['X']
+        # Load training data
+        X = train_dict['X']
 
-    # TODO: Figure out how to deal with varying numbers of points
-    # for each image - right now, just treating it as equal
-    # Solution is likely ragged tensor
+        # TODO: Figure out how to deal with varying numbers of points
+        # for each image - right now, just treating it as equal
+        # Solution is likely ragged tensor
 
-    y = train_dict['y']
-    tpr = train_dict['tpr']
-    fpr = train_dict['fpr']
-    sigma = train_dict['sigma']
+        y = train_dict['y']
+        tpr = train_dict['tpr']
+        fpr = train_dict['fpr']
+        sigma = train_dict['sigma']
 
-    self.X = np.asarray(X, dtype=K.floatx())
-    self.y = np.asarray(y, dtype=K.floatx())
-    self.tpr = tpr
-    self.fpr = fpr
-    self.sigma = sigma
-    self.augmentation_kwargs = augmentation_kwargs
+        self.X = np.asarray(X, dtype=K.floatx())
+        self.y = np.asarray(y, dtype=K.floatx())
+        self.tpr = tpr
+        self.fpr = fpr
+        self.sigma = sigma
+        self.augmentation_kwargs = augmentation_kwargs
 
-    self.batch_size = batch_size
-    self.cache_size = cache_size
+        self.batch_size = batch_size
+        self.cache_size = cache_size
 
-    # Create dataset
-    self._create_dataset(self)
-
-    def _get_random_transform(self, seed=None):
+        # Create dataset
+        self._create_dataset()
+        
+    def _transform_matrix_offset_center(self, matrix, x, y):
+        o_x = float(x) / 2 + 0.5
+        o_y = float(y) / 2 + 0.5
+        offset_matrix = np.array([[1, 0, o_x], [0, 1, o_y], [0, 0, 1]], dtype='float32')
+        reset_matrix = np.array([[1, 0, -o_x], [0, 1, -o_y], [0, 0, 1]], dtype='float32')
+        
+        offset_matrix = tf.convert_to_tensor(offset_matrix)
+        reset_matrix = tf.convert_to_tensor(reset_matrix)
+        
+        transform_matrix = tf.keras.backend.dot(tf.keras.backend.dot(offset_matrix, matrix), reset_matrix)
+        return transform_matrix
+        
+    def _compute_random_transform_matrix(self):
         rotation_range = self.augmentation_kwargs['rotation_range']
         zoom_range = self.augmentation_kwargs['zoom_range']
         horizontal_flip = self.augmentation_kwargs['horizontal_flip']
         vertical_flip = self.augmentation_kwargs['vertical_flip']
-
-        theta = np.random.uniform(-rotation_range, rotation_range)
         
-        if zoom_range[0] == 1 and zoom_range[1] == 1:
-            zx, zy = 1, 1
-        else:
-            zx, zy = np.random.uniform(zoom_range[0], zoom_range[1], 2)
+        
+        # Get random angles
+        theta = tf.random.uniform(shape=(1,), 
+                                  minval=-np.pi*rotation_range/180, 
+                                  maxval=np.pi*rotation_range/180)
+        one = tf.constant(1.0, shape=(1,))
+        zero = tf.constant(0.0, shape=(1,))
+        cos_theta = tf.math.cos(theta)
+        sin_theta = tf.math.sin(theta)
+        
+        rot_row_0 = tf.stack([cos_theta, -sin_theta, zero], axis=1)
+        rot_row_1 = tf.stack([sin_theta, cos_theta, zero], axis=1)
+        rot_row_2 = tf.stack([zero, zero, one], axis=1)
+        rotation_matrix = tf.concat([rot_row_0, rot_row_1, rot_row_2], axis=0)
+        
+        transform_matrix = rotation_matrix
+        
+        # Get random lr flips
+        lr = 2*tf.cast(tf.random.categorical(tf.math.log([[0.5, 0.5]]), 1), 'float32')[0] - 1.0
+        lr_row_0 = tf.stack([lr, zero, zero], axis=1)
+        lr_row_1 = tf.stack([zero, one, zero], axis=1)
+        lr_row_2 = tf.stack([zero, zero, one], axis=1)
+        lr_flip_matrix = tf.concat([lr_row_0, lr_row_1, lr_row_2], axis=0)
+        
+        transform_matrix = tf.keras.backend.dot(transform_matrix, lr_flip_matrix)
+        
+        # Get randum ud flips
+        ud = 2*tf.cast(tf.random.categorical(tf.math.log([[0.5, 0.5]]), 1), 'float32')[0] - 1.0
+        ud_row_0 = tf.stack([one, zero, zero], axis=1)
+        ud_row_1 = tf.stack([zero, ud, zero], axis=1)
+        ud_row_2 = tf.stack([zero, zero, one], axis=1)
+        ud_flip_matrix = tf.concat([ud_row_0, ud_row_1, ud_row_2], axis=0)
+        
+        transform_matrix = tf.keras.backend.dot(transform_matrix, ud_flip_matrix)
 
-        flip_horizontal = (np.random.random() < 0.5) * horizontal_flip
-        flip_vertical = (np.random.random() < 0.5) * vertical_flip
+        # Get random zooms
+        zx = tf.random.uniform(shape=(1,), minval=zoom_range[0], maxval=zoom_range[1])
+        zy = tf.random.uniform(shape=(1,), minval=zoom_range[0], maxval=zoom_range[1])
+        z_row_0 = tf.stack([zx, zero, zero], axis=1)
+        z_row_1 = tf.stack([zero, zy, zero], axis=1)
+        z_row_2 = tf.stack([zero, zero, one], axis=1)
+        zoom_matrix = tf.concat([z_row_0, z_row_1, z_row_2], axis=0)
+        
+        transform_matrix = tf.keras.backend.dot(transform_matrix, zoom_matrix)
 
-        transform_parameters = {'theta': theta,
-                                'zx': zx,
-                                'zy': zy,
-                                'flip_horizontal': flip_horizontal,
-                                'flip_vertical': flip_vertical,
-                                'tx': 0,
-                                'ty': 0,
-                                'shear':0,
-                                'channel_shift_intensity': None,
-                                'brightness': None}
-        return transform_parameters
+        # Combine all matrices
+        h, w = self.X.shape[1], self.X.shape[2]
+        transform_matrix = self._transform_matrix_offset_center(transform_matrix, h, w)
+        
+        return transform_matrix      
 
-    def _augment_data(self, images, points):
-        # Get transformation matrix
-        transform_parameters = self._get_random_transform()
-
-        # Apply transform to image
-        transformed_image = affine_transform_image(image,
-                                                   transform_parameters.get('theta', 0),
-                                                   transform_parameters.get('tx', 0),
-                                                   transform_parameters.get('ty', 0),
-                                                   transform_parameters.get('shear', 0),
-                                                   transform_parameters.get('zx', 1),
-                                                   transform_parameters.get('zy', 1),
-                                                   row_axis=0,
-                                                   col_axis=1,
-                                                   channel_axis=2,
-                                                   fill_mode='nearest',
-                                                   cval=0,
-                                                   order=1)
-
-        if transform_parameters.get('flip_horizontal', False):
-            transformed_image = flip_axis(transformed_image, 0)
-
-        if transformed_parameters.get('flip_vertical', False):
-            transformed_image = flip_axis(transformed_image, 1)
-
-        # Apply transform to points
-        transformed_points = affine_transform_points(points, 
-                                                     transform_parameters, 
-                                                     image_shape=self.X.shape[1:])
-
-        return transformed_image, transformed_points
-
-    def _augment(self, args):
+    def _augment(self, *args):
         X_dict = args[0]
         y_dict = args[1]
 
         images = X_dict['images']
         points = y_dict['points']
 
-        im_shape = images.shape
-        pt_shape = points.shape
-
-        [images, points] = tf.py_function(self._augment_data, [images, points], [tf.float32, tf.float32])
-
-        images.set_shape(im_shape)
-        points.set_shape(pt_shape)
-
-        X_dict['images'] = images
-        y_dict['points'] = points
+        transform_matrix = self._compute_random_transform_matrix()
+        
+        # Transform image
+        transform_vector = tfa.image.transform_ops.matrices_to_flat_transforms(transform_matrix)
+    
+        new_images = tfa.image.transform(images,
+                                     transform_vector,
+                                     interpolation = 'BILINEAR')
+        
+        # Transform points
+        offsets = transform_matrix[:2, 2]
+        tr_matrix = transform_matrix[0:2, 0:2]
+        
+        # flip x and y coordinates 
+        tr_matrix = tf.reverse(tr_matrix, axis=[0,1])
+        offsets = tf.reverse(offsets, axis=[0])
+        
+        inv = tf.linalg.inv(tr_matrix)
+        
+        # Only transform the good points
+        valid_indices = tf.where(points[:,0] != -1)
+        new_points = tf.gather(points, valid_indices[:,0], axis=0)
+        new_points = tf.matmul(inv, new_points-offsets, transpose_b=True)
+        new_points = tf.transpose(new_points)
+        
+        # Repad
+        paddings = tf.convert_to_tensor([[0,tf.shape(points)[0]-tf.shape(new_points)[0]],[0,0]])
+        new_points = tf.pad(new_points, paddings, constant_values=-1)
+        
+        # Update dictionaries
+        X_dict['images'] = new_images
+        y_dict['points'] = new_points
 
         return X_dict, y_dict
 
@@ -156,10 +188,9 @@ class SpotDatasetBuilder(object):
         X_dict['sigma'] = self.sigma
 
         y_dict = {}
-        y_dict['points'] = tf.ragged.constant(self.y)
+        y_dict['points'] = self.y
 
         self.dataset = tf.data.Dataset.from_tensor_slices((X_dict, y_dict))
 
         # Apply augmentation, batching, and caching
-        self.training_dataset = self.dataset.shuffle(self.cache_size).map(self._augment).padded_batch(self.batch_size, padding_values=-1)
-
+        self.training_dataset = self.dataset.shuffle(self.cache_size).map(self._augment).batch(self.batch_size)

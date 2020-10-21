@@ -1,5 +1,6 @@
 import scipy
 import numpy as np
+import tensorflow as tf
 
 from scipy.ndimage.morphology import distance_transform_edt
 from tensorflow.python.keras.preprocessing.image import ImageDataGenerator
@@ -267,3 +268,73 @@ def affine_transform_points(points, transform_parameters,
     transformed_points_in_image = transformed_points[point_in_image(transformed_points, image_shape, img_row_axis, img_col_axis),:]
     
     return transformed_points_in_image
+
+
+def transform_matrix_offset_center(matrix, x, y):
+    o_x = float(x) / 2 + 0.5
+    o_y = float(y) / 2 + 0.5
+    offset_matrix = np.array([[1, 0, o_x], [0, 1, o_y], [0, 0, 1]], dtype='float32')
+    reset_matrix = np.array([[1, 0, -o_x], [0, 1, -o_y], [0, 0, 1]], dtype='float32')
+
+    offset_matrix = tf.convert_to_tensor(offset_matrix)
+    reset_matrix = tf.convert_to_tensor(reset_matrix)
+
+    transform_matrix = tf.keras.backend.dot(tf.keras.backend.dot(offset_matrix, matrix), reset_matrix)
+    return transform_matrix
+
+
+def compute_random_transform_matrix(augmentation_kwargs, img_height, img_width):
+    rotation_range = augmentation_kwargs['rotation_range']
+    zoom_range = augmentation_kwargs['zoom_range']
+    horizontal_flip = augmentation_kwargs['horizontal_flip']
+    vertical_flip = augmentation_kwargs['vertical_flip']
+
+    # Get random angles
+    theta = tf.random.uniform(shape=(1,), 
+                              minval=-np.pi*rotation_range/180, 
+                              maxval=np.pi*rotation_range/180)
+    one = tf.constant(1.0, shape=(1,))
+    zero = tf.constant(0.0, shape=(1,))
+    cos_theta = tf.math.cos(theta)
+    sin_theta = tf.math.sin(theta)
+
+    rot_row_0 = tf.stack([cos_theta, -sin_theta, zero], axis=1)
+    rot_row_1 = tf.stack([sin_theta, cos_theta, zero], axis=1)
+    rot_row_2 = tf.stack([zero, zero, one], axis=1)
+    rotation_matrix = tf.concat([rot_row_0, rot_row_1, rot_row_2], axis=0)
+
+    transform_matrix = rotation_matrix
+
+    # # Get random lr flips
+    # lr = 2*tf.cast(tf.random.categorical(tf.math.log([[0.5, 0.5]]), 1), 'float32')[0] - 1.0
+    # lr_row_0 = tf.stack([lr, zero, zero], axis=1)
+    # lr_row_1 = tf.stack([zero, one, zero], axis=1)
+    # lr_row_2 = tf.stack([zero, zero, one], axis=1)
+    # lr_flip_matrix = tf.concat([lr_row_0, lr_row_1, lr_row_2], axis=0)
+
+    # transform_matrix = tf.keras.backend.dot(transform_matrix, lr_flip_matrix)
+
+    # # Get randum ud flips
+    # ud = 2*tf.cast(tf.random.categorical(tf.math.log([[0.5, 0.5]]), 1), 'float32')[0] - 1.0
+    # ud_row_0 = tf.stack([one, zero, zero], axis=1)
+    # ud_row_1 = tf.stack([zero, ud, zero], axis=1)
+    # ud_row_2 = tf.stack([zero, zero, one], axis=1)
+    # ud_flip_matrix = tf.concat([ud_row_0, ud_row_1, ud_row_2], axis=0)
+
+    # transform_matrix = tf.keras.backend.dot(transform_matrix, ud_flip_matrix)
+
+    # Get random zooms
+    zx = tf.random.uniform(shape=(1,), minval=zoom_range[0], maxval=zoom_range[1])
+    zy = tf.random.uniform(shape=(1,), minval=zoom_range[0], maxval=zoom_range[1])
+    z_row_0 = tf.stack([zx, zero, zero], axis=1)
+    z_row_1 = tf.stack([zero, zy, zero], axis=1)
+    z_row_2 = tf.stack([zero, zero, one], axis=1)
+    zoom_matrix = tf.concat([z_row_0, z_row_1, z_row_2], axis=0)
+
+    transform_matrix = tf.keras.backend.dot(transform_matrix, zoom_matrix)
+
+    # Combine all matrices
+    h, w = img_height, img_width
+    transform_matrix = transform_matrix_offset_center(transform_matrix, h, w)
+
+    return transform_matrix       

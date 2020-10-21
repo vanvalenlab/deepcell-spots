@@ -43,7 +43,7 @@ def default_heads(input_shape, num_classes):
     num_dimensions = 2 # regress x and y coordinates (pixel center signed distance from nearest object center)
     return [
       ('offset_regression', offset_regression_head(num_values=num_dimensions, input_shape=input_shape)),
-      ('classification', classification_head(input_shape,n_features=num_classes))
+      ('classification', classification_head(input_shape, n_features=num_classes))
     ]
 
 

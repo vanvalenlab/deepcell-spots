@@ -3,7 +3,7 @@
 # Only supporting python3.
 ARG TF_VERSION=2.3.0-gpu
 
-FROM tensorflow/tensorflow:${TF_VERSION}-py3
+FROM tensorflow/tensorflow:${TF_VERSION}
 
 # System maintenance
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
@@ -26,7 +26,7 @@ COPY requirements.txt /opt/deepcell-spots/
 RUN cd /opt && \        
     git clone https://github.com/vanvalenlab/deepcell-tf.git && \
     cd /opt/deepcell-tf && \
-    git checkout tf2-migration
+    git checkout tf2_migration
 
 # Prevent reinstallation of tensorflow and install all other requirements.
 RUN sed -i "/tensorflow/d" /opt/deepcell-tf/requirements.txt && \
