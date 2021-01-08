@@ -1,6 +1,7 @@
 import numpy as np
 import networkx as nx 
 from scipy.spatial import distance
+from itertools import combinations
 
 # Functions for expectation maximization for spot detection
 def define_edges(coords, threshold):
