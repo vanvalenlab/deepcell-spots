@@ -20,22 +20,6 @@ def define_edges(coords, threshold):
 
     return A
 
-def label_graph_ann(G, coords):
-    """Labels the annotator associated with each node in the graph"""
-    num_spots = [len(x) for x in coords]
-
-    # Create list of annotator labels
-    ann_labels = np.array([0]*num_spots[0])
-    for i in range(1,len(num_spots)):
-        temp_labels = np.array([i]*num_spots[i])
-        ann_labels = np.hstack((ann_labels,temp_labels))
-
-    nodes = list(G.nodes)
-
-    for i in range(len(nodes)):
-        G.nodes[i]['name'] = ann_labels[i]
-
-    return G
 
 def cluster_centroids(G, coords):
     clusters = list(nx.connected_components(G))
@@ -140,10 +124,33 @@ def label_graph_annotators(G, data):
 
     return G_new 
 
+def label_graph_gt(G, data, gt):
+    G_new = G.copy()
+    
+    num_annotators = np.shape(data)[1]
+
+    labels = []
+    for i in range(num_annotators):
+        detections = data[:,i]
+
+        for ii in range(len(detections)):
+            if detections[ii] == 1:
+                if gt[ii] == 'T':
+                    labels.append(1)
+                if gt[ii] == 'F':
+                    labels.append(0)
+
+    nodes = list(G.nodes)
+
+    for i in range(len(nodes)-1):
+        G_new.nodes[i]['name'] = labels[i]
+ 
+
+    return G_new
+
 def label_graph_prob(G, data, p_matrix):
     G_new = G.copy()
 
-    num_clusters = np.shape(data)[0]
     num_annotators = np.shape(data)[1]
 
     labels = []
@@ -176,7 +183,7 @@ def make_data_stack(log_coords,dog_coords,plm_coords):
     # create graph
     G=nx.from_numpy_matrix(A)
     # label each annotator on graph
-    G_labeled = label_graph_ann(G, coords)
+    G_labeled = label_graph_annotators(G, coords)
     # break up clusters with multiple spots from single annotator
     G_clean = check_spot_ann_num(G_labeled, coords)
     # calculate centroid of each cluster
@@ -200,7 +207,7 @@ def make_data_stack(log_coords,dog_coords,plm_coords):
         coords = np.array([plm, log, dog])
         A = define_edges(coords, 2)
         G=nx.from_numpy_matrix(A)
-        G_labeled = label_graph_ann(G, coords)
+        G_labeled = label_graph_annotators(G, coords)
         G_clean = check_spot_ann_num(G_labeled, coords)
 
         spot_centroids = cluster_centroids(G, coords)
