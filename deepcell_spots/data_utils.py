@@ -1,7 +1,5 @@
 import numpy as np
-
 from tensorflow.python.keras import backend as K
-
 from sklearn.model_selection import train_test_split
 
 
@@ -185,8 +183,6 @@ def get_data(file_name, test_size=.2, seed=0, allow_pickle=False):
 
     Args:
         file_name (str): path to NPZ file to load
-        mode (str): if 'siamese_daughters', returns lineage information from
-            .trk file otherwise, returns the same data that was loaded.
         test_size (float): percent of data to leave as testing holdout
         seed (int): seed number for random train/test split repeatability
         allow_pickle (bool): if True, allow loading pickled object arrays stored in npz files (via numpy.load)
