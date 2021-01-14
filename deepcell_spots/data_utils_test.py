@@ -64,7 +64,25 @@ class TestDataUtils(test.TestCase):
         
         self.assertEqual(np.shape(slice_X),(10*num_slices_x*num_slices_y,
                         slice_size[0],slice_size[1],1))
-        self.assertEqual((slice_X[num_slices_x-1,:,-1*slice_size[0]*num_slices_x:]).all(),(slice_X[num_slices_x,:,:slice_size[0]*num_slices_x]).all())
+        self.assertEqual((slice_X[num_slices_x-1::num_slices_x,:,-1*slice_size[0]*num_slices_x:]).all(),(slice_X[num_slices_x::num_slices_x,:,:slice_size[0]*num_slices_x]).all())
+
+        # test no channel dimension
+        img_w, img_h = 30,30
+        X = np.random.random((10, img_w, img_h))
+        slice_size = [8,8]
+        num_slices_x = np.ceil(img_w/slice_size[0])
+        num_slices_y = np.ceil(img_h/slice_size[1])
+        with self.assertRaises(IndexError):
+            _ = slice_image(X, slice_size)
+
+        # test slice size is not a list
+        img_w, img_h = 30,30
+        X = np.random.random((10, img_w, img_h))
+        slice_size = 8
+        num_slices_x = np.ceil(img_w/slice_size)
+        num_slices_y = np.ceil(img_h/slice_size)
+        with self.assertRaises(TypeError):
+            _ = slice_image(X, slice_size)
 
     def test_get_data(self):
         test_size = .1
