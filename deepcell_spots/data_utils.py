@@ -53,66 +53,71 @@ def slice_image(X, reshape_size, overlap=0):
     print('Sliced data from {} to {}'.format(X.shape, new_X.shape))
     return new_X  
     
+## FUNCTION DID NOT WORK
+# def stitch_image(X_sliced, image_size, reshape_size, overlap=0):
+# # def stitch_image(X_sliced, reshape_size, overlap=0):
+#     '''stitch an image from pieces as those created by slice_image(X, reshape_size, overlap)
+#     pixels from overlapping region will be taken from the slice where they are farthest from the edge'''
     
-def stitch_image(X_sliced, image_size, reshape_size, overlap=0):
-    '''stitch an image from pieces as those created by slice_image(X, reshape_size, overlap)
-    pixels from overlapping region will be taken from the slice where they are farthest from the edge'''
-    
-    image_size_x = image_size[0]
-    image_size_y = image_size[1]
-    
-    L_x = reshape_size[0] # x length of each slice
-    L_y = reshape_size[1] # y length of each slice
-    
-    n_x = np.int(np.ceil((image_size_x - 2*L_x + overlap)/(L_x - overlap)) + 2) # number of slices along x axis
-    n_y = np.int(np.ceil((image_size_y - 2*L_y + overlap)/(L_y - overlap)) + 2) # number of slices along y axis
-    
-    stitched_batch_size = np.int(X_sliced.shape[0] / (n_x * n_y)) # number of images in stitched output
-    
-    stitched_X_shape = (stitched_batch_size, image_size_x, image_size_y, X_sliced.shape[3])
-    stitched_X = np.zeros(stitched_X_shape, dtype=K.floatx())
+#     image_size_x = image_size[0]
+#     image_size_y = image_size[1]
 
-    counter = 0
-    for b in range(stitched_batch_size):
-        for i in range(n_x):
-            for j in range(n_y):
-                _axis = 1
-                if i==0:
-                    x_start, x_end = 0, L_x - np.floor(overlap/2)
-                    slice_x_start, slice_x_end = 0, L_x - np.floor(overlap/2)
-                elif i != n_x - 1:
-                    x_start, x_end = i * (L_x - overlap) + np.ceil(overlap/2), i * (L_x - overlap) + L_x - np.floor(overlap/2)
-                    slice_x_start, slice_x_end = np.ceil(overlap/2), L_x - np.floor(overlap/2)
-                else:
-                    last_overlap = (n_x - 2) * (L_x - overlap) + L_x - (image_size_x - L_x)
-                    x_start, x_end = -L_x + np.ceil(last_overlap/2), image_size_x
-                    slice_x_start, slice_x_end = np.ceil(last_overlap/2), L_x
+#     # image_size_x = np.shape(X_sliced)[1]
+#     # image_size_y = np.shape(X_sliced)[2]
 
-                if j==0:
-                    y_start, y_end = 0, L_y - np.floor(overlap/2)
-                    slice_y_start, slice_y_end = 0, L_y - np.floor(overlap/2)
-                elif j != n_y - 1:
-                    y_start, y_end = j * (L_y - overlap) + np.ceil(overlap/2), j * (L_y - overlap) + L_y - np.floor(overlap/2)
-                    slice_y_start, slice_y_end = np.ceil(overlap/2), L_y - np.floor(overlap/2)
-                else:
-                    last_overlap = (n_y - 2) * (L_y - overlap) + L_y - (image_size_y - L_y)
-                    y_start, y_end = -L_y + np.ceil(last_overlap/2), image_size_y
-                    slice_y_start, slice_y_end = np.ceil(last_overlap/2), L_y
+#     L_x = reshape_size[0] # x length of each slice
+#     L_y = reshape_size[1] # y length of each slice
+    
+#     n_x = np.int(np.ceil((image_size_x - 2*L_x + overlap)/(L_x - overlap)) + 2) # number of slices along x axis
+#     n_y = np.int(np.ceil((image_size_y - 2*L_y + overlap)/(L_y - overlap)) + 2) # number of slices along y axis
+    
+#     stitched_batch_size = np.int(X_sliced.shape[0] / (n_x * n_y)) # number of images in stitched output
+    
+#     # stitched_X_shape = (stitched_batch_size, image_size_x, image_size_y, X_sliced.shape[3])
+#     stitched_X_shape = (stitched_batch_size, L_x, L_y, X_sliced.shape[3])
+#     stitched_X = np.zeros(stitched_X_shape, dtype=K.floatx())
+
+#     counter = 0
+#     for b in range(stitched_batch_size):
+#         for i in range(n_x):
+#             for j in range(n_y):
+#                 _axis = 1
+#                 if i==0:
+#                     x_start, x_end = 0, L_x - np.floor(overlap/2)
+#                     slice_x_start, slice_x_end = 0, L_x - np.floor(overlap/2)
+#                 elif i != n_x - 1:
+#                     x_start, x_end = i * (L_x - overlap) + np.ceil(overlap/2), i * (L_x - overlap) + L_x - np.floor(overlap/2)
+#                     slice_x_start, slice_x_end = np.ceil(overlap/2), L_x - np.floor(overlap/2)
+#                 else:
+#                     last_overlap = (n_x - 2) * (L_x - overlap) + L_x - (image_size_x - L_x)
+#                     x_start, x_end = -L_x + np.ceil(last_overlap/2), image_size_x
+#                     slice_x_start, slice_x_end = np.ceil(last_overlap/2), L_x
+
+#                 if j==0:
+#                     y_start, y_end = 0, L_y - np.floor(overlap/2)
+#                     slice_y_start, slice_y_end = 0, L_y - np.floor(overlap/2)
+#                 elif j != n_y - 1:
+#                     y_start, y_end = j * (L_y - overlap) + np.ceil(overlap/2), j * (L_y - overlap) + L_y - np.floor(overlap/2)
+#                     slice_y_start, slice_y_end = np.ceil(overlap/2), L_y - np.floor(overlap/2)
+#                 else:
+#                     last_overlap = (n_y - 2) * (L_y - overlap) + L_y - (image_size_y - L_y)
+#                     y_start, y_end = -L_y + np.ceil(last_overlap/2), image_size_y
+#                     slice_y_start, slice_y_end = np.ceil(last_overlap/2), L_y
                 
-                # cast all indices as integers
-                x_start = np.int(x_start)
-                x_end = np.int(x_end)
-                slice_x_start = np.int(slice_x_start)
-                slice_x_end = np.int(slice_x_end)
-                y_start = np.int(y_start)
-                y_end = np.int(y_end)
-                slice_y_start = np.int(slice_y_start)
-                slice_y_end = np.int(slice_y_end)
-                stitched_X[b, x_start:x_end, y_start:y_end, :] = X_sliced[counter,slice_x_start:slice_x_end,slice_y_start:slice_y_end,:]
-                counter += 1
+#                 # cast all indices as integers
+#                 x_start = np.int(x_start)
+#                 x_end = np.int(x_end)
+#                 slice_x_start = np.int(slice_x_start)
+#                 slice_x_end = np.int(slice_x_end)
+#                 y_start = np.int(y_start)
+#                 y_end = np.int(y_end)
+#                 slice_y_start = np.int(slice_y_start)
+#                 slice_y_end = np.int(slice_y_end)
+#                 stitched_X[b, x_start:x_end, y_start:y_end, :] = X_sliced[counter,slice_x_start:slice_x_end,slice_y_start:slice_y_end,:]
+#                 counter += 1
 
-    print('Stitched data from {} to {}'.format(X_sliced.shape, stitched_X.shape))
-    return stitched_X
+#     print('Stitched data from {} to {}'.format(X_sliced.shape, stitched_X.shape))
+#     return stitched_X
 
 
 def slice_annotated_image(X, y, reshape_size, overlap=0):
