@@ -1,5 +1,4 @@
 import numpy as np
-import random
 import os
 from tensorflow.python.keras import backend as K
 from tensorflow.python.platform import test
