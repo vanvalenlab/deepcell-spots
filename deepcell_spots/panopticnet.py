@@ -438,6 +438,9 @@ def PanopticNet(backbone,
             semantic_id=i, ndim=ndim, upsample_type=upsample_type,
             interpolation=interpolation, **kwargs))
 
+    print(semantic_levels)
+    print(semantic_head_list)
+
     outputs = semantic_head_list
 
     # head_submodels = default_heads(input_shape=input_shape, num_classes=2) # 2 classes: contains / does not contain dot center
