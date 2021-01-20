@@ -475,5 +475,9 @@ def PanopticNet(backbone,
     outputs = dot_head
     outputs = head_submodels
 
+    print(inputs)
+    print(outputs)
+    print(name)
+
     model = Model(inputs=inputs, outputs=outputs, name=name)
     return model
