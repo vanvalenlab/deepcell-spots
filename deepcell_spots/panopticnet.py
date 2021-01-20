@@ -49,7 +49,8 @@ from deepcell.model_zoo.fpn import __create_pyramid_features
 from deepcell_spots.fpn import __create_semantic_head
 from deepcell_spots.fpn import semantic_upsample
 from deepcell.utils.backbone_utils import get_backbone
-from deepcell.layers import TensorProduct
+from deepcell.layers import TensorProduct\
+from deepcell.utils.misc_utils import get_sorted_keys
 
 def __merge_temporal_features(feature, mode='conv', feature_size=256,
                               frames_per_batch=1):
