@@ -192,6 +192,9 @@ def dot_net_2D(receptive_field=13,
         include_top=False)
 
     featurenet_output = featurenet_model(inputs)
+
+    print(featurenet_output)
+
     #model_outputs.append(featurenet_output)
     #models.append(featurenet_model)
 
@@ -206,6 +209,8 @@ def dot_net_2D(receptive_field=13,
     head_submodels = default_heads(input_shape=input_shape, num_classes=2) # 2 classes: contains / does not contain dot center
     dot_head = [__build_model_heads(n, m, featurenet_output) for n, m in head_submodels]
     outputs = dot_head
+
+    print(dot_head)
 
     #model = Model(inputs=inputs, outputs=outputs, name=name)
     model = Model(inputs=inputs, outputs=outputs)

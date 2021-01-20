@@ -427,6 +427,8 @@ def PanopticNet(backbone,
         for f, k in zip(temporal_features, pyramid_levels):
             pyramid_dict[k] = f
 
+    print(pyramid_dict)
+
     semantic_levels = [int(re.findall(r'\d+', k)[0]) for k in pyramid_dict]
     target_level = min(semantic_levels)
 
