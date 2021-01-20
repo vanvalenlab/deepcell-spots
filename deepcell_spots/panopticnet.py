@@ -460,16 +460,16 @@ def PanopticNet(backbone,
     print(semantic_sum)
 
     # Final upsampling
-    # min_level = int(re.findall(r'\d+', pyramid_names[-1])[0])
-    # n_upsample = min_level - target_level
-    # target_level=2
-    # input_target=None
-    # n_upsample = target_level
-    # x = semantic_upsample(semantic_sum, n_upsample,
-    #                       # n_filters=n_filters,  # TODO: uncomment and retrain
-    #                       target=input_target, ndim=ndim,
-    #                       upsample_type=upsample_type, semantic_id=0,
-    #                       interpolation=interpolation)
+    min_level = int(re.findall(r'\d+', pyramid_names[-1])[0])
+    n_upsample = min_level - target_level
+    target_level=1
+    input_target=None
+    n_upsample = target_level
+    x = semantic_upsample(semantic_sum, n_upsample,
+                          # n_filters=n_filters,  # TODO: uncomment and retrain
+                          target=input_target, ndim=ndim,
+                          upsample_type=upsample_type, semantic_id=0,
+                          interpolation=interpolation)
 
     head_submodels = default_heads(input_shape=input_shape, num_classes=2) # 2 classes: contains / does not contain dot center
     dot_head = [__build_model_heads(n, m, semantic_sum) for n, m in head_submodels]
