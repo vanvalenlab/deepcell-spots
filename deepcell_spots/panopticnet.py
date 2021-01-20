@@ -46,6 +46,105 @@ from deepcell_spots.fpn import __create_semantic_head
 from deepcell.utils.backbone_utils import get_backbone
 
 
+def default_heads(input_shape, num_classes):
+    """
+    Create a list of the default heads for dot detection center pixel detection and offset regression
+
+    Args:
+      input_shape
+      num_classes
+
+    Returns:
+      A list of tuple, where the first element is the name of the submodel
+      and the second element is the submodel itself.
+
+    """
+    num_dimensions = 2 # regress x and y coordinates (pixel center signed distance from nearest object center)
+    return [
+      ('offset_regression', offset_regression_head(num_values=num_dimensions, input_shape=input_shape)),
+      ('classification', classification_head(input_shape,n_features=num_classes))
+    ]
+
+
+def classification_head(input_shape,
+                        n_features=2,
+                        n_dense_filters=128,
+                        reg=1e-5,
+                        init='he_normal',
+                        name='classification_head'):
+    """
+    Creates a classification head
+
+    Args:
+        n_features (int): Number of output features (number of possible classes for each pixel. default is 2: contains point / does not contain point)
+        reg (int): regularization value
+        init (str): Method for initalizing weights.
+
+    Returns:
+        tensorflow.keras.Model for classification (softmax output)
+    """
+
+    channel_axis = 1 if K.image_data_format() == 'channels_first' else -1
+
+    x = [] # Create layers list (x) to store all of the layers.
+    inputs = Input(shape=input_shape)
+    x.append(inputs)
+    x.append(TensorProduct(n_dense_filters, kernel_initializer=init, kernel_regularizer=l2(reg))(x[-1]))
+    x.append(BatchNormalization(axis=channel_axis)(x[-1]))
+    x.append(Activation('relu')(x[-1]))
+    x.append(TensorProduct(n_features, kernel_initializer=init, kernel_regularizer=l2(reg))(x[-1]))
+    #x.append(Flatten()(x[-1]))
+    outputs = Softmax(axis=channel_axis)(x[-1])
+    #x.append(outputs)
+
+    return Model(inputs=inputs, outputs=outputs, name=name)
+
+
+def rn_classification_head(num_classes,
+                           input_size,
+                           input_feature_size=256,
+                           prior_probability=0.01,
+                           classification_feature_size=256,
+                           name='classification_submodel'):
+    # similar to the one used by retinanet, HASN'T BEEN TESTED, MAY NOT WORK!!!
+    options = {
+        'kernel_size': 3,
+        'strides': 1,
+        'padding': 'same',
+    }
+
+    if K.image_data_format() == 'channels_first':
+        inputs = Input(shape=(input_size, None, None))
+    else:
+        inputs = Input(shape=(None, None, input_size))
+    outputs = inputs
+    for i in range(4):
+        outputs = Conv2D(
+            filters=classification_feature_size,
+            activation='relu',
+            name='pyramid_classification_{}'.format(i),
+            kernel_initializer=RandomNormal(mean=0.0, stddev=0.01, seed=None),
+            bias_initializer='zeros',
+            **options
+        )(outputs)
+
+    outputs = Conv2D(
+        filters=num_classes * num_anchors,
+        kernel_initializer=RandomNormal(mean=0.0, stddev=0.01, seed=None),
+        bias_initializer=PriorProbability(probability=prior_probability),
+        name='pyramid_classification',
+        **options
+    )(outputs)
+
+    # reshape output and apply sigmoid
+    if K.image_data_format() == 'channels_first':
+        outputs = Permute((2, 3, 1), name='pyramid_classification_permute')(outputs)
+    outputs = Reshape((-1, num_classes), name='pyramid_classification_reshape')(outputs)
+    outputs = Activation('sigmoid', name='pyramid_classification_sigmoid')(outputs)
+
+    return Model(inputs=inputs, outputs=outputs, name=name)
+
+
 def PanopticNet(backbone,
                 input_shape,
                 inputs=None,
@@ -232,13 +331,17 @@ def PanopticNet(backbone,
     semantic_levels = [int(re.findall(r'\d+', k)[0]) for k in pyramid_dict]
     target_level = min(semantic_levels)
 
-    semantic_head_list = []
-    for i, c in enumerate(num_semantic_classes):
-        semantic_head_list.append(create_semantic_head(
-            pyramid_dict, n_classes=c,
-            input_target=inputs, target_level=target_level,
-            semantic_id=i, ndim=ndim, upsample_type=upsample_type,
-            interpolation=interpolation, **kwargs))
+    # semantic_head_list = []
+    # for i, c in enumerate(num_semantic_classes):
+    #     semantic_head_list.append(create_semantic_head(
+    #         pyramid_dict, n_classes=c,
+    #         input_target=inputs, target_level=target_level,
+    #         semantic_id=i, ndim=ndim, upsample_type=upsample_type,
+    #         interpolation=interpolation, **kwargs))
+
+    head_submodels = default_heads(input_shape=input_shape, num_classes=2) # 2 classes: contains / does not contain dot center
+    dot_head = [__build_model_heads(n, m, featurenet_output) for n, m in head_submodels]
+    outputs = dot_head
 
     outputs = semantic_head_list
 
