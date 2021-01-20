@@ -473,9 +473,6 @@ def PanopticNet(backbone,
     head_submodels = default_heads(input_shape=input_shape, num_classes=2) # 2 classes: contains / does not contain dot center
     dot_head = [__build_model_heads(n, m, x) for n, m in head_submodels]
     outputs = dot_head
-    outputs = head_submodels
-
-    print(type(outputs))
 
     model = Model(inputs=inputs, outputs=outputs, name=name)
     return model
