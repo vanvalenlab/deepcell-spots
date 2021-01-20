@@ -429,26 +429,38 @@ def PanopticNet(backbone,
 
     print(pyramid_dict)
 
-    semantic_levels = [int(re.findall(r'\d+', k)[0]) for k in pyramid_dict]
-    target_level = min(semantic_levels)
+    # semantic_levels = [int(re.findall(r'\d+', k)[0]) for k in pyramid_dict]
+    # target_level = min(semantic_levels)
 
-    semantic_head_list = []
-    for i, c in enumerate(num_semantic_classes):
-        semantic_head_list.append(create_semantic_head(
-            pyramid_dict, n_classes=c,
-            input_target=inputs, target_level=target_level,
-            semantic_id=i, ndim=ndim, upsample_type=upsample_type,
-            interpolation=interpolation, **kwargs))
+    # semantic_head_list = []
+    # for i, c in enumerate(num_semantic_classes):
+    #     semantic_head_list.append(create_semantic_head(
+    #         pyramid_dict, n_classes=c,
+    #         input_target=inputs, target_level=target_level,
+    #         semantic_id=i, ndim=ndim, upsample_type=upsample_type,
+    #         interpolation=interpolation, **kwargs))
 
-    print(semantic_levels)
-    print(semantic_head_list)
+    # print(semantic_levels)
+    # print(semantic_head_list)
 
-    outputs = semantic_head_list
+    # outputs = semantic_head_list
 
-    # head_submodels = default_heads(input_shape=input_shape, num_classes=2) # 2 classes: contains / does not contain dot center
-    # # dot_head = [__build_model_heads(n, m, featurenet_output) for n, m in head_submodels]
-    # # outputs = dot_head
-    # outputs = head_submodels
+    semantic_sum = pyramid_features[-1]
+
+    # Final upsampling
+    # min_level = int(re.findall(r'\d+', pyramid_names[-1])[0])
+    # n_upsample = min_level - target_level
+    n_upsample = target_level
+    x = semantic_upsample(semantic_sum, n_upsample,
+                          # n_filters=n_filters,  # TODO: uncomment and retrain
+                          target=input_target, ndim=ndim,
+                          upsample_type=upsample_type, semantic_id=semantic_id,
+                          interpolation=interpolation)
+
+    head_submodels = default_heads(input_shape=input_shape, num_classes=2) # 2 classes: contains / does not contain dot center
+    dot_head = [__build_model_heads(n, m, x) for n, m in head_submodels]
+    outputs = dot_head
+    outputs = head_submodels
 
     model = Model(inputs=inputs, outputs=outputs, name=name)
     return model
