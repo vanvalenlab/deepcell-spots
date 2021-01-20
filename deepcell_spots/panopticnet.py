@@ -457,6 +457,8 @@ def PanopticNet(backbone,
 
     semantic_sum = pyramid_features[-1]
 
+    print(semantic_sum)
+
     # Final upsampling
     # min_level = int(re.findall(r'\d+', pyramid_names[-1])[0])
     # n_upsample = min_level - target_level
