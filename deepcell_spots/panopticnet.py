@@ -144,6 +144,32 @@ def rn_classification_head(num_classes,
 
     return Model(inputs=inputs, outputs=outputs, name=name)
 
+def offset_regression_head(num_values,
+                           input_shape,
+                           regression_feature_size=256,
+                           name='offset_regression_head'):
+
+    options = {
+        'kernel_size': 3,
+        'strides': 1,
+        'padding': 'same',
+        'kernel_initializer': RandomNormal(mean=0.0, stddev=0.01, seed=None),
+        'bias_initializer': 'zeros'
+    }
+
+    inputs = Input(shape=input_shape)
+    outputs = inputs
+    for i in range(4):
+        outputs = Conv2D(
+            filters=regression_feature_size,
+            activation='relu',
+            name='offset_regression_{}'.format(i),
+            **options
+        )(outputs)
+
+    outputs = Conv2D(filters=2, name='offset_regression', **options)(outputs)
+
+    return Model(inputs=inputs, outputs=outputs, name=name)
 
 def PanopticNet(backbone,
                 input_shape,
