@@ -38,12 +38,77 @@ from tensorflow.keras.layers import Conv2D, Conv3D
 from tensorflow.keras.layers import TimeDistributed, ConvLSTM2D
 from tensorflow.keras.layers import Input, Concatenate
 from tensorflow.keras.layers import Activation, BatchNormalization
+from tensorflow.python.keras.initializers import RandomNormal
+from tensorflow.python.keras.layers import Permute, Reshape
+from tensorflow.python.keras.layers import Softmax, Lambda
+from tensorflow.python.keras.regularizers import l2
 
 from deepcell.layers import ConvGRU2D
 from deepcell.layers import ImageNormalization2D, Location2D
 from deepcell.model_zoo.fpn import __create_pyramid_features
 from deepcell_spots.fpn import __create_semantic_head
 from deepcell.utils.backbone_utils import get_backbone
+from deepcell.layers import TensorProduct
+
+def __merge_temporal_features(feature, mode='conv', feature_size=256,
+                              frames_per_batch=1):
+    """Merges feature with its temporal residual through addition.
+    Input feature (x) --> Temporal convolution* --> Residual feature (x')
+    *Type of temporal convolution specified by ``mode``.
+    Output: ``y = x + x'``
+    Args:
+        feature (tensorflow.keras.layers.Layer): Input layer
+        mode (str): Mode of temporal convolution. One of
+            ``{'conv','lstm','gru', None}``.
+        feature_size (int): Length of convolutional kernel
+        frames_per_batch (int): Size of z axis in generated batches.
+            If equal to 1, assumes 2D data.
+    Raises:
+        ValueError: ``mode`` not 'conv', 'lstm', 'gru' or ``None``
+    Returns:
+        tensorflow.keras.layers.Layer: Input feature merged with its residual
+        from a temporal convolution. If mode is ``None``,
+        the output is exactly the input.
+    """
+    # Check inputs to mode
+    acceptable_modes = {'conv', 'lstm', 'gru', None}
+    if mode is not None:
+        mode = str(mode).lower()
+        if mode not in acceptable_modes:
+            raise ValueError('Mode {} not supported. Please choose '
+                             'from {}.'.format(mode, str(acceptable_modes)))
+
+    f_name = str(feature.name)[:2]
+
+    if mode == 'conv':
+        x = Conv3D(feature_size,
+                   (frames_per_batch, 3, 3),
+                   strides=(1, 1, 1),
+                   padding='same',
+                   name='conv3D_mtf_{}'.format(f_name),
+                   )(feature)
+        x = BatchNormalization(axis=-1, name='bnorm_mtf_{}'.format(f_name))(x)
+        x = Activation('relu', name='acti_mtf_{}'.format(f_name))(x)
+    elif mode == 'lstm':
+        x = ConvLSTM2D(feature_size,
+                       (3, 3),
+                       padding='same',
+                       activation='relu',
+                       return_sequences=True,
+                       name='convLSTM_mtf_{}'.format(f_name))(feature)
+    elif mode == 'gru':
+        x = ConvGRU2D(feature_size,
+                      (3, 3),
+                      padding='same',
+                      activation='relu',
+                      return_sequences=True,
+                      name='convGRU_mtf_{}'.format(f_name))(feature)
+    else:
+        x = feature
+
+    temporal_feature = x
+
+    return temporal_feature
 
 
 def default_heads(input_shape, num_classes):
@@ -170,6 +235,14 @@ def offset_regression_head(num_values,
     outputs = Conv2D(filters=2, name='offset_regression', **options)(outputs)
 
     return Model(inputs=inputs, outputs=outputs, name=name)
+
+# TO BE DELETED - only needed when there are multiple features but here have only 1 backbone_output
+def __build_model_heads(name, model, backbone_output):
+    identity = Lambda(lambda x: x, name=name)
+    return identity(model(backbone_output))
+    #for name, model in head_submodels: # DELETE?
+    #concat = Concatenate(axis=1, name=name)
+    #return concat([model(backbone_output)])
 
 def PanopticNet(backbone,
                 input_shape,
@@ -357,19 +430,20 @@ def PanopticNet(backbone,
     semantic_levels = [int(re.findall(r'\d+', k)[0]) for k in pyramid_dict]
     target_level = min(semantic_levels)
 
-    # semantic_head_list = []
-    # for i, c in enumerate(num_semantic_classes):
-    #     semantic_head_list.append(create_semantic_head(
-    #         pyramid_dict, n_classes=c,
-    #         input_target=inputs, target_level=target_level,
-    #         semantic_id=i, ndim=ndim, upsample_type=upsample_type,
-    #         interpolation=interpolation, **kwargs))
-
-    head_submodels = default_heads(input_shape=input_shape, num_classes=2) # 2 classes: contains / does not contain dot center
-    dot_head = [__build_model_heads(n, m, featurenet_output) for n, m in head_submodels]
-    outputs = dot_head
+    semantic_head_list = []
+    for i, c in enumerate(num_semantic_classes):
+        semantic_head_list.append(create_semantic_head(
+            pyramid_dict, n_classes=c,
+            input_target=inputs, target_level=target_level,
+            semantic_id=i, ndim=ndim, upsample_type=upsample_type,
+            interpolation=interpolation, **kwargs))
 
     outputs = semantic_head_list
+
+    # head_submodels = default_heads(input_shape=input_shape, num_classes=2) # 2 classes: contains / does not contain dot center
+    # # dot_head = [__build_model_heads(n, m, featurenet_output) for n, m in head_submodels]
+    # # outputs = dot_head
+    # outputs = head_submodels
 
     model = Model(inputs=inputs, outputs=outputs, name=name)
     return model
