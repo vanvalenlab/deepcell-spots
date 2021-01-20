@@ -429,7 +429,6 @@ def PanopticNet(backbone,
         for f, k in zip(temporal_features, pyramid_levels):
             pyramid_dict[k] = f
 
-    print(pyramid_dict)
 
     # semantic_levels = [int(re.findall(r'\d+', k)[0]) for k in pyramid_dict]
     # target_level = min(semantic_levels)
@@ -442,8 +441,7 @@ def PanopticNet(backbone,
     #         semantic_id=i, ndim=ndim, upsample_type=upsample_type,
     #         interpolation=interpolation, **kwargs))
 
-    # print(semantic_levels)
-    # print(semantic_head_list)
+
 
     # outputs = semantic_head_list
     # Get pyramid names and features into list form
@@ -457,7 +455,6 @@ def PanopticNet(backbone,
 
     semantic_sum = pyramid_features[-1]
 
-    print(semantic_sum)
 
     # Final upsampling
     # min_level = int(re.findall(r'\d+', pyramid_names[-1])[0])
@@ -470,6 +467,8 @@ def PanopticNet(backbone,
                           target=input_target, ndim=ndim,
                           upsample_type=upsample_type, semantic_id=0,
                           interpolation=interpolation)
+
+    input_shape = x.get_shape().as_list()[1:]
 
     head_submodels = default_heads(input_shape=input_shape, num_classes=2) # 2 classes: contains / does not contain dot center
     dot_head = [__build_model_heads(n, m, x) for n, m in head_submodels]
