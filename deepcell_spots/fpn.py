@@ -44,6 +44,101 @@ from deepcell.layers import UpsampleLike
 from deepcell.utils.misc_utils import get_sorted_keys
 
 
+def semantic_upsample(x,
+                      n_upsample,
+                      target=None,
+                      n_filters=64,
+                      ndim=2,
+                      semantic_id=0,
+                      upsample_type='upsamplelike',
+                      interpolation='bilinear'):
+    """Performs iterative rounds of 2x upsampling and
+    convolutions with a 3x3 filter to remove aliasing effects.
+    Args:
+        x (tensor): The input tensor to be upsampled.
+        n_upsample (int): The number of 2x upsamplings.
+        target (tensor): An optional tensor with the target shape.
+        n_filters (int): The number of filters for
+            the 3x3 convolution.
+        ndim (int): The spatial dimensions of the input data.
+            Must be either 2 or 3.
+        semantic_id (int): ID of the semantic head.
+        upsample_type (str): Choice of upsampling layer to use from
+            ``['upsamplelike', 'upsampling2d', 'upsampling3d']``.
+        interpolation (str): Choice of interpolation mode for upsampling
+            layers from ``['bilinear', 'nearest']``.
+    Raises:
+        ValueError: ``ndim`` is not 2 or 3.
+        ValueError: ``interpolation`` not in ``['bilinear', 'nearest']``.
+        ValueError: ``upsample_type`` not in
+            ``['upsamplelike','upsampling2d', 'upsampling3d']``.
+        ValueError: ``target`` is ``None`` and
+            ``upsample_type`` is ``'upsamplelike'``
+    Returns:
+        tensor: The upsampled tensor.
+    """
+    # Check input to ndims
+    acceptable_ndims = [2, 3]
+    if ndim not in acceptable_ndims:
+        raise ValueError('Only 2 and 3 dimensional networks are supported')
+
+    # Check input to interpolation
+    acceptable_interpolation = {'bilinear', 'nearest'}
+    if interpolation not in acceptable_interpolation:
+        raise ValueError('Interpolation mode "{}" not supported. '
+                         'Choose from {}.'.format(
+                             interpolation, list(acceptable_interpolation)))
+
+    # Check input to upsample_type
+    acceptable_upsample = {'upsamplelike', 'upsampling2d', 'upsampling3d'}
+    if upsample_type not in acceptable_upsample:
+        raise ValueError('Upsample method "{}" not supported. '
+                         'Choose from {}.'.format(
+                             upsample_type, list(acceptable_upsample)))
+
+    # Check that there is a target if upsamplelike is used
+    if upsample_type == 'upsamplelike' and target is None:
+        raise ValueError('upsamplelike requires a target.')
+
+    conv = Conv2D if ndim == 2 else Conv3D
+    conv_kernel = (3, 3) if ndim == 2 else (1, 3, 3)
+    upsampling = UpSampling2D if ndim == 2 else UpSampling3D
+    size = (2, 2) if ndim == 2 else (1, 2, 2)
+
+    if n_upsample > 0:
+        for i in range(n_upsample):
+            x = conv(n_filters, conv_kernel, strides=1, padding='same',
+                     name='conv_{}_semantic_upsample_{}'.format(
+                         i, semantic_id))(x)
+
+            # Define kwargs for upsampling layer
+            upsample_name = 'upsampling_{}_semantic_upsample_{}'.format(
+                i, semantic_id)
+
+            if upsample_type == 'upsamplelike':
+                if i == n_upsample - 1 and target is not None:
+                    x = UpsampleLike(name=upsample_name)([x, target])
+            else:
+                upsampling_kwargs = {
+                    'size': size,
+                    'name': upsample_name,
+                    'interpolation': interpolation
+                }
+
+                if ndim > 2:
+                    del upsampling_kwargs['interpolation']
+                x = upsampling(**upsampling_kwargs)(x)
+    else:
+        x = conv(n_filters, conv_kernel, strides=1, padding='same',
+                 name='conv_final_semantic_upsample_{}'.format(semantic_id))(x)
+
+        if upsample_type == 'upsamplelike' and target is not None:
+            upsample_name = 'upsampling_{}_semanticupsample_{}'.format(
+                0, semantic_id)
+            x = UpsampleLike(name=upsample_name)([x, target])
+
+    return x
+
 def __create_semantic_head(pyramid_dict,
                            input_target=None,
                            n_classes=3,
