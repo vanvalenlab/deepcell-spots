@@ -20,7 +20,7 @@ except ImportError:
 from tensorflow.python.keras.preprocessing.image import array_to_img
 from tensorflow.python.keras.preprocessing.image import Iterator
 from tensorflow.python.keras.preprocessing.image import ImageDataGenerator
-from tensorflow.python.keras.utils import to_categorical
+from tensorflow.keras.utils import to_categorical
 
 from deepcell_spots.utils import subpixel_distance_transform
 from deepcell_spots.utils import affine_transform_points
