@@ -47,6 +47,7 @@ from deepcell.layers import ConvGRU2D
 from deepcell.layers import ImageNormalization2D, Location2D
 from deepcell.model_zoo.fpn import __create_pyramid_features
 from deepcell_spots.fpn import __create_semantic_head
+from deepcell_spots.fpn import semantic_upsample
 from deepcell.utils.backbone_utils import get_backbone
 from deepcell.layers import TensorProduct
 
@@ -444,17 +445,27 @@ def PanopticNet(backbone,
     # print(semantic_head_list)
 
     # outputs = semantic_head_list
+    # Get pyramid names and features into list form
+    pyramid_names = get_sorted_keys(pyramid_dict)
+    pyramid_features = [pyramid_dict[name] for name in pyramid_names]
+
+    # Reverse pyramid names and features
+    pyramid_names.reverse()
+    pyramid_features.reverse()
+
 
     semantic_sum = pyramid_features[-1]
 
     # Final upsampling
     # min_level = int(re.findall(r'\d+', pyramid_names[-1])[0])
     # n_upsample = min_level - target_level
+    target_level=2
+    input_target=None
     n_upsample = target_level
     x = semantic_upsample(semantic_sum, n_upsample,
                           # n_filters=n_filters,  # TODO: uncomment and retrain
                           target=input_target, ndim=ndim,
-                          upsample_type=upsample_type, semantic_id=semantic_id,
+                          upsample_type=upsample_type, semantic_id=0,
                           interpolation=interpolation)
 
     head_submodels = default_heads(input_shape=input_shape, num_classes=2) # 2 classes: contains / does not contain dot center
