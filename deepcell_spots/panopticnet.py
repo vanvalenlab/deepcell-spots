@@ -401,4 +401,5 @@ def PanopticNet(backbone,
     outputs = semantic_head_list
 
     model = Model(inputs=inputs, outputs=outputs)
+    print(model)
     return model

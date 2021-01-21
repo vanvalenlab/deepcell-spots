@@ -214,5 +214,5 @@ def dot_net_2D(receptive_field=13,
 
     #model = Model(inputs=inputs, outputs=outputs, name=name)
     model = Model(inputs=inputs, outputs=outputs)
-
+    print(model)
     return model
