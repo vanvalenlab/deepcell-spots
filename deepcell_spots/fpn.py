@@ -40,8 +40,10 @@ from tensorflow.keras.layers import Activation
 from tensorflow.keras.layers import UpSampling2D, UpSampling3D
 from tensorflow.keras.layers import BatchNormalization
 from tensorflow.python.keras.initializers import RandomNormal
+from tensorflow.python.keras.regularizers import l2
 
 from deepcell.layers import UpsampleLike
+from deepcell.layers import TensorProduct
 from deepcell.utils.misc_utils import get_sorted_keys
 
 
@@ -290,6 +292,11 @@ def __create_semantic_head(pyramid_dict,
         # x = Softmax(axis=channel_axis,
         #                 dtype=K.floatx(),
         #                 name='classification')(x)
+        n_dense_filters = 128
+        n_features=2
+        init='he_normal'
+        reg=1e-5
+        
         x = [x]
         x.append(TensorProduct(n_dense_filters, kernel_initializer=init, kernel_regularizer=l2(reg))(x[-1]))
         x.append(BatchNormalization(axis=channel_axis)(x[-1]))
