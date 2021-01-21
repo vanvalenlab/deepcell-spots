@@ -253,7 +253,7 @@ def __create_semantic_head(pyramid_dict,
                           target=input_target, ndim=ndim,
                           upsample_type=upsample_type, semantic_id=semantic_id,
                           interpolation=interpolation)
-    if semantic_id == 0:
+    if semantic_id == 1:
         # Apply conv in place of previous tensor product
         x = conv(n_dense, conv_kernel, strides=1, padding='same',
                 name='conv_0_semantic_{}'.format(semantic_id))(x)
@@ -268,7 +268,7 @@ def __create_semantic_head(pyramid_dict,
         x = Softmax(axis=channel_axis,
                         dtype=K.floatx(),
                         name='classification')(x)
-    elif semantic_id == 1:
+    elif semantic_id == 0:
 
         options = {
             'kernel_size': 3,

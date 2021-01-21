@@ -46,8 +46,8 @@ from tensorflow.python.keras.regularizers import l2
 from deepcell.layers import ConvGRU2D
 from deepcell.layers import ImageNormalization2D, Location2D
 from deepcell.model_zoo.fpn import __create_pyramid_features
-from deepcell.model_zoo.fpn import __create_semantic_head
-# from deepcell_spots.fpn import __create_semantic_head
+# from deepcell.model_zoo.fpn import __create_semantic_head
+from deepcell_spots.fpn import __create_semantic_head
 from deepcell_spots.fpn import semantic_upsample
 from deepcell.utils.backbone_utils import get_backbone
 from deepcell.layers import TensorProduct
