@@ -166,51 +166,6 @@ def classification_head(input_shape,
 
     return Model(inputs=inputs, outputs=outputs, name=name)
 
-
-def rn_classification_head(num_classes,
-                           input_size,
-                           input_feature_size=256,
-                           prior_probability=0.01,
-                           classification_feature_size=256,
-                           name='classification_submodel'):
-    # similar to the one used by retinanet, HASN'T BEEN TESTED, MAY NOT WORK!!!
-    options = {
-        'kernel_size': 3,
-        'strides': 1,
-        'padding': 'same',
-    }
-
-    if K.image_data_format() == 'channels_first':
-        inputs = Input(shape=(input_size, None, None))
-    else:
-        inputs = Input(shape=(None, None, input_size))
-    outputs = inputs
-    for i in range(4):
-        outputs = Conv2D(
-            filters=classification_feature_size,
-            activation='relu',
-            name='pyramid_classification_{}'.format(i),
-            kernel_initializer=RandomNormal(mean=0.0, stddev=0.01, seed=None),
-            bias_initializer='zeros',
-            **options
-        )(outputs)
-
-    outputs = Conv2D(
-        filters=num_classes * num_anchors,
-        kernel_initializer=RandomNormal(mean=0.0, stddev=0.01, seed=None),
-        bias_initializer=PriorProbability(probability=prior_probability),
-        name='pyramid_classification',
-        **options
-    )(outputs)
-
-    # reshape output and apply sigmoid
-    if K.image_data_format() == 'channels_first':
-        outputs = Permute((2, 3, 1), name='pyramid_classification_permute')(outputs)
-    outputs = Reshape((-1, num_classes), name='pyramid_classification_reshape')(outputs)
-    outputs = Activation('sigmoid', name='pyramid_classification_sigmoid')(outputs)
-
-    return Model(inputs=inputs, outputs=outputs, name=name)
-
 def offset_regression_head(num_values,
                            input_shape,
                            regression_feature_size=256,
@@ -225,16 +180,17 @@ def offset_regression_head(num_values,
     }
 
     inputs = Input(shape=input_shape)
-    outputs = inputs
+    x = inputs
     for i in range(4):
-        outputs = Conv2D(
+        x = Conv2D(
             filters=regression_feature_size,
             activation='relu',
             name='offset_regression_{}'.format(i),
             **options
-        )(outputs)
+        )(x)
 
-    outputs = Conv2D(filters=2, name='offset_regression', **options)(outputs)
+    # outputs = Conv2D(filters=2, name='offset_regression', **options)(outputs) # never used num_values anywhere?
+    outputs = Conv2D(filters=num_values, name='offset_regression', **options)(x)
 
     return Model(inputs=inputs, outputs=outputs, name=name)
 
@@ -255,9 +211,10 @@ def PanopticNet(backbone,
                 create_semantic_head=__create_semantic_head,
                 frames_per_batch=1,
                 temporal_mode=None,
+                num_semantic_heads=1,
                 num_semantic_classes=[3],
                 required_channels=3,
-                norm_method=None,
+                norm_method='whole_image',
                 pooling=None,
                 location=True,
                 use_imagenet=True,
@@ -429,50 +386,18 @@ def PanopticNet(backbone,
         for f, k in zip(temporal_features, pyramid_levels):
             pyramid_dict[k] = f
 
+    semantic_levels = [int(re.findall(r'\d+', k)[0]) for k in pyramid_dict]
+    target_level = min(semantic_levels)
 
-    # semantic_levels = [int(re.findall(r'\d+', k)[0]) for k in pyramid_dict]
-    # target_level = min(semantic_levels)
+    semantic_head_list = []
+    for i in range(num_semantic_heads):
+        semantic_head_list.append(create_semantic_head(
+            pyramid_dict, n_classes=num_semantic_classes[i],
+            input_target=inputs, target_level=target_level,
+            semantic_id=i, ndim=ndim, upsample_type=upsample_type,
+            interpolation=interpolation, **kwargs))
 
-    # semantic_head_list = []
-    # for i, c in enumerate(num_semantic_classes):
-    #     semantic_head_list.append(create_semantic_head(
-    #         pyramid_dict, n_classes=c,
-    #         input_target=inputs, target_level=target_level,
-    #         semantic_id=i, ndim=ndim, upsample_type=upsample_type,
-    #         interpolation=interpolation, **kwargs))
-
-
-
-    # outputs = semantic_head_list
-    # Get pyramid names and features into list form
-    pyramid_names = get_sorted_keys(pyramid_dict)
-    pyramid_features = [pyramid_dict[name] for name in pyramid_names]
-
-    # Reverse pyramid names and features
-    pyramid_names.reverse()
-    pyramid_features.reverse()
-
-
-    semantic_sum = pyramid_features[-1]
-
-
-    # Final upsampling
-    # min_level = int(re.findall(r'\d+', pyramid_names[-1])[0])
-    # n_upsample = min_level - target_level
-    target_level=1
-    input_target=None
-    n_upsample = target_level
-    x = semantic_upsample(semantic_sum, n_upsample,
-                          # n_filters=n_filters,  # TODO: uncomment and retrain
-                          target=input_target, ndim=ndim,
-                          upsample_type=upsample_type, semantic_id=0,
-                          interpolation=interpolation)
-
-    input_shape = x.get_shape().as_list()[1:]
-
-    head_submodels = default_heads(input_shape=input_shape, num_classes=2) # 2 classes: contains / does not contain dot center
-    dot_head = [__build_model_heads(n, m, x) for n, m in head_submodels]
-    outputs = dot_head
+    outputs = semantic_head_list
 
     model = Model(inputs=inputs, outputs=outputs, name=name)
     return model

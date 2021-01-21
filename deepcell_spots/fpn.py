@@ -174,7 +174,7 @@ def __create_semantic_head(pyramid_dict,
         ValueError: ``upsample_type`` not in
             ``['upsamplelike','upsampling2d', 'upsampling3d']``
     Returns:
-        tensorflow.keras.Layer: The semantic segmentation head
+        tensorflow.keras.layers.Layer: The semantic segmentation head
     """
     # Check input to ndims
     if ndim not in {2, 3}:
@@ -252,25 +252,29 @@ def __create_semantic_head(pyramid_dict,
                           target=input_target, ndim=ndim,
                           upsample_type=upsample_type, semantic_id=semantic_id,
                           interpolation=interpolation)
+    if semantic_id == 0:
+        # Apply conv in place of previous tensor product
+        x = conv(n_dense, conv_kernel, strides=1, padding='same',
+                name='conv_0_semantic_{}'.format(semantic_id))(x)
+        x = BatchNormalization(axis=channel_axis,
+                            name='batch_normalization_0_semantic_{}'.format(semantic_id))(x)
+        x = Activation('relu', name='relu_0_semantic_{}'.format(semantic_id))(x)
 
-    # Apply conv in place of previous tensor product
-    x = conv(n_dense, conv_kernel, strides=1, padding='same',
-             name='conv_0_semantic_{}'.format(semantic_id))(x)
-    x = BatchNormalization(axis=channel_axis,
-                           name='batch_normalization_0_semantic_{}'.format(semantic_id))(x)
-    x = Activation('relu', name='relu_0_semantic_{}'.format(semantic_id))(x)
+        # Apply conv and softmax layer
+        x = conv(n_classes, conv_kernel, strides=1,
+                padding='same', name='conv_1_semantic_{}'.format(semantic_id))(x)
 
-    # Apply conv and softmax layer
-    x = conv(n_classes, conv_kernel, strides=1,
-             padding='same', name='conv_1_semantic_{}'.format(semantic_id))(x)
-
-    if include_top:
         x = Softmax(axis=channel_axis,
-                    dtype=K.floatx(),
-                    name='semantic_{}'.format(semantic_id))(x)
-    else:
-        x = Activation('relu',
-                       dtype=K.floatx(),
-                       name='semantic_{}'.format(semantic_id))(x)
+                        dtype=K.floatx(),
+                        name='classification_'.format(semantic_id))(x)
+    elif semantic_id == 1:
+        for i in range(4):
+            x = Conv2D(
+                filters=regression_feature_size,
+                activation='relu',
+                name='offset_regression_{}'.format(i),
+                **options
+            )(x)
+        x = Conv2D(filters=num_values, name='offset_regression_'.format(semantic_id), **options)(x)
 
     return x
