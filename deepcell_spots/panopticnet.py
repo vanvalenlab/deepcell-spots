@@ -399,7 +399,7 @@ def PanopticNet(backbone,
             interpolation=interpolation, **kwargs))
 
     outputs = semantic_head_list
-
+    print(outputs)
     model = Model(inputs=inputs, outputs=outputs)
-    print(model)
+    
     return model
