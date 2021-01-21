@@ -39,6 +39,7 @@ from tensorflow.keras.layers import Add
 from tensorflow.keras.layers import Activation
 from tensorflow.keras.layers import UpSampling2D, UpSampling3D
 from tensorflow.keras.layers import BatchNormalization
+from tensorflow.python.keras.initializers import RandomNormal
 
 from deepcell.layers import UpsampleLike
 from deepcell.utils.misc_utils import get_sorted_keys
@@ -266,8 +267,20 @@ def __create_semantic_head(pyramid_dict,
 
         x = Softmax(axis=channel_axis,
                         dtype=K.floatx(),
-                        name='classification_'.format(semantic_id))(x)
+                        name='classification_{}'.format(semantic_id))(x)
     elif semantic_id == 1:
+
+        options = {
+            'kernel_size': 3,
+            'strides': 1,
+            'padding': 'same',
+            'kernel_initializer': RandomNormal(mean=0.0, stddev=0.01, seed=None),
+            'bias_initializer': 'zeros'
+        }
+
+        regression_feature_size=256
+        num_values=2
+
         for i in range(4):
             x = Conv2D(
                 filters=regression_feature_size,
@@ -275,6 +288,6 @@ def __create_semantic_head(pyramid_dict,
                 name='offset_regression_{}'.format(i),
                 **options
             )(x)
-        x = Conv2D(filters=num_values, name='offset_regression_'.format(semantic_id), **options)(x)
+        x = Conv2D(filters=num_values, name='offset_regression_{}'.format(semantic_id), **options)(x)
 
     return x
