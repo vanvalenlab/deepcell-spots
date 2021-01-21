@@ -303,7 +303,7 @@ def __create_semantic_head(pyramid_dict,
         x.append(Activation('relu')(x[-1]))
         x.append(TensorProduct(n_features, kernel_initializer=init, kernel_regularizer=l2(reg))(x[-1]))
         #x.append(Flatten()(x[-1]))
-        x = Softmax(axis=channel_axis)(x[-1])
+        x = Softmax(axis=channel_axis,name='classification')(x[-1])
 
 
     return x
