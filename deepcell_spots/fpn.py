@@ -253,22 +253,7 @@ def __create_semantic_head(pyramid_dict,
                           target=input_target, ndim=ndim,
                           upsample_type=upsample_type, semantic_id=semantic_id,
                           interpolation=interpolation)
-    if semantic_id == 1:
-        # Apply conv in place of previous tensor product
-        x = conv(n_dense, conv_kernel, strides=1, padding='same',
-                name='conv_0_semantic_{}'.format(semantic_id))(x)
-        x = BatchNormalization(axis=channel_axis,
-                            name='batch_normalization_0_semantic_{}'.format(semantic_id))(x)
-        x = Activation('relu', name='relu_0_semantic_{}'.format(semantic_id))(x)
-
-        # Apply conv and softmax layer
-        x = conv(n_classes, conv_kernel, strides=1,
-                padding='same', name='conv_1_semantic_{}'.format(semantic_id))(x)
-
-        x = Softmax(axis=channel_axis,
-                        dtype=K.floatx(),
-                        name='classification')(x)
-    elif semantic_id == 0:
+    if semantic_id == 0:
 
         options = {
             'kernel_size': 3,
@@ -289,5 +274,29 @@ def __create_semantic_head(pyramid_dict,
                 **options
             )(x)
         x = Conv2D(filters=num_values, name='offset_regression', **options)(x)
+    
+    elif semantic_id == 1:
+        # # Apply conv in place of previous tensor product
+        # x = conv(n_dense, conv_kernel, strides=1, padding='same',
+        #         name='conv_0_semantic_{}'.format(semantic_id))(x)
+        # x = BatchNormalization(axis=channel_axis,
+        #                     name='batch_normalization_0_semantic_{}'.format(semantic_id))(x)
+        # x = Activation('relu', name='relu_0_semantic_{}'.format(semantic_id))(x)
+
+        # # Apply conv and softmax layer
+        # x = conv(n_classes, conv_kernel, strides=1,
+        #         padding='same', name='conv_1_semantic_{}'.format(semantic_id))(x)
+
+        # x = Softmax(axis=channel_axis,
+        #                 dtype=K.floatx(),
+        #                 name='classification')(x)
+
+        x.append(TensorProduct(n_dense_filters, kernel_initializer=init, kernel_regularizer=l2(reg))(x[-1]))
+        x.append(BatchNormalization(axis=channel_axis)(x[-1]))
+        x.append(Activation('relu')(x[-1]))
+        x.append(TensorProduct(n_features, kernel_initializer=init, kernel_regularizer=l2(reg))(x[-1]))
+        #x.append(Flatten()(x[-1]))
+        x = Softmax(axis=channel_axis)(x[-1])
+
 
     return x
