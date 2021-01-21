@@ -267,7 +267,7 @@ def __create_semantic_head(pyramid_dict,
 
         x = Softmax(axis=channel_axis,
                         dtype=K.floatx(),
-                        name='classification_{}'.format(semantic_id))(x)
+                        name='classification')(x)
     elif semantic_id == 1:
 
         options = {
@@ -288,6 +288,6 @@ def __create_semantic_head(pyramid_dict,
                 name='offset_regression_{}'.format(i),
                 **options
             )(x)
-        x = Conv2D(filters=num_values, name='offset_regression_{}'.format(semantic_id), **options)(x)
+        x = Conv2D(filters=num_values, name='offset_regression', **options)(x)
 
     return x
