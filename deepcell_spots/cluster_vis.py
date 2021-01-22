@@ -105,26 +105,26 @@ def ca_matrix(G):
 
     return ca_matrix
 
-def label_graph_annotators(G, data):
+def label_graph_ann(G, coords):
+    """Labels the annotator associated with each node in the graph"""
     G_new = G.copy()
+    num_spots = [len(x) for x in coords]
 
-    num_annotators = np.shape(data)[1]
-
-    num_det = int(sum(data[:,0]))
-    ann_labels = np.array([0]*num_det)
-    for i in range(1,num_annotators):
-        num_det = int(sum(data[:,i]))
-        temp_labels = np.array([i]*num_det)
+    # Create list of annotator labels
+    ann_labels = np.array([0]*num_spots[0])
+    for i in range(1,len(num_spots)):
+        temp_labels = np.array([i]*num_spots[i])
         ann_labels = np.hstack((ann_labels,temp_labels))
 
     nodes = list(G_new.nodes)
 
-    for i in range(len(nodes)-1):
+    for i in range(len(nodes)):
         G_new.nodes[i]['name'] = ann_labels[i]
 
-    return G_new 
+    return G_new
 
 def label_graph_gt(G, data, gt):
+    """Labels the ground truth identity of each node in the graph"""
     G_new = G.copy()
     
     num_annotators = np.shape(data)[1]
@@ -149,6 +149,7 @@ def label_graph_gt(G, data, gt):
     return G_new
 
 def label_graph_prob(G, data, p_matrix):
+    """Labels the EM output probability of being a ground truth true detection for each cluster in the graph"""
     G_new = G.copy()
 
     num_annotators = np.shape(data)[1]
@@ -178,12 +179,13 @@ def make_data_stack(log_coords,dog_coords,plm_coords):
 
     # cluster all detected spots in first image
     coords = np.array([plm, log, dog])
+    print(np.shape(coords))
     # adjacency matrix
     A = define_edges(coords, 2)
     # create graph
     G=nx.from_numpy_matrix(A)
     # label each annotator on graph
-    G_labeled = label_graph_annotators(G, coords)
+    G_labeled = label_graph_ann(G, coords)
     # break up clusters with multiple spots from single annotator
     G_clean = check_spot_ann_num(G_labeled, coords)
     # calculate centroid of each cluster
@@ -207,7 +209,7 @@ def make_data_stack(log_coords,dog_coords,plm_coords):
         coords = np.array([plm, log, dog])
         A = define_edges(coords, 2)
         G=nx.from_numpy_matrix(A)
-        G_labeled = label_graph_annotators(G, coords)
+        G_labeled = label_graph_ann(G, coords)
         G_clean = check_spot_ann_num(G_labeled, coords)
 
         spot_centroids = cluster_centroids(G, coords)
