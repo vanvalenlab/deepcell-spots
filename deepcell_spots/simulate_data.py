@@ -95,7 +95,7 @@ def sim_annotators(gt, tpr_list, fpr_list):
 
     Returns:
     --------
-    data_array : matrix
+    data_matrix : matrix
         Matrix of simulated detection data with dimensions clusters x annotators. A value of 1 indicates a detected clsuter and a value of 0 indicates an undetected cluster. 
     """
 
@@ -108,11 +108,11 @@ def sim_annotators(gt, tpr_list, fpr_list):
     for i in range(len(tpr_list)):
         data_list.append(sim_detections(gt, tpr_list[i], fpr_list[i]))
 
-    data_array = np.array(data_list).T
+    data_matrix = np.array(data_list).T
 
-    return data_array
+    return data_matrix
 
-def percent_correct(gt, p_matrix):
+def percent_correct(gt, data_array):
     """ Calculates the percent of detections correctly labeled.
 
     Returns a value from 0 to 1 indicating the fraction of detections correctly labeled.
@@ -120,20 +120,35 @@ def percent_correct(gt, p_matrix):
     Parameters:
     -------------
     gt : array-like
+        Array of ground truth cluster labels. 1 indicates a true detection and 0 indicates a false detection. 
+    data_array : array-like
+        Array of simulated detections with length number of detections. A value of 1 indicates a detected clsuter and a value of 0 indicates an undetected cluster. 
 
+    Returns:
+    -----------
+    percent_corr : float
+        Value for fraction of detections correctly labeled compared to ground truth.
 
     """
+
+    assert len(gt) == len(data_array), "Number of GT detections must equal number of simulated detections"
+    for i in range(len(gt)):
+        assert gt[i] == 1 or gt[i] == 0, "Items in GT detections must equal 0 or 1"
+        assert data_array[i] == 1 or data_array[i] == 0, "Items in data array must equal 0 or 1"
+
     num_correct = 0
 
     for i in range(len(gt)):
-        label = np.round(p_matrix[i,0])
+        label = np.round(data_array[i])
 
         if gt[i] == 1 and label == 1:
             num_correct += 1
         elif gt[i] == 0 and label == 0:
             num_correct += 1
 
-    return num_correct / len(gt)
+    percent_corr = num_correct / len(gt)
+
+    return percent_corr
 
 def is_in_image(x,y,a,L):
     # return True if the square with left bottom corner at (x,y) and side length a

@@ -80,6 +80,26 @@ class TestSpotEM(test.TestCase):
         fpr_list = [0.1]*3
         with self.assertRaises(AssertionError):
             data_array_tp = sim_annotators(gt_tp,tpr_list,fpr_list)
-        
+
+    def test_percent_correct(self):
+        # test all wrong detections
+        num_detections = 10
+        gt = np.ones(num_detections)
+        data_array = np.zeros(num_detections)
+        perc_corr = percent_correct(gt, data_array)
+        self.assertEqual(perc_corr, 0)
+
+        # test half correct detections
+        data_array = np.concatenate((np.zeros(int(num_detections/2)),np.ones(int(num_detections/2))))
+        perc_corr = percent_correct(gt, data_array)
+        self.assertEqual(perc_corr, 0.5)
+
+        data_array = np.ones(num_detections) * 2
+        with self.assertRaises(AssertionError):
+            perc_corr = percent_correct(gt, data_array)
+
+        data_array = np.ones(num_detections-1)
+        with self.assertRaises(AssertionError):
+            perc_corr = percent_correct(gt, data_array)
 
 test.main()
