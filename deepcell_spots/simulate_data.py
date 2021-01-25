@@ -9,7 +9,7 @@ from skimage import draw
 import skimage
 
 
-def gt_clusters(num_clusters, tp_ratio):
+def sim_gt_clusters(num_clusters, tp_ratio):
     """ Generate random simulated labels (true detection or false detection) for clusters, with a specified rate of true detections and false detections, tp_ratio.
 
     Returns a list of length num_clusters of cluster labels with value 'T' for a true detection and 'F' for a false detection.
@@ -37,7 +37,7 @@ def gt_clusters(num_clusters, tp_ratio):
             gt.append('F')
     return gt
 
-def sim_detection(gt, tpr, fpr):
+def sim_detections(gt, tpr, fpr):
     """Simulates detection data for a set of ground truth cluster labels and an annotator with a specified TPR and FPR. 
     
     Returns an array of with same length as input gt, where 1 indicates the simulated annotator detected a cluster and 0 indicates an undetected cluster.
@@ -94,13 +94,23 @@ def sim_data(gt, tpr_list, fpr_list):
 
     data_list = []
     for i in range(len(tpr_list)):
-        data_list.append(sim_detection(gt, tpr_list[i], fpr_list[i]))
+        data_list.append(sim_detections(gt, tpr_list[i], fpr_list[i]))
 
     data_array = np.array(data_list).T
 
     return data_array
 
 def percent_correct(gt, p_matrix):
+    """ Calculates the percent of detections correctly labeled.
+
+    Returns a value from 0 to 1 indicating the fraction of detections correctly labeled.
+
+    Parameters:
+    -------------
+    gt : array-like
+
+
+    """
     num_correct = 0
 
     for i in range(len(gt)):

@@ -6,16 +6,37 @@ from itertools import combinations
 # Functions for expectation maximization for spot detection
 def define_edges(coords, threshold):
     """Defines that adjacency matrix for the multiple annotators, connecting points that are sufficiently close to one another
-    It is assumed that these spots are derived from the same ground truth spot in the original image"""
+    It is assumed that these spots are derived from the same ground truth spot in the original image
+    
+    Parameters:
+    -----------
+    coords : array-like
+        Array of coordinates from each annotator, length is equal to the number of annotators. Each item in the array is a matrix
+        of detection locations with dimensions (number of detections)x2.
+    threshold : float
+        The distance in pixels. Detections closer than the threshold distance will be grouped into a "cluster" of detections, 
+        assumed to be derived from the same ground truth detection. 
+
+    Returns:
+    ----------
+    A : matrix
+        Matrix of dimensions (number of detections) x (number of detections) defining edges of a graph clustering detections by 
+        detections from different annotators derived from the same ground truth detection. A value of 1 denotes two connected nodes
+        in the eventual graph and a value of 0 denotes disconnected nodes. 
+    """
+    # flatten detection coordinates into single 1d array
     all_coords = np.vstack(coords)
     num_spots = len(all_coords)
 
     A = np.zeros((num_spots, num_spots))
     for i in range(num_spots):
         for ii in range(i+1, num_spots):
+            # calculate distance between points
             dist = np.linalg.norm(all_coords[i] - all_coords[ii])
             if dist < threshold:
+                # define an edge if the detections are sufficiently close
                 A[i][ii] += 1
+                # symmetrical edge, because graph is non-directed
                 A[ii][i] += 1
 
     return A
@@ -179,7 +200,6 @@ def make_data_stack(log_coords,dog_coords,plm_coords):
 
     # cluster all detected spots in first image
     coords = np.array([plm, log, dog])
-    print(np.shape(coords))
     # adjacency matrix
     A = define_edges(coords, 2)
     # create graph
