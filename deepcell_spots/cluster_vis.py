@@ -43,6 +43,14 @@ def define_edges(coords, threshold):
 
 
 def cluster_centroids(G, coords):
+    """ Calculate the location of the centroid of a cluster of detections.
+
+    Returns a list of coordinates for the centroid of each cluster in an input graph.
+
+    Parameters:
+    -------------
+    G : 
+    """
     clusters = list(nx.connected_components(G))
     flat_coords = np.vstack(coords)
 

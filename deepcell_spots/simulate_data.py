@@ -12,7 +12,7 @@ import skimage
 def sim_gt_clusters(num_clusters, tp_ratio):
     """ Generate random simulated labels (true detection or false detection) for clusters, with a specified rate of true detections and false detections, tp_ratio.
 
-    Returns a list of length num_clusters of cluster labels with value 'T' for a true detection and 'F' for a false detection.
+    Returns a list of length num_clusters of cluster labels with value 1 for a true detection and 0 for a false detection.
 
     Parameters:
     -----------
@@ -24,17 +24,20 @@ def sim_gt_clusters(num_clusters, tp_ratio):
     Returns:
     ----------
     gt : list
-        List of random simulated cluster labels 'T' or 'F'
+        List of random simulated cluster labels 1 or 0
 
     """
+    
+    assert tp_ratio >= 0 and tp_ratio <= 1, "TP ratio must be between 0 and 1"
+    
     gt = []
     for i in range(num_clusters):
         rand = random.random()
 
         if rand < tp_ratio:
-            gt.append('T')
+            gt.append(1)
         else:
-            gt.append('F')
+            gt.append(0)
     return gt
 
 def sim_detections(gt, tpr, fpr):
@@ -45,26 +48,30 @@ def sim_detections(gt, tpr, fpr):
     Parameters:
     -------------
     gt : array-like
-        Array of ground truth cluster labels. 'T' indicates a true detection and 'F' indicates a false detection. 
+        Array of ground truth cluster labels. 1 indicates a true detection and 0 indicates a false detection. 
     tpr : float
-        The true positive rate of the annotator. For a ground truth value of 'T', it is the probability that the function will output 1, indicating that the simulated annotator detected the true cluster. 
+        The true positive rate of the annotator. For a ground truth value of 1, it is the probability that the function will output 1, indicating that the simulated annotator detected the true cluster. 
     fpr : float
-        The false positive rate of the annotator. For a ground truth value of 'F', it is the probability that the funciton will output 1, indicating that the simulated annotator falsely detected the cluster.  
+        The false positive rate of the annotator. For a ground truth value of 0, it is the probability that the funciton will output 1, indicating that the simulated annotator falsely detected the cluster.  
     
     Returns: 
     ----------
     det_list : array-like
         Array of detected cluster labels. A value of 1 indicates that a cluster was detected by the annotator, and 0 indicates that the cluster was not detected by the annotator. 
          """
+    
+    assert tpr >= 0 and tpr <= 1, "TPR must be between 0 and 1"
+    assert fpr >= 0 and fpr <= 1, "FPR must be between 0 and 1"
+    
     det_list = []
     for item in gt:
         rand = random.random()
-        if item == 'T':
+        if item == 1:
             if rand < tpr:
                 det_list.append(1)
             else:
                 det_list.append(0)
-        elif item == 'F':
+        elif item == 0:
             if rand < fpr:
                 det_list.append(1)
             else:
@@ -72,7 +79,7 @@ def sim_detections(gt, tpr, fpr):
 
     return det_list
 
-def sim_data(gt, tpr_list, fpr_list):
+def sim_annotators(gt, tpr_list, fpr_list):
     """Simulate the detections of multiple annotators with different TPRs and FPRs on the same ground truth data. 
     
     Returns a matrix of simulated detection data with dimensions clusters x annotators. 
@@ -80,17 +87,22 @@ def sim_data(gt, tpr_list, fpr_list):
     Parameters:
     ------------
     gt : array-like
-        Array of ground truth cluster labels. 'T' indicates a true detection and 'F' indicates a false detection. 
+        Array of ground truth cluster labels. 1 indicates a true detection and 0 indicates a false detection. 
     tpr_list : array-like
-        Array of TPR values for each annotator. For a ground truth value of 'T', the TPR is the probability that the function will output 1, indicating that the simulated annotator detected the true cluster. 
+        Array of TPR values for each annotator. For a ground truth value of 1, the TPR is the probability that the function will output 1, indicating that the simulated annotator detected the true cluster. 
     fpr_list : array-like
-        Array of FPR values for each annotator. For a ground truth value of 'F', the FPR is the probability that the funciton will output 1, indicating that the simulated annotator falsely detected the cluster.  
+        Array of FPR values for each annotator. For a ground truth value of 0, the FPR is the probability that the funciton will output 1, indicating that the simulated annotator falsely detected the cluster.  
 
     Returns:
     --------
     data_array : matrix
         Matrix of simulated detection data with dimensions clusters x annotators. A value of 1 indicates a detected clsuter and a value of 0 indicates an undetected cluster. 
     """
+
+    assert type(tpr_list) == list or type(tpr_list) == np.ndarray, "tpr_list must be a list or an array"
+    assert type(fpr_list) == list or type(fpr_list) == np.ndarray, "fpr_list must be a list or an array"
+
+    assert len(tpr_list) == len(fpr_list), "Length of TPR list and FPR list must be the same"
 
     data_list = []
     for i in range(len(tpr_list)):
@@ -116,9 +128,9 @@ def percent_correct(gt, p_matrix):
     for i in range(len(gt)):
         label = np.round(p_matrix[i,0])
 
-        if gt[i] == 'T' and label == 1:
+        if gt[i] == 1 and label == 1:
             num_correct += 1
-        elif gt[i] == 'F' and label == 0:
+        elif gt[i] == 0 and label == 0:
             num_correct += 1
 
     return num_correct / len(gt)

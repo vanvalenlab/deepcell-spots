@@ -3,7 +3,7 @@ import numpy as np
 
 from tensorflow.python.platform import test
 
-from spot_em import *
+from simulate_data import *
 
 class TestSpotEM(test.TestCase):
     def test_sim_gt_clusters(self):
