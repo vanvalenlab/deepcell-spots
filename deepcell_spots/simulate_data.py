@@ -151,27 +151,70 @@ def percent_correct(gt, data_array):
     return percent_corr
 
 def is_in_image(x,y,a,L):
-    # return True if the square with left bottom corner at (x,y) and side length a
-    # is contained in [0,L-1]X[0,L-1]
-    if (x+a<=(L-1)) and (y+a<=(L-1)) and (x>=0) and (y>=0):
-        return True
-    else:
-        return False
+    """ Determines if a square with defined vertices is contained in an image with larger dimensions
 
+    Returns a boolean
+
+    Parameters:
+    ------------
+    x : integer
+        Value for the x coordinate of the top left corner of the square of interest
+    y : integer
+        Value for the y coordinate of the top left corner of the square of interest
+    a : integer
+        Value for the side length of the square of interest
+    L : integer
+        Value for the dimensions of the larger image
+
+    Returns:
+    ------------
+    boolean
+        True if square is contained in image dimensions, false if it is not 
+    """
+
+    return (x+a<=(L-1)) and (y+a<=(L-1)) and (x>=0) and (y>=0)
+
+
+# NOT TESTED BC NOT USED
 def is_in_square(x,y,a,x1,y1):
     # returns True if (x1,y1) is inside the square with left bottom corner at (x,y) and side length a
-    if (x<=x1<=x+a) and (y<=y1<=y+a):
-        return True
-    else:
-        return False 
+
+    return (x<=x1<=x+a) and (y<=y1<=y+a)
     
-def is_overlapping(x_list,y_list,side_length_list,x,y,a):
+def is_overlapping(x_list,y_list,a_list,x,y,a):
     # check if a square with left corner at x,y,a
     # overlaps with other squares with corner coordinates and side length in the list
+    """ Determines if a square overlaps with a list of other squares.
+
+    Returns boolean, true if square overlaps with any of squares in list, false if it doesn't overlap with any of squares in list
+
+    Parameters:
+    ------------
+    x_list : list
+        List of x coordinates for top left corners of squares to be compared with square of interest.
+    y_list : list
+        List of y coordinates for top left corners of squares to be compared with square of interest.
+    a_list : list
+        List of side lengths of squares to be compared with square of interest.
+    x : integer
+        Value for the x coordinate of the top left corner of the square of interest
+    y : integer
+        Value for the y coordinate of the top left corner of the square of interest
+    a : integer
+        Value for the side length of the square of interest
+
+    Returns: 
+    -----------
+    boolean
+        True if square overlaps with any of squares in list, False if it doesn't overlap with any of squares in list
+    """
+
+    assert len(x_list) == len(y_list) == len(a_list), "There must be the same number of x and y coordinates and side lengths"
+
     x_list = np.array(x_list)
     y_list = np.array(y_list)
-    side_length_list = np.array(side_length_list)
-    not_overlapping = ((x+a)<x_list) | ((x_list+side_length_list)<x) | ((y+a)<y_list) | ((y_list+side_length_list)<y)
+    a_list = np.array(a_list)
+    not_overlapping = ((x+a)<x_list) | ((x_list+a_list)<x) | ((y+a)<y_list) | ((y_list+a_list)<y)
     return not all(not_overlapping)
 
 def add_gaussian_noise(image,m,s):
@@ -263,329 +306,329 @@ def generate_nonoverlapping_square_img(L,N_min,N_max):
     return img
 
 
-def generate_nonoverlapping_square_img_with_segmask(L,N_min,N_max):
-    '''
-    Generates an L*L image with pixel values in [0,1] which has a background of 0s and non-overlapping squares
-    with various intensities.
+# def generate_nonoverlapping_square_img_with_segmask(L,N_min,N_max):
+#     '''
+#     Generates an L*L image with pixel values in [0,1] which has a background of 0s and non-overlapping squares
+#     with various intensities.
     
-    Args:
-        L: length in pixels of image side
-        N_min: integer minimal number of squares to be drawn on the image
-        N_max: integer maximal number of squares to be drawn on the image
-            The number of generated squares is drawn uniformly from the set of integers in [Nmin Nmax]
+#     Args:
+#         L: length in pixels of image side
+#         N_min: integer minimal number of squares to be drawn on the image
+#         N_max: integer maximal number of squares to be drawn on the image
+#             The number of generated squares is drawn uniformly from the set of integers in [Nmin Nmax]
             
-    Returns:
-        img: The generated image of squares with a background of 0s
-        segmask: The segmentation mask for the image: background=0, each object's pixels are marked with value i for i=1,...,N for N=number of objects in the image
-    '''
+#     Returns:
+#         img: The generated image of squares with a background of 0s
+#         segmask: The segmentation mask for the image: background=0, each object's pixels are marked with value i for i=1,...,N for N=number of objects in the image
+#     '''
 
     
-    # simulated data:
-    # grascale image L*L pixels of N squares at random positions with varying intensities
+#     # simulated data:
+#     # grascale image L*L pixels of N squares at random positions with varying intensities
     
-    #L = 256
+#     #L = 256
     
-    # parameters
-    # number of squares: vary uniformly in a range
-    #N_min = 1
-    #N_max = 10
+#     # parameters
+#     # number of squares: vary uniformly in a range
+#     #N_min = 1
+#     #N_max = 10
     
-    # length of square side: vary uniformly in a range
-    a_min = 1
-    a_max = 100
+#     # length of square side: vary uniformly in a range
+#     a_min = 1
+#     a_max = 100
     
-    # intensity - assume uniform distribution
-    A_min = 0.2
-    A_max = 1.0
+#     # intensity - assume uniform distribution
+#     A_min = 0.2
+#     A_max = 1.0
     
-    # create the image
-    img = np.zeros((L,L))
-    segmask = np.zeros((L,L)) # create the matching segmentation mask
-    # coordinates for grid of pixels
-    X = np.arange(0,L,1) + 0.5
-    Y = np.arange(0,L,1) + 0.5
-    X, Y = np.meshgrid(X, Y)
-    pos = np.empty(X.shape + (2,))
-    pos[:, :, 0] = X
-    pos[:, :, 1] = Y
+#     # create the image
+#     img = np.zeros((L,L))
+#     segmask = np.zeros((L,L)) # create the matching segmentation mask
+#     # coordinates for grid of pixels
+#     X = np.arange(0,L,1) + 0.5
+#     Y = np.arange(0,L,1) + 0.5
+#     X, Y = np.meshgrid(X, Y)
+#     pos = np.empty(X.shape + (2,))
+#     pos[:, :, 0] = X
+#     pos[:, :, 1] = Y
     
-    # draw the number of objects that will be created in the image - an integer N_min <= N <= N_max
-    N = random.randint(N_min, N_max)
+#     # draw the number of objects that will be created in the image - an integer N_min <= N <= N_max
+#     N = random.randint(N_min, N_max)
     
     
-    # allocate variables to store square positions
-    x_list = []
-    y_list = []
-    side_length_list = []
-    # loop on all squares, draw each square until it does not overlap with previous ones, then draw its intensity and add it to img
-    for ind in range(N):
-        # draw the position (x,y) of the lower left corner of the square uniformly from [0,L-1]*[0,L-1]
-        x = random.randint(0, L-1)
-        y = random.randint(0, L-1)
+#     # allocate variables to store square positions
+#     x_list = []
+#     y_list = []
+#     side_length_list = []
+#     # loop on all squares, draw each square until it does not overlap with previous ones, then draw its intensity and add it to img
+#     for ind in range(N):
+#         # draw the position (x,y) of the lower left corner of the square uniformly from [0,L-1]*[0,L-1]
+#         x = random.randint(0, L-1)
+#         y = random.randint(0, L-1)
     
-        # draw the side length of the square
-        a = random.randint(a_min, a_max)
+#         # draw the side length of the square
+#         a = random.randint(a_min, a_max)
         
-        # check if square overlaps with others
-        while ((not is_in_image(x,y,a,L)) or is_overlapping(x_list,y_list,side_length_list,x,y,a)):
-            # draw the position (x,y) of the lower left corner of the square uniformly from [0,L-1]*[0,L-1]
-            x = random.randint(0, L-1)
-            y = random.randint(0, L-1)
+#         # check if square overlaps with others
+#         while ((not is_in_image(x,y,a,L)) or is_overlapping(x_list,y_list,side_length_list,x,y,a)):
+#             # draw the position (x,y) of the lower left corner of the square uniformly from [0,L-1]*[0,L-1]
+#             x = random.randint(0, L-1)
+#             y = random.randint(0, L-1)
         
-            # draw the side length of the square
-            a = random.randint(a_min, a_max)
+#             # draw the side length of the square
+#             a = random.randint(a_min, a_max)
         
-        # draw the intensity from a uniform distribution
-        A = random.uniform(A_min, A_max)
+#         # draw the intensity from a uniform distribution
+#         A = random.uniform(A_min, A_max)
             
-        # add new square properties to lists
-        x_list.append(x)
-        y_list.append(y)
-        side_length_list.append(a)
+#         # add new square properties to lists
+#         x_list.append(x)
+#         y_list.append(y)
+#         side_length_list.append(a)
         
-        # add the square to the image and to the segmentation mask
-        in_square = (X>=x) & (X<=x+a) & (Y>=y) & (Y<=y+a)
-        img[in_square] += A
-        segmask[in_square] = ind+1
+#         # add the square to the image and to the segmentation mask
+#         in_square = (X>=x) & (X<=x+a) & (Y>=y) & (Y<=y+a)
+#         img[in_square] += A
+#         segmask[in_square] = ind+1
         
-    #img = add_gaussian_noise(img, 0, 0.002)
+#     #img = add_gaussian_noise(img, 0, 0.002)
     
-    return (img, segmask)
+#     return (img, segmask)
 
 
-def uniform_dist_size_nonoverlapping_square_img_generator(L,N_max,a_min,a_max,noise=False):
-    '''
-    Generates L*L images with pixel values in [0,1] which has a background of 0s and non-overlapping squares
-    with various intensities.
-    The side length of generated squares is drawn uniformly from the set of integers in [a_min a_max].
-    A position for the square is drawn randomly, and redrawn up to a max_trial amount of times until a position
-    in which it doesn't overlap with existing squares in the image is successfully drawn
-    If after max_trial redraws the square still overlaps with existing squares, the image is returned and
-    the square is saved for the next image
-    This way, the square sizes over all the images are distributed uniformly, while the distribution of number
-    of squares is probably not uniform
+# def uniform_dist_size_nonoverlapping_square_img_generator(L,N_max,a_min,a_max,noise=False):
+#     '''
+#     Generates L*L images with pixel values in [0,1] which has a background of 0s and non-overlapping squares
+#     with various intensities.
+#     The side length of generated squares is drawn uniformly from the set of integers in [a_min a_max].
+#     A position for the square is drawn randomly, and redrawn up to a max_trial amount of times until a position
+#     in which it doesn't overlap with existing squares in the image is successfully drawn
+#     If after max_trial redraws the square still overlaps with existing squares, the image is returned and
+#     the square is saved for the next image
+#     This way, the square sizes over all the images are distributed uniformly, while the distribution of number
+#     of squares is probably not uniform
     
-    Args:
-        L: length in pixels of image side
-        a_min: the minimal square side length to be generated
-        a_max: the maximal square side length to be generated
-        N_max: integer maximal number of squares to be drawn on the image
-        noise: if True, white noise will be added to the image
+#     Args:
+#         L: length in pixels of image side
+#         a_min: the minimal square side length to be generated
+#         a_max: the maximal square side length to be generated
+#         N_max: integer maximal number of squares to be drawn on the image
+#         noise: if True, white noise will be added to the image
             
-    Returns:
-        img: The generated image of squares with a background of 0s
-        segmask: The segmentation mask for the image: background=0, each object's pixels are marked with value i for i=1,...,N for N=number of objects in the image
-    '''
-    # parameters for simulated data:
-    # grascale image L*L pixels of N squares at random positions with varying intensities
+#     Returns:
+#         img: The generated image of squares with a background of 0s
+#         segmask: The segmentation mask for the image: background=0, each object's pixels are marked with value i for i=1,...,N for N=number of objects in the image
+#     '''
+#     # parameters for simulated data:
+#     # grascale image L*L pixels of N squares at random positions with varying intensities
     
-    #L = 256
+#     #L = 256
     
-    # parameters
-    # number of squares: vary uniformly in a range
-    #N_min = 1
-    #N_max = 10
+#     # parameters
+#     # number of squares: vary uniformly in a range
+#     #N_min = 1
+#     #N_max = 10
     
-    # length of square side: vary uniformly in a range
-    #a_min = 1
-    #a_max = 100
+#     # length of square side: vary uniformly in a range
+#     #a_min = 1
+#     #a_max = 100
     
-    resample_max = 10 # maximal number of times to redraw object position before saving it for plotting in the next image
+#     resample_max = 10 # maximal number of times to redraw object position before saving it for plotting in the next image
     
-    # intensity - assume uniform distribution
-    A_min = 0.2
-    A_max = 1.0 
+#     # intensity - assume uniform distribution
+#     A_min = 0.2
+#     A_max = 1.0 
     
-    noise_std = 0.01 # white noise standard deviation
+#     noise_std = 0.01 # white noise standard deviation
     
-    # coordinates for grid of pixels
-    X = np.arange(0,L,1)
-    Y = np.arange(0,L,1)
-    X, Y = np.meshgrid(X, Y)
+#     # coordinates for grid of pixels
+#     X = np.arange(0,L,1)
+#     Y = np.arange(0,L,1)
+#     X, Y = np.meshgrid(X, Y)
     
-    while True: 
-        # create a new image
-        img = np.zeros((L,L))
-        segmask = np.zeros((L,L)) # create the matching segmentation mask
+#     while True: 
+#         # create a new image
+#         img = np.zeros((L,L))
+#         segmask = np.zeros((L,L)) # create the matching segmentation mask
 
-        N = 0 # number of objects plotted to the image    
-        resample_num = 0 # number of times object position was redrawn
-        # allocate variables to store square positions in a single image
-        x_list = []
-        y_list = []
-        side_length_list = []
-        # loop on all squares, draw each square until it does not overlap with previous ones, then draw its intensity and add it to img
-        while N<=N_max:
-            # draw the side length of the square
-            a = random.randint(a_min, a_max)
+#         N = 0 # number of objects plotted to the image    
+#         resample_num = 0 # number of times object position was redrawn
+#         # allocate variables to store square positions in a single image
+#         x_list = []
+#         y_list = []
+#         side_length_list = []
+#         # loop on all squares, draw each square until it does not overlap with previous ones, then draw its intensity and add it to img
+#         while N<=N_max:
+#             # draw the side length of the square
+#             a = random.randint(a_min, a_max)
             
-            # draw the position (x,y) of the lower left corner of the square uniformly from [0,L-a-1]*[0,L-a-1] (uniformly inside image boundaries)
-            x = random.randint(0, L-a-1)
-            y = random.randint(0, L-a-1)
+#             # draw the position (x,y) of the lower left corner of the square uniformly from [0,L-a-1]*[0,L-a-1] (uniformly inside image boundaries)
+#             x = random.randint(0, L-a-1)
+#             y = random.randint(0, L-a-1)
             
-            # check if square overlaps with others, if so resample the lower left corner position form a uniform distribution in the image
-            while resample_num<=resample_max and is_overlapping(x_list,y_list,side_length_list,x,y,a):
-                # draw the position (x,y) of the lower left corner of the square uniformly from [0,L-1]*[0,L-1]
-                x = random.randint(0, L-a-1)
-                y = random.randint(0, L-a-1)
+#             # check if square overlaps with others, if so resample the lower left corner position form a uniform distribution in the image
+#             while resample_num<=resample_max and is_overlapping(x_list,y_list,side_length_list,x,y,a):
+#                 # draw the position (x,y) of the lower left corner of the square uniformly from [0,L-1]*[0,L-1]
+#                 x = random.randint(0, L-a-1)
+#                 y = random.randint(0, L-a-1)
                 
-                resample_num += 1 # increase number of samples counter by 1               
+#                 resample_num += 1 # increase number of samples counter by 1               
                 
-            if is_overlapping(x_list,y_list,side_length_list,x,y,a): # done resampling, still haven't found an empty space for this square
-                if noise==True: # add white noise to the image
-                    img = add_gaussian_noise(img, 0, noise_std)
-                    img[img<0] = 0 # when white noise was added to 0 background, negative pixel values are obtained - set them to zero
-                yield (img, segmask)
+#             if is_overlapping(x_list,y_list,side_length_list,x,y,a): # done resampling, still haven't found an empty space for this square
+#                 if noise==True: # add white noise to the image
+#                     img = add_gaussian_noise(img, 0, noise_std)
+#                     img[img<0] = 0 # when white noise was added to 0 background, negative pixel values are obtained - set them to zero
+#                 yield (img, segmask)
                 
-                # create a new image
-                img = np.zeros((L,L))
-                segmask = np.zeros((L,L)) # create the matching segmentation mask
+#                 # create a new image
+#                 img = np.zeros((L,L))
+#                 segmask = np.zeros((L,L)) # create the matching segmentation mask
                 
-                N = 0 # number of objects plotted to the image    
-                resample_num = 0 # number of times object position was redrawn
-                # allocate variables to store square positions in a single image
-                x_list = []
-                y_list = []
-                side_length_list = []
+#                 N = 0 # number of objects plotted to the image    
+#                 resample_num = 0 # number of times object position was redrawn
+#                 # allocate variables to store square positions in a single image
+#                 x_list = []
+#                 y_list = []
+#                 side_length_list = []
     
-            # if found a place for this square, save it to this image
-            # draw the intensity from a uniform distribution
-            A = random.uniform(A_min, A_max)
+#             # if found a place for this square, save it to this image
+#             # draw the intensity from a uniform distribution
+#             A = random.uniform(A_min, A_max)
                 
-            # add new square properties to lists
-            x_list.append(x)
-            y_list.append(y)
-            side_length_list.append(a)
+#             # add new square properties to lists
+#             x_list.append(x)
+#             y_list.append(y)
+#             side_length_list.append(a)
             
-            # add the square to the image and to the segmentation mask
-            in_square = (X>=x) & (X<=x+a) & (Y>=y) & (Y<=y+a)
-            img[in_square] += A
-            segmask[in_square] = N+1
-            N += 1 # increase number of objects in image counter by 1
+#             # add the square to the image and to the segmentation mask
+#             in_square = (X>=x) & (X<=x+a) & (Y>=y) & (Y<=y+a)
+#             img[in_square] += A
+#             segmask[in_square] = N+1
+#             N += 1 # increase number of objects in image counter by 1
          
         
-        # reached the maximal number of squares in a single image - save it and start a new one
-        if noise==True: # add white noise to the image
-            img = add_gaussian_noise(img, 0, noise_std)
-            img[img<0] = 0 # when white noise was added to 0 background, negative pixel values are obtained - set them to zero
-        yield (img, segmask)
+#         # reached the maximal number of squares in a single image - save it and start a new one
+#         if noise==True: # add white noise to the image
+#             img = add_gaussian_noise(img, 0, noise_std)
+#             img[img<0] = 0 # when white noise was added to 0 background, negative pixel values are obtained - set them to zero
+#         yield (img, segmask)
         
 
-def is_circle_overlapping(x_list,y_list,r_list,x,y,r):
-    # check if a circle with center at x,y and radius r
-    # overlaps with other circles with center coordinates and radius on the list
-    x_list = np.array(x_list)
-    y_list = np.array(y_list)
-    r_list = np.array(r_list)
-    dist_sq = (x_list-x)**2 + (y_list-y)**2
-    overlapping = dist_sq < (r_list+r)**2
-    return any(overlapping)
+# def is_circle_overlapping(x_list,y_list,r_list,x,y,r):
+#     # check if a circle with center at x,y and radius r
+#     # overlaps with other circles with center coordinates and radius on the list
+#     x_list = np.array(x_list)
+#     y_list = np.array(y_list)
+#     r_list = np.array(r_list)
+#     dist_sq = (x_list-x)**2 + (y_list-y)**2
+#     overlapping = dist_sq < (r_list+r)**2
+#     return any(overlapping)
 
-def uniform_dist_size_nonoverlapping_circle_img_generator(L,N_max,r_min,r_max,noise=False):
-    '''
-    Generates L*L images with pixel values in [0,1] which has a background of 0s and non-overlapping squares
-    with various intensities.
-    The radius of the circles is drawn uniformly from the set of integers in [r_min r_max].
-    A position for the circle is drawn randomly, and redrawn up to a max_trial amount of times until a position
-    in which it doesn't overlap with existing squares in the image is successfully drawn
-    If after max_trial redraws the circle still overlaps with existing squares, the image is returned and
-    the square is saved for the next image
-    This way, the square sizes over all the images are distributed uniformly, while the distribution of number
-    of circles is probably not uniform
+# def uniform_dist_size_nonoverlapping_circle_img_generator(L,N_max,r_min,r_max,noise=False):
+#     '''
+#     Generates L*L images with pixel values in [0,1] which has a background of 0s and non-overlapping squares
+#     with various intensities.
+#     The radius of the circles is drawn uniformly from the set of integers in [r_min r_max].
+#     A position for the circle is drawn randomly, and redrawn up to a max_trial amount of times until a position
+#     in which it doesn't overlap with existing squares in the image is successfully drawn
+#     If after max_trial redraws the circle still overlaps with existing squares, the image is returned and
+#     the square is saved for the next image
+#     This way, the square sizes over all the images are distributed uniformly, while the distribution of number
+#     of circles is probably not uniform
     
-    Args:
-        L: length in pixels of image side
-        r_min: the minimal square radius to be generated
-        r_max: the maximal square radius to be generated
-        N_max: integer maximal number of squares to be drawn on the image
-        noise: if True, white noise will be added to the image
+#     Args:
+#         L: length in pixels of image side
+#         r_min: the minimal square radius to be generated
+#         r_max: the maximal square radius to be generated
+#         N_max: integer maximal number of squares to be drawn on the image
+#         noise: if True, white noise will be added to the image
             
-    Returns:
-        img: The generated image of squares with a background of 0s
-        segmask: The segmentation mask for the image: background=0, each object's pixels are marked with value i for i=1,...,N for N=number of objects in the image
-    '''
-    # parameters for simulated data: 
-    resample_max = 10 # maximal number of times to redraw object position before saving it for plotting in the next image
+#     Returns:
+#         img: The generated image of squares with a background of 0s
+#         segmask: The segmentation mask for the image: background=0, each object's pixels are marked with value i for i=1,...,N for N=number of objects in the image
+#     '''
+#     # parameters for simulated data: 
+#     resample_max = 10 # maximal number of times to redraw object position before saving it for plotting in the next image
     
-    # intensity - assume uniform distribution
-    A_min = 0.2
-    A_max = 1.0
+#     # intensity - assume uniform distribution
+#     A_min = 0.2
+#     A_max = 1.0
     
-    noise_std = 0.01 # white noise standard deviation
+#     noise_std = 0.01 # white noise standard deviation
     
-    # coordinates for grid of pixels
-    X = np.arange(0,L,1)
-    Y = np.arange(0,L,1)
-    X, Y = np.meshgrid(X, Y)
+#     # coordinates for grid of pixels
+#     X = np.arange(0,L,1)
+#     Y = np.arange(0,L,1)
+#     X, Y = np.meshgrid(X, Y)
     
-    while True: 
-        # create a new image
-        img = np.zeros((L,L))
-        segmask = np.zeros((L,L)) # create the matching segmentation mask
+#     while True: 
+#         # create a new image
+#         img = np.zeros((L,L))
+#         segmask = np.zeros((L,L)) # create the matching segmentation mask
 
-        N = 0 # number of objects plotted to the image    
-        resample_num = 0 # number of times object position was redrawn
-        # allocate variables to store square positions in a single image
-        x_list = []
-        y_list = []
-        r_list = []
-        # loop on all squares, draw each square until it does not overlap with previous ones, then draw its intensity and add it to img
-        while N<=N_max:
-            # draw the radius of the circle
-            r = random.randint(r_min, r_max)
-            # draw the position (x,y) of the circle center uniformly s.t. the circle is entirely inside the image
-            x = random.randint(r, L-r-1)
-            y = random.randint(r, L-r-1)
+#         N = 0 # number of objects plotted to the image    
+#         resample_num = 0 # number of times object position was redrawn
+#         # allocate variables to store square positions in a single image
+#         x_list = []
+#         y_list = []
+#         r_list = []
+#         # loop on all squares, draw each square until it does not overlap with previous ones, then draw its intensity and add it to img
+#         while N<=N_max:
+#             # draw the radius of the circle
+#             r = random.randint(r_min, r_max)
+#             # draw the position (x,y) of the circle center uniformly s.t. the circle is entirely inside the image
+#             x = random.randint(r, L-r-1)
+#             y = random.randint(r, L-r-1)
             
-            # check if square overlaps with others, if so resample the lower left corner position form a uniform distribution in the image
-            while resample_num<=resample_max and is_circle_overlapping(x_list,y_list,r_list,x,y,r):
-                # draw the position (x,y) of the circle center uniformly s.t. the circle is entirely inside the image
-                x = random.randint(r, L-r-1)
-                y = random.randint(r, L-r-1)
+#             # check if square overlaps with others, if so resample the lower left corner position form a uniform distribution in the image
+#             while resample_num<=resample_max and is_circle_overlapping(x_list,y_list,r_list,x,y,r):
+#                 # draw the position (x,y) of the circle center uniformly s.t. the circle is entirely inside the image
+#                 x = random.randint(r, L-r-1)
+#                 y = random.randint(r, L-r-1)
                 
-                resample_num += 1 # increase number of samples counter by 1               
+#                 resample_num += 1 # increase number of samples counter by 1               
                 
-            if is_circle_overlapping(x_list,y_list,r_list,x,y,r): # done resampling, still haven't found an empty space for this square
-                if noise==True: # add white noise to the image
-                    img = add_gaussian_noise(img, 0, noise_std)
-                    img[img<0] = 0 # when white noise was added to 0 background, negative pixel values are obtained - set them to zero
-                yield (img, segmask)
+#             if is_circle_overlapping(x_list,y_list,r_list,x,y,r): # done resampling, still haven't found an empty space for this square
+#                 if noise==True: # add white noise to the image
+#                     img = add_gaussian_noise(img, 0, noise_std)
+#                     img[img<0] = 0 # when white noise was added to 0 background, negative pixel values are obtained - set them to zero
+#                 yield (img, segmask)
                 
-                # create a new image
-                img = np.zeros((L,L))
-                segmask = np.zeros((L,L)) # create the matching segmentation mask
+#                 # create a new image
+#                 img = np.zeros((L,L))
+#                 segmask = np.zeros((L,L)) # create the matching segmentation mask
                 
-                N = 0 # number of objects plotted to the image    
-                resample_num = 0 # number of times object position was redrawn
-                # allocate variables to store square positions in a single image
-                x_list = []
-                y_list = []
-                r_list = []
+#                 N = 0 # number of objects plotted to the image    
+#                 resample_num = 0 # number of times object position was redrawn
+#                 # allocate variables to store square positions in a single image
+#                 x_list = []
+#                 y_list = []
+#                 r_list = []
     
-            # if found a place for this square, save it to this image
-            # draw the intensity from a uniform distribution
-            A = random.uniform(A_min, A_max)
+#             # if found a place for this square, save it to this image
+#             # draw the intensity from a uniform distribution
+#             A = random.uniform(A_min, A_max)
                 
-            # add new square properties to lists
-            x_list.append(x)
-            y_list.append(y)
-            r_list.append(r)
+#             # add new square properties to lists
+#             x_list.append(x)
+#             y_list.append(y)
+#             r_list.append(r)
             
-            # add the circle to the image and to the segmentation mask
-            #in_square = (X>=x) & (X<=x+a) & (Y>=y) & (Y<=y+a)
-            #img[in_square] += A
-            #segmask[in_square] = N+1
-            rr, cc = skimage.draw.circle(x, y, r, shape=img.shape)
-            img[rr,cc] += A
-            segmask[rr,cc] = N+1
-            N += 1 # increase number of objects in image counter by 1
+#             # add the circle to the image and to the segmentation mask
+#             #in_square = (X>=x) & (X<=x+a) & (Y>=y) & (Y<=y+a)
+#             #img[in_square] += A
+#             #segmask[in_square] = N+1
+#             rr, cc = skimage.draw.circle(x, y, r, shape=img.shape)
+#             img[rr,cc] += A
+#             segmask[rr,cc] = N+1
+#             N += 1 # increase number of objects in image counter by 1
          
         
-        # reached the maximal number of squares in a single image - save it and start a new one
-        if noise==True: # add white noise to the image
-            img = add_gaussian_noise(img, 0, noise_std)
-            img[img<0] = 0 # when white noise was added to 0 background, negative pixel values are obtained - set them to zero
-        yield (img, segmask)
+#         # reached the maximal number of squares in a single image - save it and start a new one
+#         if noise==True: # add white noise to the image
+#             img = add_gaussian_noise(img, 0, noise_std)
+#             img[img<0] = 0 # when white noise was added to 0 background, negative pixel values are obtained - set them to zero
+#         yield (img, segmask)
            
         
         

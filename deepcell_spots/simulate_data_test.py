@@ -102,4 +102,84 @@ class TestSpotEM(test.TestCase):
         with self.assertRaises(AssertionError):
             perc_corr = percent_correct(gt, data_array)
 
+    def test_is_in_image(self):
+        x = 0
+        y = 0
+        a = 10
+        L = 100
+        in_image = is_in_image(x,y,a,L)
+        self.assertEqual(in_image, True)
+
+        # test square bigger than image
+        a = 100
+        L = 10
+        in_image = is_in_image(x,y,a,L)
+        self.assertEqual(in_image, False)
+
+        # test negative coordinates for square corner
+        x = -1
+        y = -1
+        a = 10
+        L = 100
+        in_image = is_in_image(x,y,a,L)
+        self.assertEqual(in_image, False)
+
+    def test_is_overlapping(self):
+        # test squares compared are exactly overlapping
+        x_list = [0]
+        y_list = [0]
+        a_list = [10]
+        x = 0
+        y = 0
+        a = 10
+        overlapping = is_overlapping(x_list,y_list,a_list,x,y,a)
+        self.assertEqual(overlapping, True)
+
+        # test squares are not overlapping
+        x_list = [11]
+        y_list = [11]
+        a_list = [10]
+        x = 0
+        y = 0
+        a = 10
+        overlapping = is_overlapping(x_list,y_list,a_list,x,y,a)
+        self.assertEqual(overlapping, False)
+
+        # test one square overlapping, other not
+        x_list = [0,11]
+        y_list = [0,11]
+        a_list = [10,10]
+        x = 0
+        y = 0
+        a = 10
+        overlapping = is_overlapping(x_list,y_list,a_list,x,y,a)
+        self.assertEqual(overlapping, True)
+
+        # test lists of different lengths
+        x_list = [0]
+        with self.assertRaises(AssertionError):
+            overlapping = is_overlapping(x_list,y_list,a_list,x,y,a)
+
+    def test_add_gaussian_noise(self):
+        img_w, img_h = 30, 30
+        X = np.random.random((img_w, img_h))
+        noisy = add_gaussian_noise(X, m=3, s=3)
+        self.assertEqual(np.shape(X), np.shape(noisy))
+        self.assertGreaterEqual(noisy.all(), X.all())
+
+    def test_gaussian_spot_image_generator(self):
+        L = 30
+        N_min = 1
+        N_max = 5
+        g = gaussian_spot_image_generator(L=L,N_min=N_min,N_max=N_max,
+                                            sigma_mean=1,sigma_std=0.5,
+                                            A_mean=1,A_std=0.5,
+                                            segmask=True,yield_pos=True)
+
+        img, label, x_list, y_list, bboxes = next(g)
+        self.assertEqual(np.shape(img),(L,L))
+        self.assertEqual(np.shape(label),(L,L))
+        self.assertEqual(len(x_list),len(y_list),len(bboxes))
+        self.assertGreaterEqual(len(x_list),N_min)
+        self.assertLessEqual(len(x_list),N_max)
 test.main()
