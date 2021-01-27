@@ -64,15 +64,24 @@ def cluster_centroids(G, coords):
     return centroid_list
 
 def jitter(coords,size):
+    """ Add Gaussian noise to a list of coordinates for plotting when coordinates overlap.
+
+    Parameters:
+    ------------
+    coords : matrix
+        Matrix with dimensions (number of detections) x 2
+    size : integer
+        Standard deviation of the Gaussian noise distribution in pixels. 
+    """
     result = []
     for item in coords:
         noise = np.random.normal(0,size)
         result.append(item+noise)
 
-    return result
+    return np.array(result)
 
 def check_spot_ann_num(G, coords):
-    """Check that each annotator only has one spot per cluster, break up clusters that have multiple spots per annotator"""
+    """ Check that each annotator only has one spot per cluster, break up clusters that have multiple spots per annotator"""
     # Get all node labels
     node_labels = list(nx.get_node_attributes(G,'name').values())
     # Get all connected nodes = clusters
