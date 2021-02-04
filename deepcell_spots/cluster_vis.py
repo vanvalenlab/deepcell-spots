@@ -208,7 +208,7 @@ def label_graph_prob(G, data, p_matrix):
 
     return G_new
 
-def make_data_stack(log_coords,dog_coords,plm_coords):
+def make_data_stack(log_coords,dog_coords,plm_coords,threshold):
     # create one annotator data matrix from all images
     # first iteration out of loop
     log = log_coords[0]
@@ -218,7 +218,7 @@ def make_data_stack(log_coords,dog_coords,plm_coords):
     # cluster all detected spots in first image
     coords = np.array([plm, log, dog])
     # adjacency matrix
-    A = define_edges(coords, 0.5)
+    A = define_edges(coords, threshold)
     # create graph
     G=nx.from_numpy_matrix(A)
     # label each annotator on graph
@@ -244,7 +244,7 @@ def make_data_stack(log_coords,dog_coords,plm_coords):
             continue
 
         coords = np.array([plm, log, dog])
-        A = define_edges(coords, 2)
+        A = define_edges(coords, threshold)
         G=nx.from_numpy_matrix(A)
         G_labeled = label_graph_ann(G, coords)
         G_clean = check_spot_ann_num(G_labeled, coords)
