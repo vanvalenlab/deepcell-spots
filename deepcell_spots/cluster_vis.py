@@ -218,7 +218,7 @@ def make_data_stack(log_coords,dog_coords,plm_coords):
     # cluster all detected spots in first image
     coords = np.array([plm, log, dog])
     # adjacency matrix
-    A = define_edges(coords, 2)
+    A = define_edges(coords, 0.5)
     # create graph
     G=nx.from_numpy_matrix(A)
     # label each annotator on graph
