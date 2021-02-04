@@ -31,6 +31,19 @@ def y_annotations_to_point_list(y_pred, ind, threshold):
     dot_centers = np.array([[y_ind+delta_y[y_ind, x_ind],x_ind+delta_x[y_ind, x_ind]] for y_ind, x_ind in dot_pixel_inds])
     return dot_centers
 
+def y_annotations_to_point_list2(y_pred, ind, threshold):
+    # make final decision to be: classification of pixel as containing dot > threshold AND
+    # center regression is contained in the pixel
+    contains_dot = y_pred[1][ind,...,1] > threshold
+    delta_y = y_pred[0][ind,...,0]
+    delta_x = y_pred[0][ind,...,1]
+    contains_its_regression = (abs(delta_x)<=0.5) & (abs(delta_y)<=0.5)
+    
+    final_dot_detection = contains_dot & contains_its_regression
+
+    dot_pixel_inds = np.argwhere(final_dot_detection)
+    dot_centers = np.array([[y_ind+delta_y[y_ind, x_ind],x_ind+delta_x[y_ind, x_ind]] for y_ind, x_ind in dot_pixel_inds])
+    return dot_centers
 
 def y_annotations_to_point_list_restrictive(y_pred, ind, threshold):
     # make final decision to be: classification of pixel as containing dot > threshold AND
