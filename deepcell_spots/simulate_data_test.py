@@ -94,10 +94,6 @@ class TestSpotEM(test.TestCase):
         perc_corr = percent_correct(gt, data_array)
         self.assertEqual(perc_corr, 0.5)
 
-        data_array = np.ones(num_detections) * 2
-        with self.assertRaises(AssertionError):
-            perc_corr = percent_correct(gt, data_array)
-
         data_array = np.ones(num_detections-1)
         with self.assertRaises(AssertionError):
             perc_corr = percent_correct(gt, data_array)

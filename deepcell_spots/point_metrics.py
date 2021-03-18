@@ -231,13 +231,15 @@ def stats_points(points_true, points_pred, threshold, match_points_function=matc
         F1 = 0
         J = 0
         RMSE = None
+        dmd = None
 
         return {
             'precision': p,
             'recall': r,
             'F1': F1,
             'JAC': J,
-            'RMSE': RMSE
+            'RMSE': RMSE,
+            'd_md': dmd
         }
 
 

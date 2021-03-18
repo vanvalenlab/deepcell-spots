@@ -134,12 +134,11 @@ def percent_correct(gt, data_array):
     assert len(gt) == len(data_array), "Number of GT detections must equal number of simulated detections"
     for i in range(len(gt)):
         assert gt[i] == 1 or gt[i] == 0, "Items in GT detections must equal 0 or 1"
-        assert data_array[i] == 1 or data_array[i] == 0, "Items in data array must equal 0 or 1"
 
     num_correct = 0
 
     for i in range(len(gt)):
-        label = np.round(data_array[i])
+        label = np.round(data_array[i][0])
 
         if gt[i] == 1 and label == 1:
             num_correct += 1
