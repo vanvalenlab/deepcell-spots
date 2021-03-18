@@ -11,7 +11,7 @@ Build and run a local docker container, similarly to the instructions for deepce
 ```bash
 git clone https://github.com/vanvalenlab/deepcell-spots.git
 cd deepcell-spots
-docker build --build-arg TF_VERSION=1.15.0-gpu -t $USER/deepcell-spots . 
+docker build --build-arg TF_VERSION=2.4.1-gpu -t $USER/deepcell-spots . 
 ```
 
 ### Run the new docker image
