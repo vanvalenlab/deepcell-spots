@@ -7,7 +7,7 @@ tensorflow>=2.4.1
 jupyter>=1.0.0,<2
 nbformat>=4.4.0,<5
 keras-applications==1.0.8
-keras-preprocessing<=1.1.0
+keras-preprocessing==1.1.2
 networkx>=2.1
 opencv-python>=3.4.2.17,<4
 cython>=0.28
