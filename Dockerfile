@@ -12,6 +12,7 @@ RUN /usr/bin/python3 -m pip install --upgrade pip
 RUN apt-get update && \
     apt-get upgrade -y && \
     apt-get install git -y
+RUN apt-get install ffmpeg libsm6 libxext6  -y
 
 WORKDIR /notebooks
 
