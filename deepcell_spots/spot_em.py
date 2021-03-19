@@ -3,6 +3,7 @@ import numpy as np
 import networkx as nx
 from itertools import combinations
 from scipy.spatial import distance
+from copy import deepcopy
 from deepcell_spots.cluster_vis import *
 
 def calc_tpr_fpr(gt, data):
@@ -193,7 +194,7 @@ def cluster_coords(all_coords,image_stack,threshold):
         image_stack_updated = np.delete(image_stack, ind_skipped, 0)
         image_stack_updated = np.expand_dims(image_stack_updated, axis=-1)
 
-        all_coords_updated = all_coords.copy()
+        all_coords_updated = deepcopy(all_coords)
         for i in range(len(all_coords_updated)):
             all_coords_updated = np.delete(all_coords[i], ind_skipped)
 
