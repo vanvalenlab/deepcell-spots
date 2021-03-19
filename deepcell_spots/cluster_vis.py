@@ -37,7 +37,7 @@ def label_graph_ann(G, coords):
 
     nodes = list(G_new.nodes)
 
-    for i in range(len(nodes)-1):
+    for i in range(len(nodes)):
         G_new.nodes[i]['name'] = ann_labels[i]
 
     return G_new
