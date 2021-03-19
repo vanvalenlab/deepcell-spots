@@ -2,6 +2,7 @@ import random
 import numpy as np
 import networkx as nx
 from itertools import combinations
+from deepcell_spots.cluster_vis import *
 
 def calc_tpr_fpr(gt, data):
     """Calculate the true postivie rate and false positive rate for a pair of ground truth labels and detection data. 
@@ -167,7 +168,7 @@ def make_data_stack(all_coords,threshold):
     num_spots_list = [len(data_stack)]
     centroid_list = [spot_centroids]
     # iterate through images
-    for i in range(1,len(log_coords)):
+    for i in range(1,len(all_coords[0])):
         len_list = np.array([len(item[i]) for item in all_coords])
         
         if 0 in len_list:
