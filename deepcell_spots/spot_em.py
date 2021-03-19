@@ -2,6 +2,7 @@ import random
 import numpy as np
 import networkx as nx
 from itertools import combinations
+from scipy.spatial import distance
 from deepcell_spots.cluster_vis import *
 
 def calc_tpr_fpr(gt, data):
@@ -79,7 +80,7 @@ def norm_marg_likelihood(cluster, tp_list, fp_list, prior):
 
     return norm_tp_likelihood, norm_fp_likelihood
 
-def em_spot(data, tp_list, fp_list, prior, max_iter=10):
+def em_spot(cluster_matrix, tp_list, fp_list, prior=0.9, max_iter=10):
     """ Estimate the TPR/FPR and probability of true detection for various spot annotators using expectation maximization. 
 
     Returns the true positive rate and false positive rate for each annotator, and returns the probability that each spot is a true detection or false detection. 
@@ -107,47 +108,47 @@ def em_spot(data, tp_list, fp_list, prior, max_iter=10):
         Matrix of probabilities that each cluster is a true detection (column 0) or false detection (column 1). Dimensions spots x 2.
     """
     
-    likelihood_matrix = np.zeros((len(data), 2))
+    likelihood_matrix = np.zeros((len(cluster_matrix), 2))
 
     for i in range(max_iter):
         # Caluclate the probability that each spot is a true detection or false detection
-        likelihood_matrix = np.zeros((len(data), 2))
+        likelihood_matrix = np.zeros((len(cluster_matrix), 2))
 
-        for i in range(len(data)):
-            likelihood_matrix[i] = norm_marg_likelihood(data[i], tp_list, fp_list, prior)
+        for i in range(len(cluster_matrix)):
+            likelihood_matrix[i] = norm_marg_likelihood(cluster_matrix[i], tp_list, fp_list, prior)
 
         # Calculate the expectation value for the number of TP/FN/FP/TN
-        tp_matrix = np.zeros((np.shape(data)))
-        for i in range(len(data)): 
-            tp_matrix[i] = likelihood_matrix[i,0] * data[i]
+        tp_matrix = np.zeros((np.shape(cluster_matrix)))
+        for i in range(len(cluster_matrix)): 
+            tp_matrix[i] = likelihood_matrix[i,0] * cluster_matrix[i]
 
-        fn_matrix = np.zeros((np.shape(data)))
-        for i in range(len(data)):
-            fn_matrix[i] = likelihood_matrix[i,0] * (data[i] * -1 + 1)
+        fn_matrix = np.zeros((np.shape(cluster_matrix)))
+        for i in range(len(cluster_matrix)):
+            fn_matrix[i] = likelihood_matrix[i,0] * (cluster_matrix[i] * -1 + 1)
 
-        fp_matrix = np.zeros((np.shape(data)))
-        for i in range(len(data)):  
-            fp_matrix[i] = likelihood_matrix[i,1] * data[i]
+        fp_matrix = np.zeros((np.shape(cluster_matrix)))
+        for i in range(len(cluster_matrix)):  
+            fp_matrix[i] = likelihood_matrix[i,1] * cluster_matrix[i]
 
-        tn_matrix = np.zeros((np.shape(data)))
-        for i in range(len(data)):
-            tn_matrix[i] = likelihood_matrix[i,1] * (data[i] * -1 + 1)
+        tn_matrix = np.zeros((np.shape(cluster_matrix)))
+        for i in range(len(cluster_matrix)):
+            tn_matrix[i] = likelihood_matrix[i,1] * (cluster_matrix[i] * -1 + 1)
 
-        tp_sum_list = [sum(tp_matrix[:,i]) for i in range(np.shape(data)[1])]
-        fn_sum_list = [sum(fn_matrix[:,i]) for i in range(np.shape(data)[1])]
-        fp_sum_list = [sum(fp_matrix[:,i]) for i in range(np.shape(data)[1])]
-        tn_sum_list = [sum(tn_matrix[:,i]) for i in range(np.shape(data)[1])]
+        tp_sum_list = [sum(tp_matrix[:,i]) for i in range(np.shape(cluster_matrix)[1])]
+        fn_sum_list = [sum(fn_matrix[:,i]) for i in range(np.shape(cluster_matrix)[1])]
+        fp_sum_list = [sum(fp_matrix[:,i]) for i in range(np.shape(cluster_matrix)[1])]
+        tn_sum_list = [sum(tn_matrix[:,i]) for i in range(np.shape(cluster_matrix)[1])]
 
         # Calculate the MLE estimate for the TPR/FPR
-        tp_list = [tp_sum_list[i] / (tp_sum_list[i]+fn_sum_list[i]) for i in range(np.shape(data)[1])]
-        fp_list = [fp_sum_list[i] / (fp_sum_list[i]+tn_sum_list[i]) for i in range(np.shape(data)[1])]
+        tp_list = [tp_sum_list[i] / (tp_sum_list[i]+fn_sum_list[i]) for i in range(np.shape(cluster_matrix)[1])]
+        fp_list = [fp_sum_list[i] / (fp_sum_list[i]+tn_sum_list[i]) for i in range(np.shape(cluster_matrix)[1])]
 
 
     likelihood_matrix = np.round(likelihood_matrix,2)
 
     return tp_list, fp_list, likelihood_matrix
 
-def make_data_stack(all_coords,threshold):
+def cluster_coords(all_coords,image_stack,threshold):
     # create one annotator data matrix from all images
     # first iteration out of loop
     coords = np.array([item[0] for item in all_coords])
@@ -163,9 +164,9 @@ def make_data_stack(all_coords,threshold):
     spot_centroids = cluster_centroids(G_clean, coords)
 
     # create annotator data matrix for first image
-    data_stack = ca_matrix(G_clean)
+    cluster_matrix = ca_matrix(G_clean)
     ind_skipped = []
-    num_spots_list = [len(data_stack)]
+    num_spots_list = [len(cluster_matrix)]
     centroid_list = [spot_centroids]
     # iterate through images
     for i in range(1,len(all_coords[0])):
@@ -187,9 +188,27 @@ def make_data_stack(all_coords,threshold):
         temp_data = ca_matrix(G_clean)
         num_spots_list.append(len(temp_data))
 
-        data_stack = np.vstack((data_stack, temp_data))
+        cluster_matrix = np.vstack((cluster_matrix, temp_data))
 
-    return(data_stack, centroid_list, num_spots_list, ind_skipped)
+        image_stack_updated = np.delete(image_stack, ind_skipped, 0)
+        image_stack_updated = np.expand_dims(image_stack_updated, axis=-1)
+
+        all_coords_updated = all_coords.copy()
+        for i in range(len(all_coords_updated)):
+            all_coords_updated = np.delete(all_coords[i], ind_skipped)
+
+    return(cluster_matrix, centroid_list, all_coords_updated, image_stack_updated)
+
+def running_total_spots(centroid_list):
+    num_spots_list = [len(item) for item in centroid_list]
+    running_total_spots = np.zeros(len(num_spots_list)+1)
+
+    for i in range(len(num_spots_list)):
+        running_total_spots[i+1] = sum(num_spots_list[:i+1])
+
+    running_total_spots = running_total_spots.astype(int)
+
+    return running_total_spots
 
 def ca_to_adjacency_matrix(ca_matrix):
     num_clusters = np.shape(ca_matrix)[0]
