@@ -196,7 +196,7 @@ def cluster_coords(all_coords,image_stack,threshold):
 
         all_coords_updated = deepcopy(all_coords)
         for i in range(len(all_coords_updated)):
-            all_coords_updated = np.delete(all_coords[i], ind_skipped)
+            all_coords_updated[i] = np.delete(all_coords[i], ind_skipped)
 
     return(cluster_matrix, centroid_list, all_coords_updated, image_stack_updated)
 
