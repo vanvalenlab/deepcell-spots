@@ -24,7 +24,7 @@ def jitter(coords,size):
     return np.array(result)
 
 
-def label_graph_ann(G, coords):
+def label_graph_ann(G, coords, exclude_last=False):
     """Labels the annotator associated with each node in the graph"""
     G_new = G.copy()
     num_spots = [len(x) for x in coords]
@@ -37,8 +37,12 @@ def label_graph_ann(G, coords):
 
     nodes = list(G_new.nodes)
 
-    for i in range(len(nodes)):
-        G_new.nodes[i]['name'] = ann_labels[i]
+    if exclude_last == True:
+        for i in range(len(nodes)-1):
+            G_new.nodes[i]['name'] = ann_labels[i]
+    else:
+        for i in range(len(nodes)):
+            G_new.nodes[i]['name'] = ann_labels[i]
 
     return G_new
 
