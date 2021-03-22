@@ -158,3 +158,38 @@ def y_classification_to_point_list_max(y_pred, ind, threshold=0.8, min_distance=
     dot_pixel_inds = peak_local_max(y_pred[1][ind,...,1], min_distance=min_distance, threshold_abs=threshold)
  
     return dot_pixel_inds
+
+def consensus_coords(p_matrix,centroid_list,running_total,threshold=0.5):
+    y = []
+    for i in range(len(running_total)-1):
+        temp_spots = centroid_list[i]
+        start_ind = running_total[i]
+        end_ind = running_total[i+1]
+
+        labels = p_matrix_all[start_ind:end_ind,0]
+        labels = np.array([item > threshold for item in labels])
+
+        temp_y = []
+        for ii in range(len(labels)):
+            if labels[ii] == 1:
+                temp_y.append(temp_spots[ii])
+
+        y.append(temp_y)
+        
+    X_keep = []
+    y_keep = []
+    min_num_spots=8
+
+    for i in range(len(y)):
+        if len(y[i]) > 0:
+            max_int = np.round(max(map(max,y[i])))
+
+            if max_int == 128:
+                continue
+            if len(y[i]) > min_num_spots:
+                X_keep.append(image_stack_updated[i])
+                y_keep.append(y[i])
+                
+    y_keep=np.array([np.array(item) for item in y_keep])
+    
+    return X_keep,y_keep
