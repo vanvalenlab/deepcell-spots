@@ -28,12 +28,12 @@ def calc_tpr_fpr(gt, data):
     tn = 0
 
     for i in range(len(gt)):
-        if gt[i] == 'T':
+        if gt[i] == 1:
             if data[i] == 1:
                 tp += 1
             elif data[i] == 0:
                 fn += 1
-        elif gt[i] == 'F':
+        elif gt[i] == 0:
             if data[i] == 1:
                 fp += 1
             elif data[i] == 0:
@@ -196,7 +196,7 @@ def cluster_coords(all_coords,image_stack,threshold):
         all_coords_updated = []
         for i in range(len(all_coords)):
             all_coords_updated.append(np.delete(all_coords[i], ind_skipped))
-        all_coords_updated = tuple(all_coords_updated)
+        
 
     return(cluster_matrix, centroid_list, all_coords_updated, image_stack_updated)
 
