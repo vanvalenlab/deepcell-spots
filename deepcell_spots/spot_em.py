@@ -197,6 +197,7 @@ def cluster_coords(all_coords,image_stack,threshold):
         for i in range(len(all_coords)):
             all_coords_updated.append(np.delete(all_coords[i], ind_skipped))
         
+        centroid_list = [np.array(item) for item in centroid_list]
 
     return(cluster_matrix, centroid_list, all_coords_updated, image_stack_updated)
 
