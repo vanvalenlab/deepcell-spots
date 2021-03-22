@@ -166,7 +166,7 @@ def consensus_coords(p_matrix,centroid_list,running_total,threshold=0.5):
         start_ind = running_total[i]
         end_ind = running_total[i+1]
 
-        labels = p_matrix_all[start_ind:end_ind,0]
+        labels = p_matrix[start_ind:end_ind,0]
         labels = np.array([item > threshold for item in labels])
 
         temp_y = []
@@ -175,21 +175,5 @@ def consensus_coords(p_matrix,centroid_list,running_total,threshold=0.5):
                 temp_y.append(temp_spots[ii])
 
         y.append(temp_y)
-        
-    X_keep = []
-    y_keep = []
-    min_num_spots=8
-
-    for i in range(len(y)):
-        if len(y[i]) > 0:
-            max_int = np.round(max(map(max,y[i])))
-
-            if max_int == 128:
-                continue
-            if len(y[i]) > min_num_spots:
-                X_keep.append(image_stack_updated[i])
-                y_keep.append(y[i])
-                
-    y_keep=np.array([np.array(item) for item in y_keep])
     
-    return X_keep,y_keep
+    return y
