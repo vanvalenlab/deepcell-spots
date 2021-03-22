@@ -355,3 +355,33 @@ def cluster_centroids(G, coords):
         centroid_list.append(centroid)
 
     return centroid_list
+
+def consensus_coords(p_matrix,centroid_list,running_total,threshold=0.5):
+    """Converts EM output to a list of consensus spot coordinate locations. 
+
+    Args:
+    p_matrix: matrix with the dimensions (number of cluster)x2, each entry is the probability that the detection is a true detection or false detection
+    centroid_list: list of coordinate locations of the centroids of each of the clusters
+    running_total: list with running total for the number of clusters in each image
+    threshold: value for probability threshold for a cluster to be considered a true detection
+
+    Returns:
+    y: nested list with length (number of images) with the coordinate locations of spots in each image
+    """
+    y = []
+    for i in range(len(running_total)-1):
+        temp_spots = centroid_list[i]
+        start_ind = running_total[i]
+        end_ind = running_total[i+1]
+
+        labels = p_matrix[start_ind:end_ind,0]
+        labels = np.array([item > threshold for item in labels])
+
+        temp_y = []
+        for ii in range(len(labels)):
+            if labels[ii] == 1:
+                temp_y.append(temp_spots[ii])
+
+        y.append(temp_y)
+    
+    return y

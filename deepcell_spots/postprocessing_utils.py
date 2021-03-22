@@ -88,7 +88,23 @@ def y_annotations_to_point_list_with_source(y_pred, ind, threshold):
 
 
 def y_annotations_to_point_list_max(y_pred, ind, threshold=0.8, min_distance=2):
-    # make final decision to be: regression from local maxima of the classification detections
+    """ Convert raw prediction to a predicted point list
+    
+    Args:
+    y_pred: a batch of predictions, of the format: y_pred[annot_type][ind] is an annotation for image #ind in the batch
+    where annot_type = 0 or 1: 0 - contains_dot (from classification head), 1 - offset matrices (from regression head)
+    
+    ind: the index of the image in the batch for which to convert the annotations
+    
+    threshold: a number in [0, 1]. Pixels with classification score > threshold are considered containing a spot center,
+    and their corresponding regression values will be used to create a final spot position prediction which will
+    be added to the output spot center coordinates list.
+
+    min_distance: the minimum distance between detected spots in pixels
+    
+    Returns:
+    A list of spot center coordinates of the format [[y0, x0], [y1, x1],...]
+    """
     dot_pixel_inds = peak_local_max(y_pred[1][ind,...,1], min_distance=min_distance, threshold_abs=threshold)
 
     delta_y = y_pred[0][ind,...,0]
@@ -151,6 +167,46 @@ def get_mean_stats(decision_function, y_test,y_pred,threshold=0.8,d_thresh=3):
     
     return (d_md, precision, recall, F1)
 
+def model_benchmarking(pred,coords,threshold,min_distance):
+    """Calculates the precision, recall, F1 score, Jacard Index, root mean square error, and sum of min distances for stack of predictions"
+
+    Args:
+    pred: a batch of predictions, of the format: y_pred[annot_type][ind] is an annotation for image #ind in the batch
+    where annot_type = 0 or 1: 0 - contains_dot (from classification head), 1 - offset matrices (from regression head)
+    coords: nested list of coordinate locations for ground truth spots from a single annotator
+    threshold: a number in [0, 1]. Pixels with classification score > threshold are considered containing a spot center,
+    and their corresponding regression values will be used to create a final spot position prediction which will
+    be added to the output spot center coordinates list.
+    min_distance: the minimum distance between detected spots in pixels
+
+    Returns:
+    precision: list of values for the precision of the predicted spot numbers in each image
+    recall: list of values for the recall of the predicted spot numbers in each image
+    f1: list of values for the f1 score of the predicted spot numbers in each image
+    jac: list of values for the jacard index of the predicted spot numbers in each image
+    rmse: list of values for the root mean square error of the spot locations in each image
+    dmd: list of values for the sum of min distance of the spot locations in each image 
+
+    """
+    precision = []
+    recall = []
+    f1 = []
+    jac = []
+    rmse = []
+    dmd = []
+
+    for i in range(len(pred[0])):
+        points_list2 = y_annotations_to_point_list_max(pred, i, threshold,min_distance)
+        stats_dict = stats_points(coords[i],points_list2,1,match_points_function=match_points_mutual_nearest_neighbor)
+        precision.append(stats_dict['precision'])
+        recall.append(stats_dict['recall'])
+        f1.append(stats_dict['F1'])
+        jac.append(stats_dict['JAC'])
+        rmse.append(stats_dict['RMSE'])
+        dmd.append(stats_dict['d_md'])
+        
+    return(precision,recall,f1,jac,rmse,dmd)
+
 
 def y_classification_to_point_list_max(y_pred, ind, threshold=0.8, min_distance=2):
     # make final decision to be: center of pixels that are local maxima of the classification detections
@@ -159,21 +215,3 @@ def y_classification_to_point_list_max(y_pred, ind, threshold=0.8, min_distance=
  
     return dot_pixel_inds
 
-def consensus_coords(p_matrix,centroid_list,running_total,threshold=0.5):
-    y = []
-    for i in range(len(running_total)-1):
-        temp_spots = centroid_list[i]
-        start_ind = running_total[i]
-        end_ind = running_total[i+1]
-
-        labels = p_matrix[start_ind:end_ind,0]
-        labels = np.array([item > threshold for item in labels])
-
-        temp_y = []
-        for ii in range(len(labels)):
-            if labels[ii] == 1:
-                temp_y.append(temp_spots[ii])
-
-        y.append(temp_y)
-    
-    return y
