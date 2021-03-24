@@ -30,8 +30,8 @@ class TestUtils(test.TestCase):
 
         # are more tests needed?
 
-    def test_generate_transformation_matrix(self):
-        # not sure what to test beside the shape
+    # def test_generate_transformation_matrix(self):
+    #     # not sure what to test beside the shape
 
 
 test.main()

@@ -85,12 +85,14 @@ class TestSpotEM(test.TestCase):
         # test all wrong detections
         num_detections = 10
         gt = np.ones(num_detections)
-        data_array = np.zeros(num_detections)
+        data_array = np.array([np.zeros(num_detections),np.ones(num_detections)]).T
+        print('Print' + str(data_array[0][0]))
         perc_corr = percent_correct(gt, data_array)
         self.assertEqual(perc_corr, 0)
 
         # test half correct detections
-        data_array = np.concatenate((np.zeros(int(num_detections/2)),np.ones(int(num_detections/2))))
+        data_array = np.array([np.concatenate((np.zeros(int(num_detections/2)),np.ones(int(num_detections/2)))),
+                                np.concatenate((np.ones(int(num_detections/2)),np.zeros(int(num_detections/2))))]).T
         perc_corr = percent_correct(gt, data_array)
         self.assertEqual(perc_corr, 0.5)
 

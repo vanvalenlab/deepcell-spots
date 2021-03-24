@@ -3,7 +3,7 @@ import numpy as np
 import networkx as nx
 from itertools import combinations
 from scipy.spatial import distance
-from deepcell_spots.cluster_vis import *
+from cluster_vis import *
 
 def calc_tpr_fpr(gt, data):
     """Calculate the true postivie rate and false positive rate for a pair of ground truth labels and detection data. 
@@ -11,7 +11,7 @@ def calc_tpr_fpr(gt, data):
     Parameters: 
     ------------
     gt : array-like
-        Array of ground truth cluster labels. 'T' indicates a true detection and 'F' indicates a false detection. 
+        Array of ground truth cluster labels. A value of 1 indicates a true detection and a value of 0 indicates a false detection. 
     data : array-like
         Array of detection data with same length . A value of 1 indicates a detected clsuter and a value of 0 indicates an undetected cluster. 
     
@@ -40,6 +40,7 @@ def calc_tpr_fpr(gt, data):
                 tn += 1
 
     tpr = tp / (tp+fn)
+
     fpr = fp / (fp+tn)
 
     return tpr, fpr
@@ -62,7 +63,7 @@ def det_likelihood(cluster_data, pr_list):
         Value for the likelihood that a cluster is either a true positive or a false positive detection 
     
     """
-    likelihood = 1
+    likelihood = 1 #init likelihood
 
     for i in range(len(cluster_data)):
         if cluster_data[i] == 1:
@@ -71,9 +72,28 @@ def det_likelihood(cluster_data, pr_list):
             likelihood *= (1-pr_list[i])
     return likelihood
 
-def norm_marg_likelihood(cluster, tp_list, fp_list, prior):
-    tp_likelihood = det_likelihood(cluster, tp_list)
-    fp_likelihood = det_likelihood(cluster, fp_list)
+def norm_marg_likelihood(cluster_data, tp_list, fp_list, prior):
+    """Calculates the normalized marginal likelihood that each cluster is a true positive or a false positive.
+    
+    Parameters:
+    -----------
+    cluster_data : array_like
+        Array of detection labels for each annotator. Entry has value 1 if annotator detected the cluster, and entry has value 0 if annotator did not detect the cluster. 
+    tp_list : array_like
+        Array of true postive rates for each annotator.
+    fp_list : array_like
+        Array of false postive rates for each annotator.
+
+    Returns:
+    ---------
+    norm_tp_likelihood : float
+        Value for the normalized marginal likelihood that a cluster is either a true positive detection
+    norm_fp_likelihood : float
+        Value for the normalized marginal likelihood that a cluster is either a false positive detection
+    
+    """
+    tp_likelihood = det_likelihood(cluster_data, tp_list)
+    fp_likelihood = det_likelihood(cluster_data, fp_list)
 
     norm_tp_likelihood = tp_likelihood * prior / (tp_likelihood * prior + fp_likelihood * (1-prior))
     norm_fp_likelihood = fp_likelihood * (1-prior) / (tp_likelihood * prior + fp_likelihood * (1-prior))
@@ -87,7 +107,7 @@ def em_spot(cluster_matrix, tp_list, fp_list, prior=0.9, max_iter=10):
 
     Parameters: 
     -----------
-    data : matrix
+    cluster_matrix : matrix
         Matrix of detection labels for each spot for each annotator. Dimensions spots x annotators. A value of 1 indicates that the spot was detected by that annotator and a value of 0 indicates that the spot was not detected by that annotator. 
     tp_list : array-like
         Array of initial guesses for the true positive rates for each annotator. 
@@ -194,12 +214,14 @@ def cluster_coords(all_coords,image_stack,threshold):
         image_stack_updated = np.expand_dims(image_stack_updated, axis=-1)
 
         all_coords_updated = []
-        for i in range(len(all_coords)):
-            all_coords_updated.append(np.delete(all_coords[i], ind_skipped))
+        for i in range(np.shape(all_coords)[0]):
+            temp_coords = all_coords[i]
+            temp_coords_updated = np.delete(temp_coords,ind_skipped,axis=0)
+            all_coords_updated.append(temp_coords_updated)
         
         centroid_list = [np.array(item) for item in centroid_list]
 
-    return(cluster_matrix, centroid_list, all_coords_updated, image_stack_updated)
+    return cluster_matrix, centroid_list, all_coords_updated, image_stack_updated
 
 def running_total_spots(centroid_list):
     num_spots_list = [len(item) for item in centroid_list]
