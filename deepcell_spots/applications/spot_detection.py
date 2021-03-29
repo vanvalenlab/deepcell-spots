@@ -34,8 +34,8 @@ import glob
 
 import tensorflow as tf
 
-from deepcell_toolbox.processing import normalize
-from deepcell_toolbox.deep_watershed import deep_watershed
+from deepcell_spots.preprocessing_utils import min_max_normalize
+from deepcell_spots.postprocessing_utils import y_annotations_to_point_list_max
 
 from deepcell_spots.applications.application import Application
 from deepcell_spots.losses import DotNetLosses
@@ -102,8 +102,8 @@ class SpotDetection(Application):
             model,
             model_image_shape=model.input_shape[1:],
             model_mpp=0.65,
-            preprocessing_fn=normalize,
-            postprocessing_fn=deep_watershed,
+            preprocessing_fn=min_max_normalize,
+            postprocessing_fn=y_annotations_to_point_list_max,
             dataset_metadata=self.dataset_metadata,
             model_metadata=self.model_metadata)
 
@@ -142,12 +142,8 @@ class SpotDetection(Application):
 
         if postprocess_kwargs is None:
             postprocess_kwargs = {
-                'min_distance': 10,
-                'detection_threshold': 0.1,
-                'distance_threshold': 0.01,
-                'exclude_border': False,
-                'small_objects_threshold': 0
-            }
+                'threshold':0.95,
+                'min_distance':1}
 
         return self._predict_segmentation(
             image,
