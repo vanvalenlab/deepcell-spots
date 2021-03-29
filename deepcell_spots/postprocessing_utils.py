@@ -3,7 +3,7 @@ import numpy as np
 from skimage.feature import peak_local_max
 from skimage import measure
 
-from point_metrics import stats_points
+from deepcell_spots.point_metrics import stats_points
 
 
 # functions for processing the neural network output into a final list of predicted coordinates
@@ -89,7 +89,7 @@ def y_annotations_to_point_list_with_source(y_pred, ind, threshold):
 
 
 
-def y_annotations_to_point_list_max(y_pred, ind, threshold=0.8, min_distance=2):
+def y_annotations_to_point_list_max(y_pred, ind, threshold=0.95, min_distance=2):
     """ Convert raw prediction to a predicted point list
     
     Args:
