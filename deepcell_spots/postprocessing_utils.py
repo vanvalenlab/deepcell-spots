@@ -3,6 +3,8 @@ import numpy as np
 from skimage.feature import peak_local_max
 from skimage import measure
 
+from point_metrics import stats_points
+
 
 # functions for processing the neural network output into a final list of predicted coordinates
 
@@ -134,7 +136,6 @@ def y_annotations_to_point_list_cc(y_pred, ind, threshold=0.8):
     return dot_centers
 
 
-from deepcell_spots.point_metrics import stats_points
 
 def get_mean_stats(decision_function, y_test,y_pred,threshold=0.8,d_thresh=3):
     # decision_function: a postprocessing function with inputs y_pred, ind, threshold
