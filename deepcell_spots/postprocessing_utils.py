@@ -89,7 +89,7 @@ def y_annotations_to_point_list_with_source(y_pred, ind, threshold):
 
 
 
-def y_annotations_to_point_list_max(y_pred, ind, threshold=0.95, min_distance=2):
+def y_annotations_to_point_list_max(y_pred, threshold=0.95, min_distance=2):
     """ Convert raw prediction to a predicted point list
     
     Args:
@@ -107,12 +107,15 @@ def y_annotations_to_point_list_max(y_pred, ind, threshold=0.95, min_distance=2)
     Returns:
     A list of spot center coordinates of the format [[y0, x0], [y1, x1],...]
     """
-    dot_pixel_inds = peak_local_max(y_pred[1][ind,...,1], min_distance=min_distance, threshold_abs=threshold)
+    dot_centers = []
+    for ind in np.shape(y_pred)[1]:
+        dot_pixel_inds = peak_local_max(y_pred[1][ind,...,1], min_distance=min_distance, threshold_abs=threshold)
 
-    delta_y = y_pred[0][ind,...,0]
-    delta_x = y_pred[0][ind,...,1]
-  
-    dot_centers = np.array([[y_ind+delta_y[y_ind, x_ind],x_ind+delta_x[y_ind, x_ind]] for y_ind, x_ind in dot_pixel_inds])
+        delta_y = y_pred[0][ind,...,0]
+        delta_x = y_pred[0][ind,...,1]
+    
+        dot_centers.append(np.array([[y_ind+delta_y[y_ind, x_ind],x_ind+delta_x[y_ind, x_ind]] for y_ind, x_ind in dot_pixel_inds]))
+        
     return dot_centers
 
 
