@@ -37,8 +37,9 @@ import tensorflow as tf
 from deepcell_toolbox.processing import normalize
 from deepcell_toolbox.deep_watershed import deep_watershed
 
-from deepcell_spots.applications import Application
-
+from deepcell_spots.applications.application import Application
+from deepcell_spots.losses import DotNetLosses
+from deepcell_spots.dotnet import *
 
 # MODEL_PATH = ('https://deepcell-data.s3-us-west-1.amazonaws.com/'
 #               'saved-models/NuclearSegmentation-3.tar.gz')
@@ -93,8 +94,9 @@ class SpotDetection(Application):
             #     extract=True, cache_subdir='models'
             # )
             # model_path = os.path.splitext(archive_path)[0]
-            model_path = glob.glob('/data/20210203-training_data/models/conv_dots_model_em_w_suntag.h5')[0]
-            model = tf.keras.models.load_model(model_path)
+            model_path = '/data/20210203-training_data/models/em_model'
+            model = tf.keras.models.load_model(model_path, custom_objects={'regression_loss':DotNetLosses.regression_loss,
+                                                                             'classification_loss':DotNetLosses.classification_loss})
 
         super(SpotDetection, self).__init__(
             model,
