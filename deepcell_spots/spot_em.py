@@ -3,7 +3,7 @@ import numpy as np
 import networkx as nx
 from itertools import combinations
 from scipy.spatial import distance
-from cluster_vis import *
+from deepcell_spots.cluster_vis import *
 
 def calc_tpr_fpr(gt, data):
     """Calculate the true postivie rate and false positive rate for a pair of ground truth labels and detection data. 
