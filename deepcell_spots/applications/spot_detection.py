@@ -142,7 +142,7 @@ class SpotDetection(Application):
 
         if postprocess_kwargs is None:
             postprocess_kwargs = {
-                'threshold':0.9,
+                'threshold':0.8,
                 'min_distance':1}
 
         return self._predict_segmentation(
