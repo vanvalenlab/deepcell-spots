@@ -94,7 +94,7 @@ class SpotDetection(Application):
             #     extract=True, cache_subdir='models'
             # )
             # model_path = os.path.splitext(archive_path)[0]
-            model_path = '/data/20210203-training_data/models/em_model'
+            model_path = '/data/20210331-training_data/models/em_model'
             model = tf.keras.models.load_model(model_path, custom_objects={'regression_loss':DotNetLosses.regression_loss,
                                                                              'classification_loss':DotNetLosses.classification_loss})
 
