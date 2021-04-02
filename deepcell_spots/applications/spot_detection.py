@@ -110,6 +110,7 @@ class SpotDetection(Application):
     def predict(self,
                 image,
                 batch_size=4,
+                threshold=0.9,
                 image_mpp=None,
                 pad_mode='reflect',
                 preprocess_kwargs=None,
@@ -137,12 +138,16 @@ class SpotDetection(Application):
         Returns:
             numpy.array: Labeled image
         """
+
+        if threshold < 0 or threshold > 1:
+            raise ValueError('Enter a probability threshold value between 0 and 1.')
+        
         if preprocess_kwargs is None:
             preprocess_kwargs = {}
 
         if postprocess_kwargs is None:
             postprocess_kwargs = {
-                'threshold':0.8,
+                'threshold':threshold,
                 'min_distance':1}
 
         return self._predict_segmentation(
