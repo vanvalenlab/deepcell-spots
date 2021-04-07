@@ -1,6 +1,6 @@
 # DeepCell Spots
 
-`deepcell-spots` is a deep learning library for spot detection. It is written in Python and built using [TensorFlow](https://github.com/tensorflow/tensorflow), [Keras](https://www.tensorflow.org/guide/keras) and [DeepCell](https://github.com/vanvalenlab/deepcell-tf).
+`deepcell-spots` is a deep learning library for fluorescent spot detection image analysis. It allows you to apply pre-existing models and train new deep learning models for spot detection. It is written in Python and built using [TensorFlow](https://github.com/tensorflow/tensorflow), [Keras](https://www.tensorflow.org/guide/keras) and [DeepCell](https://github.com/vanvalenlab/deepcell-tf).
 
 
 ## DeepCell-spots for Developers
@@ -35,6 +35,19 @@ docker run --gpus '"device=0"' -it \
     $USER/deepcell-spots
 ```
 
+## DeepCell Spots Application
+
+`deepcell-spots` contains an application that greatly simplifies the implementation of deep learning models for spot detection. `deepcell-spots.applications` contains a pre-trained model for fluorescent spot detection on images derived from assays such as RNA FISH and in-situ sequencing. This model returns a list of coordinate locations for fluorescent spots detected in the input image. 
+
+## How to Use
+
+```python
+from deepcell_spots.applications.spot_detection import SpotDetection
+
+app = SpotDetection()
+# image is an np array with dimensions (batch,x,y,channel)
+coords = app.predict(image)
+```
 
 ## Copyright
 
