@@ -1,5 +1,7 @@
 # DeepCell Spots
 
+[![Coverage Status](https://coveralls.io/repos/github/vanvalenlab/deepcell-spots/badge.svg?branch=master)](https://coveralls.io/github/vanvalenlab/deepcell-spots?branch=master)
+
 `deepcell-spots` is a deep learning library for fluorescent spot detection image analysis. It allows you to apply pre-existing models and train new deep learning models for spot detection. It is written in Python and built using [TensorFlow](https://github.com/tensorflow/tensorflow), [Keras](https://www.tensorflow.org/guide/keras) and [DeepCell](https://github.com/vanvalenlab/deepcell-tf).
 
 
