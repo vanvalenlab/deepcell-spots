@@ -41,8 +41,8 @@ from deepcell_spots.applications.application import Application
 from deepcell_spots.losses import DotNetLosses
 from deepcell_spots.dotnet import *
 
-# MODEL_PATH = ('https://deepcell-data.s3-us-west-1.amazonaws.com/'
-#               'saved-models/NuclearSegmentation-3.tar.gz')
+MODEL_PATH = ('https://deepcell-data.s3-us-west-1.amazonaws.com/'
+              'saved-models/SpotDetection-1.tar.gz')
 
 
 class SpotDetection(Application):
@@ -88,13 +88,13 @@ class SpotDetection(Application):
     def __init__(self, model=None):
 
         if model is None:
-            # archive_path = tf.keras.utils.get_file(
-            #     'NuclearSegmentation.tgz', MODEL_PATH,
-            #     file_hash='7fff56a59f453252f24967cfe1813abd',
-            #     extract=True, cache_subdir='models'
-            # )
-            # model_path = os.path.splitext(archive_path)[0]
-            model_path = '/data/20210331-training_data/models/em_model'
+            # model_path = '/data/20210331-training_data/models/em_model'
+            archive_path = tf.keras.utils.get_file(
+                'models/em_model.tgz', MODEL_PATH,
+                file_hash='1d68b89ed5d4d4df29e84c2d77514e01',
+                extract=True, cache_subdir='models'
+            )
+            model_path = os.path.splitext(archive_path)[0]
             model = tf.keras.models.load_model(model_path, custom_objects={'regression_loss':DotNetLosses.regression_loss,
                                                                              'classification_loss':DotNetLosses.classification_loss})
 
@@ -141,7 +141,7 @@ class SpotDetection(Application):
 
         if threshold < 0 or threshold > 1:
             raise ValueError('Enter a probability threshold value between 0 and 1.')
-        
+
         if preprocess_kwargs is None:
             preprocess_kwargs = {}
 
