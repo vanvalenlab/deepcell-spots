@@ -23,7 +23,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""Nuclear segmentation application"""
+"""Spot detection application"""
 
 from __future__ import absolute_import
 from __future__ import division
@@ -70,8 +70,8 @@ class SpotDetection(Application):
 
     #: Metadata for the dataset used to train the model
     dataset_metadata = {
-        'name': 'general_nuclear_train_large', #update
-        'other': 'Pooled nuclear data from HEK293, HeLa-S3, NIH-3T3, and RAW264.7 cells.' #update
+        'name': 'general_train', #update
+        'other': 'Pooled FISH data including MERFISH data and SunTag viral RNA data' #update
     }
 
     #: Metadata for the model and training process
@@ -81,8 +81,7 @@ class SpotDetection(Application):
         'lr_decay': 0.99,
         'training_seed': 0,
         'n_epochs': 10,
-        'training_steps_per_epoch': 552,
-        'validation_steps_per_epoch': 61 #not sure, just divided by 9
+        'training_steps_per_epoch': 552
     }
 
     def __init__(self, model=None):
@@ -90,7 +89,7 @@ class SpotDetection(Application):
         if model is None:
             # model_path = '/data/20210331-training_data/models/em_model'
             archive_path = tf.keras.utils.get_file(
-                'models/em_model.tgz', MODEL_PATH,
+                'SpotDetection.tgz', MODEL_PATH,
                 file_hash='1d68b89ed5d4d4df29e84c2d77514e01',
                 extract=True, cache_subdir='models'
             )
@@ -110,11 +109,11 @@ class SpotDetection(Application):
     def predict(self,
                 image,
                 batch_size=4,
-                threshold=0.9,
                 image_mpp=None,
                 pad_mode='reflect',
                 preprocess_kwargs=None,
-                postprocess_kwargs=None):
+                postprocess_kwargs=None,
+                threshold=0.9):
         """Generates a labeled image of the input running prediction with
         appropriate pre and post processing functions.
         Input images are required to have 4 dimensions
@@ -130,13 +129,14 @@ class SpotDetection(Application):
                 pre-processing function.
             postprocess_kwargs (dict): Keyword arguments to pass to the
                 post-processing function.
+            threshold (float): Probability threshold for a pixel to be considered as a spot. 
         Raises:
             ValueError: Input data must match required rank of the application,
                 calculated as one dimension more (batch dimension) than expected
                 by the model.
             ValueError: Input data must match required number of channels.
         Returns:
-            numpy.array: Labeled image
+            numpy.array: Coordinate locations of detected spots. 
         """
 
         if threshold < 0 or threshold > 1:
