@@ -90,7 +90,7 @@ class SpotDetection(Application):
             # model_path = '/data/20210331-training_data/models/em_model'
             archive_path = tf.keras.utils.get_file(
                 'SpotDetection.tgz', MODEL_PATH,
-                file_hash='1d68b89ed5d4d4df29e84c2d77514e01',
+                file_hash='7462b1d854b75195c01eef17e89ac245',
                 extract=True, cache_subdir='models'
             )
             model_path = os.path.splitext(archive_path)[0]
