@@ -46,7 +46,8 @@ from deepcell_spots.applications.spot_detection import SpotDetection
 
 app = SpotDetection()
 # image is an np array with dimensions (batch,x,y,channel)
-coords = app.predict(image)
+# threshold is the probability threshold that a pixel must exceed to be considered a spot
+coords = app.predict(image,threshold=0.9)
 ```
 
 ## Copyright
