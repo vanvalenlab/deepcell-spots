@@ -42,7 +42,7 @@ from deepcell_spots.losses import DotNetLosses
 from deepcell_spots.dotnet import *
 
 MODEL_PATH = ('https://deepcell-data.s3-us-west-1.amazonaws.com/'
-              'saved-models/SpotDetection-1.tar.gz')
+              'saved-models/SpotDetection-3.tar.gz')
 
 
 class SpotDetection(Application):
@@ -90,7 +90,7 @@ class SpotDetection(Application):
             # model_path = '/data/20210331-training_data/models/em_model'
             archive_path = tf.keras.utils.get_file(
                 'SpotDetection.tgz', MODEL_PATH,
-                file_hash='7462b1d854b75195c01eef17e89ac245',
+                file_hash='2b9a46087b25e9aab20a2c9f67f4f559',
                 extract=True, cache_subdir='models'
             )
             model_path = os.path.splitext(archive_path)[0]
