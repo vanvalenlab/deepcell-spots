@@ -10,6 +10,9 @@ import numpy as np
 from scipy.optimize import linear_sum_assignment
 from scipy.spatial.distance import cdist
 import scipy.spatial  # cKDTree - neighbor finder (cython)
+from sklearn.metrics import *
+# from deepcell_spots.postprocessing_utils import *
+from postprocessing_utils import *
 
 
 def sum_of_min_distance(pts1, pts2, normalized=False):
@@ -98,6 +101,18 @@ def match_points_min_dist(pts1, pts2, threshold=None):
 
 
 def match_points_mutual_nearest_neighbor(pts1, pts2, threshold=None):
+    '''Find a pairing between two sets of points that ensures that each pair of points are mutual nearest neighbors. 
+    Args:
+        pts1 ((N1,d) numpy.array): a set of N1 points in d dimensions
+        pts2 ((N2,d) numpy.array): a set of N2 points in d dimensions
+            where N1/N2 is the number of points and d is the dimension
+        threshold (float): a distance threshold for matching two points. Points that are more than the threshold
+        distance apart, cannot be matched
+    Returns:
+        row_ind, col_ind (arrays):
+        An array of row indices and one of corresponding column indices giving the optimal assignment, as described in:
+        https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.linear_sum_assignment.html
+    '''
     # calculate the distances between true points and their nearest predicted points
     # and the distances between predicted points and their nearest true points
     tree1 = scipy.spatial.cKDTree(pts1, leafsize=2)
@@ -125,7 +140,7 @@ def match_points_mutual_nearest_neighbor(pts1, pts2, threshold=None):
     return row_ind, col_ind
 
 
-def point_precision(points_true, points_pred, threshold, match_points_function=match_points_min_dist):
+def point_precision(points_true, points_pred, threshold, match_points_function=match_points_mutual_nearest_neighbor):
     """ Calculates the precision, tp/(tp + fp), of point detection using the following definitions:
     true positive (tp) = a predicted dot p with a matching true dot t,
     where the matching between predicted and true points is such that the total distance between matched points is
@@ -157,7 +172,7 @@ def point_precision(points_true, points_pred, threshold, match_points_function=m
     return precision
 
 
-def point_recall(points_true, points_pred, threshold, match_points_function=match_points_min_dist):
+def point_recall(points_true, points_pred, threshold, match_points_function=match_points_mutual_nearest_neighbor):
     """Calculates the recall, tp/(tp + fn), of point detection using the following definitions:
     true positive (tp) = a predicted dot p with a matching true dot t,
     where the matching between predicted and true points is such that the total distance between matched points is
@@ -185,7 +200,7 @@ def point_recall(points_true, points_pred, threshold, match_points_function=matc
     return recall
 
 
-def point_F1_score(points_true, points_pred, threshold, match_points_function=match_points_min_dist):
+def point_F1_score(points_true, points_pred, threshold, match_points_function=match_points_mutual_nearest_neighbor):
     """Calculates the F1 score of dot detection using the following definitions:
     F1 score = 2*p*r / (p+r)
     where
@@ -212,7 +227,7 @@ def point_F1_score(points_true, points_pred, threshold, match_points_function=ma
     return F1
 
 
-def stats_points(points_true, points_pred, threshold, match_points_function=match_points_min_dist):
+def stats_points(points_true, points_pred, threshold, match_points_function=match_points_mutual_nearest_neighbor):
     """Calculates point-based statistics
     (precision, recall, F1, JAC, RMSE, d_md)
     Args:
@@ -262,11 +277,17 @@ def stats_points(points_true, points_pred, threshold, match_points_function=matc
     J = F1 / (2 - F1)
 
     # calculate the RMSE for matched pairs
-    dist_sq_sum = np.sum((points_true[row_ind] - points_pred[col_ind]) ** 2, axis=1)
-    RMSE = np.sqrt(np.mean(dist_sq_sum))
+    if len(row_ind) == 0:
+        RMSE = None
+        d_md = None
+    else:
+        dist_sq_sum = np.sum(np.sum((points_true[row_ind] - points_pred[col_ind]) ** 2, axis=1))
+        RMSE = np.sqrt(dist_sq_sum/len(row_ind)/2)
 
-    # calculate the mean sum to nearest neighbor from other set
-    d_md = sum_of_min_distance(points_true, points_pred, normalized=True)
+        # RMSE = np.sqrt(mean_squared_error(points_true[row_ind], points_pred[col_ind]))
+
+        # calculate the mean sum to nearest neighbor from other set
+        d_md = sum_of_min_distance(points_true[row_ind], points_pred[col_ind], normalized=True)
 
     return {
         'precision': p,
@@ -276,3 +297,74 @@ def stats_points(points_true, points_pred, threshold, match_points_function=matc
         'RMSE': RMSE,
         'd_md': d_md
     }
+
+def get_mean_stats(y_test,y_pred,threshold=0.98,d_thresh=1):
+    # decision_function: a postprocessing function with inputs y_pred, ind, threshold
+    # this is a function that performs postprocessing on the output of the neural net for the image #ind in the batch,
+    # and returns a decision for the list of coordinates of spot centers
+    # d_thresh = 2 # distance in pixels for precision quantification
+    # threshold = 0.95 # threshold for classification
+    n_test = len(y_test) # number of test images
+
+    d_md_list = [None]*n_test
+    precision_list = [None]*n_test
+    recall_list = [None]*n_test
+    F1_list = [None]*n_test
+
+    y_pred = y_annotations_to_point_list_max(y_pred, threshold)
+    for ind in range(n_test): # loop over test images
+        #y_pred_ind = y_annotations_to_point_list(y_pred_test, ind, threshold)
+        s = stats_points(y_test[ind], y_pred[ind], threshold=d_thresh)
+        d_md_list[ind] = s['d_md']
+        precision_list[ind] = s['precision']
+        recall_list[ind] = s['recall']
+        F1_list[ind] = s['Fmeasure']
+
+
+    d_md = np.mean(d_md_list)
+    precision = np.mean(precision_list)
+    recall = np.mean(recall_list)
+    F1 = np.mean(F1_list)
+    
+    return (d_md, precision, recall, F1)
+
+def model_benchmarking(pred,coords,threshold,min_distance):
+    """Calculates the precision, recall, F1 score, Jacard Index, root mean square error, and sum of min distances for stack of predictions"
+
+    Args:
+    pred: a batch of predictions, of the format: y_pred[annot_type][ind] is an annotation for image #ind in the batch
+    where annot_type = 0 or 1: 0 - contains_dot (from classification head), 1 - offset matrices (from regression head)
+    coords: nested list of coordinate locations for ground truth spots from a single annotator
+    threshold: a number in [0, 1]. Pixels with classification score > threshold are considered containing a spot center,
+    and their corresponding regression values will be used to create a final spot position prediction which will
+    be added to the output spot center coordinates list.
+    min_distance: the minimum distance between detected spots in pixels
+
+    Returns:
+    precision: list of values for the precision of the predicted spot numbers in each image
+    recall: list of values for the recall of the predicted spot numbers in each image
+    f1: list of values for the f1 score of the predicted spot numbers in each image
+    jac: list of values for the jacard index of the predicted spot numbers in each image
+    rmse: list of values for the root mean square error of the spot locations in each image
+    dmd: list of values for the sum of min distance of the spot locations in each image 
+
+    """
+    precision = []
+    recall = []
+    f1 = []
+    jac = []
+    rmse = []
+    dmd = []
+
+    points_list = y_annotations_to_point_list_max(pred, threshold, min_distance)
+    for i in range(len(pred[0])):
+        
+        stats_dict = stats_points(coords[i],points_list[i],1,match_points_function=match_points_mutual_nearest_neighbor)
+        precision.append(stats_dict['precision'])
+        recall.append(stats_dict['recall'])
+        f1.append(stats_dict['F1'])
+        jac.append(stats_dict['JAC'])
+        rmse.append(stats_dict['RMSE'])
+        dmd.append(stats_dict['d_md'])
+        
+    return(precision,recall,f1,jac,rmse,dmd)

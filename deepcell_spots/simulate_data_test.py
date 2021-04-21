@@ -5,7 +5,7 @@ from tensorflow.python.platform import test
 
 from simulate_data import *
 
-class TestSpotEM(test.TestCase):
+class TestSimulateData(test.TestCase):
     def test_sim_gt_clusters(self):
         num_clusters = 1000
         tp_ratio = 0.5
@@ -85,12 +85,27 @@ class TestSpotEM(test.TestCase):
         # test all wrong detections
         num_detections = 10
         gt = np.ones(num_detections)
-        data_array = np.zeros(num_detections)
+        data_array = np.array([np.zeros(num_detections),np.ones(num_detections)]).T
         perc_corr = percent_correct(gt, data_array)
         self.assertEqual(perc_corr, 0)
 
+        # test all correct detections
+        num_detections = 10
+        gt = np.zeros(num_detections)
+        data_array = np.array([np.zeros(num_detections),np.ones(num_detections)]).T
+        perc_corr = percent_correct(gt, data_array)
+        self.assertEqual(perc_corr, 1)
+
+        # test all correct detections
+        num_detections = 10
+        gt = np.ones(num_detections)
+        data_array = np.array([np.ones(num_detections),np.zeros(num_detections)]).T
+        perc_corr = percent_correct(gt, data_array)
+        self.assertEqual(perc_corr, 1)
+
         # test half correct detections
-        data_array = np.concatenate((np.zeros(int(num_detections/2)),np.ones(int(num_detections/2))))
+        data_array = np.array([np.concatenate((np.zeros(int(num_detections/2)),np.ones(int(num_detections/2)))),
+                                np.concatenate((np.ones(int(num_detections/2)),np.zeros(int(num_detections/2))))]).T
         perc_corr = percent_correct(gt, data_array)
         self.assertEqual(perc_corr, 0.5)
 
@@ -178,4 +193,31 @@ class TestSpotEM(test.TestCase):
         self.assertEqual(len(x_list),len(y_list),len(bboxes))
         self.assertGreaterEqual(len(x_list),N_min)
         self.assertLessEqual(len(x_list),N_max)
+
+        L = 30
+        N_min = 1
+        N_max = 5
+        g = gaussian_spot_image_generator(L=L,N_min=N_min,N_max=N_max,
+                                            sigma_mean=1,sigma_std=0.5,
+                                            A_mean=1,A_std=0.5,
+                                            segmask=False,yield_pos=True)
+
+        img, label, x_list, y_list, bboxes = next(g)
+        self.assertEqual(np.shape(img),(L,L))
+        self.assertEqual(np.shape(label),(L,L))
+        self.assertEqual(len(x_list),len(y_list),len(bboxes))
+        self.assertGreaterEqual(len(x_list),N_min)
+        self.assertLessEqual(len(x_list),N_max)
+
+        L = 30
+        N_min = 1
+        N_max = 5
+        g = gaussian_spot_image_generator(L=L,N_min=N_min,N_max=N_max,
+                                            sigma_mean=1,sigma_std=0.5,
+                                            A_mean=1,A_std=0.5,
+                                            segmask=False,yield_pos=False)
+
+        img, label = next(g)
+        self.assertEqual(np.shape(img),(L,L))
+        self.assertEqual(np.shape(label),(L,L))
 test.main()
