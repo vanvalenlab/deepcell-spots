@@ -6,7 +6,7 @@ from itertools import combinations
 from tensorflow.python.platform import test
 from cluster_vis import *
 
-class TestDataUtils(test.TestCase):
+class TestClusterVis(test.TestCase):
     def test_jitter(self):
         coords = np.zeros((10,2))
         size = 5

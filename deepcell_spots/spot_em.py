@@ -3,7 +3,7 @@ import numpy as np
 import networkx as nx
 from itertools import combinations
 from scipy.spatial import distance
-from deepcell_spots.cluster_vis import *
+from cluster_vis import *
 
 def calc_tpr_fpr(gt, data):
     """Calculate the true postivie rate and false positive rate for a pair of ground truth labels and detection data. 
@@ -169,6 +169,32 @@ def em_spot(cluster_matrix, tp_list, fp_list, prior=0.9, max_iter=10):
     return tp_list, fp_list, likelihood_matrix
 
 def cluster_coords(all_coords,image_stack,threshold):
+    """ Cluster coords from different clasical annotators 
+    Parameters: 
+    ------------
+    all_coords : matrix
+        List with length (number of classical algorithms), where each entry has length (number of images), where each of those
+        entries has dimensions (number of detections) x 2 and is filled by the locations of the detected points for each image
+        for each classical annotator
+    image_stack : matrix
+        Image matrix with the dimensions (batch, image_dim_x, image_dim_y, channel)
+    threshold : float
+        Value for the distance in pixels below which detections will be considered clustered
+
+    Returns:
+    -----------
+    cluster_matrix : matrix
+        Matrix with dimensions (number of detections) x (number of algorithms), filled with value 1 if the algorithm detected
+        that cluster, and 0 if it did not
+    centroid_list : matrix
+        List with length (number of images), where each entry has dimensions (number of detections) x 2, filled with the centroids 
+        of all clusters of detections
+    all_coords_updated : matrix
+        Same values as input all_coords, with entries removed from images with no detections
+    image_stack_updated : matrix
+        Same values as input image_stack, with entries removed from images with no detections
+    """
+
     # create one annotator data matrix from all images
     # first iteration out of loop
     coords = np.array([item[0] for item in all_coords])
@@ -224,32 +250,56 @@ def cluster_coords(all_coords,image_stack,threshold):
     return cluster_matrix, centroid_list, all_coords_updated, image_stack_updated
 
 def running_total_spots(centroid_list):
+    """ Returns a running total of the number of detections in each image 
+
+    Parameters:
+    ------------
+    centroid_list : matrix
+        List with length (number of images), where each entry has dimensions (number of detections) x 2, filled with the centroids 
+        of all clusters of detections
+
+    Returns: 
+    --------
+    running_total : array
+        Array of running total number of detections from each image
+    """
     num_spots_list = [len(item) for item in centroid_list]
-    running_total_spots = np.zeros(len(num_spots_list)+1)
+    running_total = np.zeros(len(num_spots_list)+1)
 
     for i in range(len(num_spots_list)):
-        running_total_spots[i+1] = sum(num_spots_list[:i+1])
+        running_total[i+1] = sum(num_spots_list[:i+1])
 
-    running_total_spots = running_total_spots.astype(int)
+    running_total = running_total.astype(int)
 
-    return running_total_spots
+    return running_total
 
-def ca_to_adjacency_matrix(ca_matrix):
-    num_clusters = np.shape(ca_matrix)[0]
-    num_annnotators = np.shape(ca_matrix)[1]
-    tot_det_list = [sum(ca_matrix[:,i]) for i in range(num_annnotators)]
+def cluster_to_adjacency_matrix(cluster_matrix):
+    """ Converts cluster_matrix to adjacency matrix.
+    Parameters:
+    -------------
+    cluster_matrix : matrix
+        Output of cluster_coords. 
+        Matrix with dimensions (number of detections) x (number of algorithms), filled with value 1 if the algorithm detected
+        that cluster, and 0 if it did not
+    A : matrix
+        Adjacency matrix with dimensions (number of detections) x (number of detections), filled with value 1 if two detections 
+        (nodes) are connected because they are closer than some threshold distance
+    """
+    num_clusters = np.shape(cluster_matrix)[0]
+    num_annnotators = np.shape(cluster_matrix)[1]
+    tot_det_list = [sum(cluster_matrix[:,i]) for i in range(num_annnotators)]
     tot_num_detections = int(sum(tot_det_list))
 
     A = np.zeros((tot_num_detections, tot_num_detections))
     for i in range(num_clusters):
-        det_list = np.ndarray.flatten(np.argwhere(ca_matrix[i] == 1))
+        det_list = np.ndarray.flatten(np.argwhere(cluster_matrix[i] == 1))
         combos = list(combinations(det_list, 2))
 
         for ii in range(len(combos)):
             ann_index0 = combos[ii][0]
             ann_index1 = combos[ii][1]
-            det_index0 = int(sum(tot_det_list[:ann_index0]) + sum(ca_matrix[:i,ann_index0]))
-            det_index1 = int(sum(tot_det_list[:ann_index1]) + sum(ca_matrix[:i,ann_index1]))
+            det_index0 = int(sum(tot_det_list[:ann_index0]) + sum(cluster_matrix[:i,ann_index0]))
+            det_index1 = int(sum(tot_det_list[:ann_index1]) + sum(cluster_matrix[:i,ann_index1]))
 
             A[det_index0, det_index1] += 1
             A[det_index1, det_index0] += 1
@@ -304,7 +354,7 @@ def check_spot_ann_num(G, coords):
     return G
 
 def ca_matrix(G):
-    """Convert graph into cluster x annotators matrix where 0 mean annotator did not find a point in that cluster
+    """Convert graph into cluster x annotators matrix (cluster_matrix) where 0 means annotator did not find a point in that cluster
     and 1 means that the annotator did find a point in that cluster"""
     clusters = list(nx.connected_components(G))
     node_labels = list(nx.get_node_attributes(G,'name').values())
@@ -364,7 +414,17 @@ def cluster_centroids(G, coords):
 
     Parameters:
     -------------
-    G : 
+    G : networkx graph
+        Graph with edges connecting nodes representing detections derived from the same ground truth detection
+    coords : matrix
+        Array of coordinates from each annotator, length is equal to the number of annotators. Each item in the array is a matrix
+        of detection locations with dimensions (number of detections)x2.
+
+    Returns:
+    ---------
+    centroid_list : matrix
+        Matrix with dimensions (number of detections) x 2, filled with the centroids of all clusters of detections
+
     """
     clusters = list(nx.connected_components(G))
     flat_coords = np.vstack(coords)

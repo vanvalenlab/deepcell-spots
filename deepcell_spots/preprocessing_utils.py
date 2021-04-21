@@ -2,7 +2,8 @@ import numpy as np
 import logging
 
 def mean_std_normalize(image, epsilon=1e-07):
-    """Normalize image data by dividing by the maximum pixel value
+    """Normalize image data by subtracting standard deviation pixel value
+    and dividing by mean pixel value
     Args:
         image (numpy.array): numpy array of image data
         epsilon (float): fuzz factor used in numeric expressions.
@@ -21,7 +22,8 @@ def mean_std_normalize(image, epsilon=1e-07):
     return image
 
 def min_max_normalize(image):
-    """Normalize image data by dividing by the maximum pixel value
+    """Normalize image data by subtracting minimum pixel value and
+     dividing by the maximum pixel value
     Args:
         image (numpy.array): numpy array of image data
         epsilon (float): fuzz factor used in numeric expressions.
