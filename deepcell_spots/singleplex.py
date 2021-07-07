@@ -1,5 +1,8 @@
 """Tools for analysis of singleplex FISH images"""
 
+from collections import defaultdict
+import numpy as np
+
 def match_spots_to_cells(labeled_im,coords):
     """Assigns detected spots to regions of a labeled image. 
 
