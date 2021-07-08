@@ -23,24 +23,78 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from setuptools import setup
-from setuptools import find_packages
+import os
 
-setup(name='Deepcell_Spots',
-      version='0.0.1',
-      description='Spot-detection with deep learning.',
-      author='Van Valen Lab',
-      author_email='vanvalenlab@gmail.com',
-      url='https://github.com/vanvalenlab/deepcell-spots',
-      license='LICENSE',
-      install_requires=['networkx>=2.1',
-                        'numpy',
-                        'pandas',
-                        'pathlib',
-                        'scipy',
-                        'scikit-image'],
-      extras_require={
-          'tests': ['pytest',
-                    'pytest-pep8',
-                    'pytest-cov']},
-      packages=find_packages())
+from codecs import open
+
+try:
+    from setuptools import setup, find_packages
+except ImportError:
+    from distutils.core import setup, find_packages
+
+
+here = os.path.abspath(os.path.dirname(__file__))
+
+
+with open(os.path.join(here, 'README.md'), 'r', 'utf-8') as f:
+    readme = f.read()
+
+
+about = {}
+with open(os.path.join(here, 'deepcell_spots', '_version.py'), 'r', 'utf-8') as f:
+    exec(f.read(), about)
+
+setup(
+    name=about['__title__'],
+    version=about['__version__'],
+    author=about['__author__'],
+    author_email=about['__author_email__'],
+    description=about['__description__'],
+    url=about['__url__'],
+    download_url=about['__download_url__'],
+    license=about['__license__'],
+    long_description=readme,
+    long_description_content_type='text/markdown',
+    install_requires=[
+        'pandas>=0.23.3,<1',
+        'numpy>=1.16.4,<2',
+        'scipy>=1.1.0,<2',
+        'scikit-image>=0.14.1,<=0.16.2',
+        'scikit-learn>=0.19.1,<1',
+        'tensorflow>=2.4.1',
+        'jupyter>=1.0.0,<2',
+        'networkx>=2.1',
+        'opencv-python>=3.4.2.17,<4',
+        'cython>=0.28',
+        'pathlib==1.0.1',
+        'deepcell~=0.9.0',
+        'trackpy==0.4.2'
+    ],
+    extras_require={
+        'tests': [
+            'pytest<6',
+            'pytest-cov',
+            'pytest-pep8',
+        ],
+    },
+    packages=find_packages(),
+    python_requires='>=3.6, <3.10',
+    classifiers=[
+        'Intended Audience :: Developers',
+        'Intended Audience :: Science/Research',
+        'Operating System :: OS Independent',
+        'Programming Language :: Python',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
+        'Topic :: Scientific/Engineering',
+        'Topic :: Scientific/Engineering :: Artificial Intelligence',
+        'Topic :: Scientific/Engineering :: Bio-Informatics',
+        'Topic :: Scientific/Engineering :: Image Processing',
+        'Topic :: Scientific/Engineering :: Image Recognition',
+        'Topic :: Software Development :: Libraries',
+        'Topic :: Software Development :: Libraries :: Python Modules'
+    ]
+)
