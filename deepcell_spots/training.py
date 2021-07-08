@@ -14,7 +14,7 @@ from tensorflow.keras.optimizers import SGD
 from deepcell.utils import train_utils
 from deepcell.utils.train_utils import rate_scheduler
 
-from deepcell_spots import losses
+from deepcell_spots import dotnet_losses
 from deepcell_spots import image_generators
 from deepcell_spots.data_utils import get_data
 
@@ -107,11 +107,11 @@ def train_model_dot(model,
 
     print('Training on {} GPUs'.format(num_gpus))
 
-    dotnet_losses = losses.DotNetLosses(sigma=sigma, alpha=alpha, gamma=gamma, focal=focal)
+    losses = dotnet_losses.DotNetLosses(sigma=sigma, alpha=alpha, gamma=gamma, focal=focal)
 
     loss = {
-        'offset_regression': dotnet_losses.regression_loss,
-        'classification': dotnet_losses.classification_loss
+        'offset_regression': losses.regression_loss,
+        'classification': losses.classification_loss
     }
 
     loss_weights = {"offset_regression": 1.0, "classification": 1.0}
