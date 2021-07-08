@@ -1,9 +1,9 @@
 # Use tensorflow/tensorflow as the base image
 # Change the build arg to edit the tensorflow version.
 # Only supporting python3.
-ARG deepcell=0.9.0
+ARG DEEPCELL_VERSION=0.9.0
 
-FROM tensorflow/tensorflow:${TF_VERSION}
+FROM deepcell:${DEEPCELL_VERSION}
 
 # System maintenance
 RUN /usr/bin/python3 -m pip install --upgrade pip
