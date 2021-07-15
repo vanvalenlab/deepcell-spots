@@ -77,7 +77,8 @@ class Application(object):
         self.model = model
 
         self.model_image_shape = model_image_shape
-        # Require dimension 1 larger than model_input_shape due to addition of batch dimension
+        # Require dimension 1 larger than model_input_shape due to
+        # addition of batch dimension
         self.required_rank = len(self.model_image_shape) + 1
 
         self.required_channels = self.model_image_shape[-1]
@@ -97,7 +98,8 @@ class Application(object):
         if self.postprocessing_fn is not None and not callable(self.postprocessing_fn):
             raise ValueError('Postprocessing_fn must be a callable function.')
         if self.format_model_output_fn is not None and not callable(self.format_model_output_fn):
-            raise ValueError('Format_model_output_fn must be a callable function.')
+            raise ValueError(
+                'Format_model_output_fn must be a callable function.')
 
     def predict(self, x):
         raise NotImplementedError

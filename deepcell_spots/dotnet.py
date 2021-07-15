@@ -1,7 +1,13 @@
-### 
+###
 """ CNN architechture with classification and regression outputs for dot center detection"""
 
 
+from deepcell.layers import TensorProduct
+from deepcell.layers import ReflectionPadding2D, ReflectionPadding3D
+from deepcell.layers import Location2D, Location3D
+from deepcell.layers import ImageNormalization2D, ImageNormalization3D
+from deepcell.layers import DilatedMaxPool2D, DilatedMaxPool3D
+from deepcell.model_zoo import bn_feature_net_skip_2D
 import numpy as np
 
 from tensorflow.python.keras import backend as K
@@ -15,21 +21,16 @@ from tensorflow.python.keras.layers import BatchNormalization
 from tensorflow.python.keras.initializers import RandomNormal
 from tensorflow.python.keras.regularizers import l2
 
-### for running on my laptop:
+# for running on my laptop:
 import sys
 sys.path.append(r'C:\Users\nitza\OneDrive\Documents\GitHub\deepcell-tf')
-### end for laptop deepcel import
-from deepcell.model_zoo import bn_feature_net_skip_2D
-from deepcell.layers import DilatedMaxPool2D, DilatedMaxPool3D
-from deepcell.layers import ImageNormalization2D, ImageNormalization3D
-from deepcell.layers import Location2D, Location3D
-from deepcell.layers import ReflectionPadding2D, ReflectionPadding3D
-from deepcell.layers import TensorProduct
+# end for laptop deepcel import
 
 
 def default_heads(input_shape, num_classes):
     """
-    Create a list of the default heads for dot detection center pixel detection and offset regression
+    Create a list of the default heads for dot detection center pixel detection and
+    offset regression
 
     Args:
       input_shape
@@ -40,10 +41,13 @@ def default_heads(input_shape, num_classes):
       and the second element is the submodel itself.
 
     """
-    num_dimensions = 2 # regress x and y coordinates (pixel center signed distance from nearest object center)
+    # regress x and y coordinates (pixel center signed distance from  nearest object center)
+    num_dimensions = 2
     return [
-      ('offset_regression', offset_regression_head(num_values=num_dimensions, input_shape=input_shape)),
-      ('classification', classification_head(input_shape,n_features=num_classes))
+        ('offset_regression', offset_regression_head(
+            num_values=num_dimensions, input_shape=input_shape)),
+        ('classification', classification_head(
+            input_shape, n_features=num_classes))
     ]
 
 
@@ -57,7 +61,8 @@ def classification_head(input_shape,
     Creates a classification head
 
     Args:
-        n_features (int): Number of output features (number of possible classes for each pixel. default is 2: contains point / does not contain point)
+        n_features (int): Number of output features (number of possible classes for each pixel.
+        default is 2: contains point / does not contain point)
         reg (int): regularization value
         init (str): Method for initalizing weights.
 
@@ -67,16 +72,18 @@ def classification_head(input_shape,
 
     channel_axis = 1 if K.image_data_format() == 'channels_first' else -1
 
-    x = [] # Create layers list (x) to store all of the layers.
+    x = []  # Create layers list (x) to store all of the layers.
     inputs = Input(shape=input_shape)
     x.append(inputs)
-    x.append(TensorProduct(n_dense_filters, kernel_initializer=init, kernel_regularizer=l2(reg))(x[-1]))
+    x.append(TensorProduct(n_dense_filters, kernel_initializer=init,
+                           kernel_regularizer=l2(reg))(x[-1]))
     x.append(BatchNormalization(axis=channel_axis)(x[-1]))
     x.append(Activation('relu')(x[-1]))
-    x.append(TensorProduct(n_features, kernel_initializer=init, kernel_regularizer=l2(reg))(x[-1]))
-    #x.append(Flatten()(x[-1]))
+    x.append(TensorProduct(n_features, kernel_initializer=init,
+                           kernel_regularizer=l2(reg))(x[-1]))
+    # x.append(Flatten()(x[-1]))
     outputs = Softmax(axis=channel_axis)(x[-1])
-    #x.append(outputs)
+    # x.append(outputs)
 
     return Model(inputs=inputs, outputs=outputs, name=name)
 
@@ -119,13 +126,15 @@ def rn_classification_head(num_classes,
 
     # reshape output and apply sigmoid
     if K.image_data_format() == 'channels_first':
-        outputs = Permute((2, 3, 1), name='pyramid_classification_permute')(outputs)
-    outputs = Reshape((-1, num_classes), name='pyramid_classification_reshape')(outputs)
-    outputs = Activation('sigmoid', name='pyramid_classification_sigmoid')(outputs)
+        outputs = Permute(
+            (2, 3, 1), name='pyramid_classification_permute')(outputs)
+    outputs = Reshape((-1, num_classes),
+                      name='pyramid_classification_reshape')(outputs)
+    outputs = Activation(
+        'sigmoid', name='pyramid_classification_sigmoid')(outputs)
 
     return Model(inputs=inputs, outputs=outputs, name=name)
 
-    
 
 def offset_regression_head(num_values,
                            input_shape,
@@ -155,12 +164,14 @@ def offset_regression_head(num_values,
     return Model(inputs=inputs, outputs=outputs, name=name)
 
 # TO BE DELETED - only needed when there are multiple features but here have only 1 backbone_output
+
+
 def __build_model_heads(name, model, backbone_output):
     identity = Lambda(lambda x: x, name=name)
     return identity(model(backbone_output))
-    #for name, model in head_submodels: # DELETE?
-    #concat = Concatenate(axis=1, name=name)
-    #return concat([model(backbone_output)])
+    # for name, model in head_submodels: # DELETE?
+    # concat = Concatenate(axis=1, name=name)
+    # return concat([model(backbone_output)])
 
 
 def dot_net_2D(receptive_field=13,
@@ -171,11 +182,10 @@ def dot_net_2D(receptive_field=13,
                padding_mode='reflect',
                **kwargs):
 
-
     inputs = Input(shape=input_shape)
 
-    #models  = []
-    #model_outputs = [] # AAA outputs all the intermediate outputs used for skips in featurenet
+    # models  = []
+    # model_outputs = [] # AAA outputs all the intermediate outputs used for skips in featurenet
 
     featurenet_model = bn_feature_net_skip_2D(
         receptive_field=receptive_field,
@@ -193,20 +203,24 @@ def dot_net_2D(receptive_field=13,
 
     featurenet_output = featurenet_model(inputs)
 
-    #model_outputs.append(featurenet_output)
-    #models.append(featurenet_model)
+    # model_outputs.append(featurenet_output)
+    # models.append(featurenet_model)
 
-    # add 2 heads: 1 for center pixel classification (should be 1 for pixel which has center, 0 otherwise),
-    # and 1 for center location regression (size of classification output where pixel value = signed x/y distance to nearest max of classification)
+    # add 2 heads: 1 for center pixel classification
+    # (should be 1 for pixel which has center, 0 otherwise),
+    # and 1 for center location regression
+    # (size of classification output where pixel value = signed x/y distance to nearest max
+    # of classification)
     # softmax top (as in include_top==True for bn_feature_net_2D):
 
     input_shape = featurenet_output.get_shape().as_list()[1:]
 
-    head_submodels = default_heads(input_shape=input_shape, num_classes=2) # 2 classes: contains / does not contain dot center
-    dot_head = [__build_model_heads(n, m, featurenet_output) for n, m in head_submodels]
+    # 2 classes: contains / does not contain dot center
+    head_submodels = default_heads(input_shape=input_shape, num_classes=2)
+    dot_head = [__build_model_heads(n, m, featurenet_output)
+                for n, m in head_submodels]
     outputs = dot_head
 
-
-    #model = Model(inputs=inputs, outputs=outputs, name=name)
+    # model = Model(inputs=inputs, outputs=outputs, name=name)
     model = Model(inputs=inputs, outputs=outputs)
     return model

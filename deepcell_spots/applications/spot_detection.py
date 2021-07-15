@@ -58,7 +58,7 @@ class SpotDetection(Application):
         im = imread('HeLa_nuclear.png')
         # Expand image dimensions to rank 4
         im = np.expand_dims(im, axis=-1)
-        im = np.expand_dims(im, axis=0) 
+        im = np.expand_dims(im, axis=0)
         # Create the application
         app = SpotDetection()
         # create the lab
@@ -70,8 +70,9 @@ class SpotDetection(Application):
 
     #: Metadata for the dataset used to train the model
     dataset_metadata = {
-        'name': 'general_train', #update
-        'other': 'Pooled FISH data including MERFISH data and SunTag viral RNA data' #update
+        'name': 'general_train',  # update
+        'other': """Pooled FISH data including MERFISH data
+                    and SunTag viral RNA data"""  # update
     }
 
     #: Metadata for the model and training process
@@ -94,8 +95,12 @@ class SpotDetection(Application):
                 extract=True, cache_subdir='models'
             )
             model_path = os.path.splitext(archive_path)[0]
-            model = tf.keras.models.load_model(model_path, custom_objects={'regression_loss':DotNetLosses.regression_loss,
-                                                                             'classification_loss':DotNetLosses.classification_loss})
+            model = tf.keras.models.load_model(
+                model_path, custom_objects={
+                    'regression_loss': DotNetLosses.regression_loss,
+                    'classification_loss': DotNetLosses.classification_loss
+                }
+            )
 
         super(SpotDetection, self).__init__(
             model,
@@ -129,26 +134,28 @@ class SpotDetection(Application):
                 pre-processing function.
             postprocess_kwargs (dict): Keyword arguments to pass to the
                 post-processing function.
-            threshold (float): Probability threshold for a pixel to be considered as a spot. 
+            threshold (float): Probability threshold for a pixel to be
+                                considered as a spot.
         Raises:
             ValueError: Input data must match required rank of the application,
-                calculated as one dimension more (batch dimension) than expected
-                by the model.
+                calculated as one dimension more (batch dimension) than
+                expected by the model.
             ValueError: Input data must match required number of channels.
         Returns:
-            numpy.array: Coordinate locations of detected spots. 
+            numpy.array: Coordinate locations of detected spots.
         """
 
         if threshold < 0 or threshold > 1:
-            raise ValueError('Enter a probability threshold value between 0 and 1.')
+            raise ValueError("""Enter a probability threshold value between
+                                0 and 1.""")
 
         if preprocess_kwargs is None:
             preprocess_kwargs = {}
 
         if postprocess_kwargs is None:
             postprocess_kwargs = {
-                'threshold':threshold,
-                'min_distance':1}
+                'threshold': threshold,
+                'min_distance': 1}
 
         return self._predict_segmentation(
             image,

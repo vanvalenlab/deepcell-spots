@@ -5,22 +5,28 @@ from itertools import combinations
 from scipy.spatial import distance
 from cluster_vis import *
 
+
 def calc_tpr_fpr(gt, data):
-    """Calculate the true postivie rate and false positive rate for a pair of ground truth labels and detection data. 
-    
-    Parameters: 
+    """Calculate the true postivie rate and false positive rate for a pair of ground truth labels
+    and detection data.
+
+    Parameters:
     ------------
     gt : array-like
-        Array of ground truth cluster labels. A value of 1 indicates a true detection and a value of 0 indicates a false detection. 
+        Array of ground truth cluster labels. A value of 1 indicates a true detection and a value
+        of 0 indicates a false detection.
     data : array-like
-        Array of detection data with same length . A value of 1 indicates a detected clsuter and a value of 0 indicates an undetected cluster. 
-    
+        Array of detection data with same length . A value of 1 indicates a detected clsuter and a
+        value of 0 indicates an undetected cluster.
+
     Returns:
     ---------
     tpr : float
-        Value for the true positive rate of an annotator. This is the probability that an annotator will detect a spot that is labeled as a ground truth true detection.
+        Value for the true positive rate of an annotator. This is the probability that an annotator
+        will detect a spot that is labeled as a ground truth true detection.
     fpr : flaot
-        Value for the false positive rate of an annotator. This is the probability that an annotator will detect a spot that is labeled as a ground truth false detection. 
+        Value for the false positive rate of an annotator. This is the probability that an
+        annotator will detect a spot that is labeled as a ground truth false detection.
     """
     tp = 0
     fn = 0
@@ -45,25 +51,33 @@ def calc_tpr_fpr(gt, data):
 
     return tpr, fpr
 
+
 def det_likelihood(cluster_data, pr_list):
-    """Calculate the likelihood that a cluster is a true positive or false positive. To calculate the likelihood of a true positive, pr_list should be a list of TPRs for all annotators. To calculate the likelihood of a cluster being a false positive, pr_list should be a list of FPRs for all annotators. 
-    
+    """Calculate the likelihood that a cluster is a true positive or false positive. To calculate
+    the likelihood of a true positive, pr_list should be a list of TPRs for all annotators. To
+    calculate the likelihood of a cluster being a false positive, pr_list should be a list of FPRs
+    for all annotators.
+
     Returns a value for the likelihood that a cluster is either a true positive or a false positive
-    
+
     Parameters:
     -----------
     cluster_data : array_like
-        Array of detection labels for each annotator. Entry has value 1 if annotator detected the cluster, and entry has value 0 if annotator did not detect the cluster. 
+        Array of detection labels for each annotator. Entry has value 1 if annotator detected the
+        cluster, and entry has value 0 if annotator did not detect the cluster.
     pr_list : array_like
-        Array of true postive rates for each annotator if one wants to calculate the likelihood that the cluster is a true positive, or array of false positive rates for each annotator if one wants to calculate the likelihood that the cluster is a false positive. 
+        Array of true postive rates for each annotator if one wants to calculate the likelihood
+        that the cluster is a true positive, or array of false positive rates for each annotator if
+        one wants to calculate the likelihood that the cluster is a false positive.
 
     Returns:
     ---------
     likelihood : float
-        Value for the likelihood that a cluster is either a true positive or a false positive detection 
-    
+        Value for the likelihood that a cluster is either a true positive or a false positive
+        detection
+
     """
-    likelihood = 1 #init likelihood
+    likelihood = 1  # init likelihood
 
     for i in range(len(cluster_data)):
         if cluster_data[i] == 1:
@@ -72,13 +86,16 @@ def det_likelihood(cluster_data, pr_list):
             likelihood *= (1-pr_list[i])
     return likelihood
 
+
 def norm_marg_likelihood(cluster_data, tp_list, fp_list, prior):
-    """Calculates the normalized marginal likelihood that each cluster is a true positive or a false positive.
-    
+    """Calculates the normalized marginal likelihood that each cluster is a true positive or a
+    false positive.
+
     Parameters:
     -----------
     cluster_data : array_like
-        Array of detection labels for each annotator. Entry has value 1 if annotator detected the cluster, and entry has value 0 if annotator did not detect the cluster. 
+        Array of detection labels for each annotator. Entry has value 1 if annotator detected the
+        cluster, and entry has value 0 if annotator did not detect the cluster.
     tp_list : array_like
         Array of true postive rates for each annotator.
     fp_list : array_like
@@ -87,47 +104,58 @@ def norm_marg_likelihood(cluster_data, tp_list, fp_list, prior):
     Returns:
     ---------
     norm_tp_likelihood : float
-        Value for the normalized marginal likelihood that a cluster is either a true positive detection
+        Value for the normalized marginal likelihood that a cluster is either a true positive
+        detection
     norm_fp_likelihood : float
-        Value for the normalized marginal likelihood that a cluster is either a false positive detection
-    
+        Value for the normalized marginal likelihood that a cluster is either a false positive
+        detection
+
     """
     tp_likelihood = det_likelihood(cluster_data, tp_list)
     fp_likelihood = det_likelihood(cluster_data, fp_list)
 
-    norm_tp_likelihood = tp_likelihood * prior / (tp_likelihood * prior + fp_likelihood * (1-prior))
-    norm_fp_likelihood = fp_likelihood * (1-prior) / (tp_likelihood * prior + fp_likelihood * (1-prior))
+    norm_tp_likelihood = tp_likelihood * prior / \
+        (tp_likelihood * prior + fp_likelihood * (1-prior))
+    norm_fp_likelihood = fp_likelihood * \
+        (1-prior) / (tp_likelihood * prior + fp_likelihood * (1-prior))
 
     return norm_tp_likelihood, norm_fp_likelihood
 
+
 def em_spot(cluster_matrix, tp_list, fp_list, prior=0.9, max_iter=10):
-    """ Estimate the TPR/FPR and probability of true detection for various spot annotators using expectation maximization. 
+    """ Estimate the TPR/FPR and probability of true detection for various spot annotators using
+    expectation maximization.
 
-    Returns the true positive rate and false positive rate for each annotator, and returns the probability that each spot is a true detection or false detection. 
+    Returns the true positive rate and false positive rate for each annotator, and returns the
+    probability that each spot is a true detection or false detection.
 
-    Parameters: 
+    Parameters:
     -----------
     cluster_matrix : matrix
-        Matrix of detection labels for each spot for each annotator. Dimensions spots x annotators. A value of 1 indicates that the spot was detected by that annotator and a value of 0 indicates that the spot was not detected by that annotator. 
+        Matrix of detection labels for each spot for each annotator. Dimensions spots x annotators.
+        A value of 1 indicates that the spot was detected by that annotator and a value of 0
+        indicates that the spot was not detected by that annotator.
     tp_list : array-like
-        Array of initial guesses for the true positive rates for each annotator. 
+        Array of initial guesses for the true positive rates for each annotator.
     fp_list : array-like
-        Array of initial guesses for the false positive rates for each annotator. 
+        Array of initial guesses for the false positive rates for each annotator.
     prior : float
         Value for the prior probability that a spot is a true positive.
     max_iter : integer
-        Value for the number of times the expectation maximization algorithm will iteratively calculate the MLE for the TPR and FPR of the annotators.
+        Value for the number of times the expectation maximization algorithm will iteratively
+        calculate the MLE for the TPR and FPR of the annotators.
 
     Returns:
     -----------
     tp_list : array-like
-        Array of final estimates for the true positive rates for each annotator. 
+        Array of final estimates for the true positive rates for each annotator.
     fp_list : array-like
-        Array of final estimates for the false postitive rates for each annotator. 
+        Array of final estimates for the false postitive rates for each annotator.
     likelihood_matrix : matrix
-        Matrix of probabilities that each cluster is a true detection (column 0) or false detection (column 1). Dimensions spots x 2.
+        Matrix of probabilities that each cluster is a true detection (column 0) or false detection
+        (column 1). Dimensions spots x 2.
     """
-    
+
     likelihood_matrix = np.zeros((len(cluster_matrix), 2))
 
     for i in range(max_iter):
@@ -135,46 +163,57 @@ def em_spot(cluster_matrix, tp_list, fp_list, prior=0.9, max_iter=10):
         likelihood_matrix = np.zeros((len(cluster_matrix), 2))
 
         for i in range(len(cluster_matrix)):
-            likelihood_matrix[i] = norm_marg_likelihood(cluster_matrix[i], tp_list, fp_list, prior)
+            likelihood_matrix[i] = norm_marg_likelihood(
+                cluster_matrix[i], tp_list, fp_list, prior)
 
         # Calculate the expectation value for the number of TP/FN/FP/TN
         tp_matrix = np.zeros((np.shape(cluster_matrix)))
-        for i in range(len(cluster_matrix)): 
-            tp_matrix[i] = likelihood_matrix[i,0] * cluster_matrix[i]
+        for i in range(len(cluster_matrix)):
+            tp_matrix[i] = likelihood_matrix[i, 0] * cluster_matrix[i]
 
         fn_matrix = np.zeros((np.shape(cluster_matrix)))
         for i in range(len(cluster_matrix)):
-            fn_matrix[i] = likelihood_matrix[i,0] * (cluster_matrix[i] * -1 + 1)
+            fn_matrix[i] = likelihood_matrix[i, 0] * \
+                (cluster_matrix[i] * -1 + 1)
 
         fp_matrix = np.zeros((np.shape(cluster_matrix)))
-        for i in range(len(cluster_matrix)):  
-            fp_matrix[i] = likelihood_matrix[i,1] * cluster_matrix[i]
+        for i in range(len(cluster_matrix)):
+            fp_matrix[i] = likelihood_matrix[i, 1] * cluster_matrix[i]
 
         tn_matrix = np.zeros((np.shape(cluster_matrix)))
         for i in range(len(cluster_matrix)):
-            tn_matrix[i] = likelihood_matrix[i,1] * (cluster_matrix[i] * -1 + 1)
+            tn_matrix[i] = likelihood_matrix[i, 1] * \
+                (cluster_matrix[i] * -1 + 1)
 
-        tp_sum_list = [sum(tp_matrix[:,i]) for i in range(np.shape(cluster_matrix)[1])]
-        fn_sum_list = [sum(fn_matrix[:,i]) for i in range(np.shape(cluster_matrix)[1])]
-        fp_sum_list = [sum(fp_matrix[:,i]) for i in range(np.shape(cluster_matrix)[1])]
-        tn_sum_list = [sum(tn_matrix[:,i]) for i in range(np.shape(cluster_matrix)[1])]
+        tp_sum_list = [sum(tp_matrix[:, i])
+                       for i in range(np.shape(cluster_matrix)[1])]
+        fn_sum_list = [sum(fn_matrix[:, i])
+                       for i in range(np.shape(cluster_matrix)[1])]
+        fp_sum_list = [sum(fp_matrix[:, i])
+                       for i in range(np.shape(cluster_matrix)[1])]
+        tn_sum_list = [sum(tn_matrix[:, i])
+                       for i in range(np.shape(cluster_matrix)[1])]
 
         # Calculate the MLE estimate for the TPR/FPR
-        tp_list = [tp_sum_list[i] / (tp_sum_list[i]+fn_sum_list[i]) for i in range(np.shape(cluster_matrix)[1])]
-        fp_list = [fp_sum_list[i] / (fp_sum_list[i]+tn_sum_list[i]) for i in range(np.shape(cluster_matrix)[1])]
+        tp_list = [tp_sum_list[i] / (tp_sum_list[i]+fn_sum_list[i])
+                   for i in range(np.shape(cluster_matrix)[1])]
+        fp_list = [fp_sum_list[i] / (fp_sum_list[i]+tn_sum_list[i])
+                   for i in range(np.shape(cluster_matrix)[1])]
 
-
-    likelihood_matrix = np.round(likelihood_matrix,2)
+    likelihood_matrix = np.round(likelihood_matrix, 2)
 
     return tp_list, fp_list, likelihood_matrix
 
-def cluster_coords(all_coords,image_stack,threshold):
-    """ Cluster coords from different clasical annotators 
-    Parameters: 
+
+def cluster_coords(all_coords, image_stack, threshold):
+    """ Cluster coords from different clasical annotators
+
+    Parameters:
     ------------
     all_coords : matrix
-        List with length (number of classical algorithms), where each entry has length (number of images), where each of those
-        entries has dimensions (number of detections) x 2 and is filled by the locations of the detected points for each image
+        List with length (number of classical algorithms), where each entry has length (number of
+        images), where each of those entries has dimensions (number of detections) x 2 and is
+        filled by the locations of the detected points for each image
         for each classical annotator
     image_stack : matrix
         Image matrix with the dimensions (batch, image_dim_x, image_dim_y, channel)
@@ -184,11 +223,11 @@ def cluster_coords(all_coords,image_stack,threshold):
     Returns:
     -----------
     cluster_matrix : matrix
-        Matrix with dimensions (number of detections) x (number of algorithms), filled with value 1 if the algorithm detected
-        that cluster, and 0 if it did not
+        Matrix with dimensions (number of detections) x (number of algorithms), filled with value 1
+        if the algorithm detected that cluster, and 0 if it did not
     centroid_list : matrix
-        List with length (number of images), where each entry has dimensions (number of detections) x 2, filled with the centroids 
-        of all clusters of detections
+        List with length (number of images), where each entry has dimensions
+        (number of detections) x 2, filled with the centroids of all clusters of detections
     all_coords_updated : matrix
         Same values as input all_coords, with entries removed from images with no detections
     image_stack_updated : matrix
@@ -201,7 +240,7 @@ def cluster_coords(all_coords,image_stack,threshold):
     # adjacency matrix
     A = define_edges(coords, threshold)
     # create graph
-    G=nx.from_numpy_matrix(A)
+    G = nx.from_numpy_matrix(A)
     # label each annotator on graph
     G_labeled = label_graph_ann(G, coords)
     # break up clusters with multiple spots from single annotator
@@ -215,16 +254,16 @@ def cluster_coords(all_coords,image_stack,threshold):
     num_spots_list = [len(cluster_matrix)]
     centroid_list = [spot_centroids]
     # iterate through images
-    for i in range(1,len(all_coords[0])):
+    for i in range(1, len(all_coords[0])):
         len_list = np.array([len(item[i]) for item in all_coords])
-        
+
         if 0 in len_list:
             ind_skipped.append(i)
             continue
 
         coords = np.array([item[i] for item in all_coords])
         A = define_edges(coords, threshold)
-        G=nx.from_numpy_matrix(A)
+        G = nx.from_numpy_matrix(A)
         G_labeled = label_graph_ann(G, coords)
         G_clean = check_spot_ann_num(G_labeled, coords)
 
@@ -242,23 +281,24 @@ def cluster_coords(all_coords,image_stack,threshold):
         all_coords_updated = []
         for i in range(np.shape(all_coords)[0]):
             temp_coords = all_coords[i]
-            temp_coords_updated = np.delete(temp_coords,ind_skipped,axis=0)
+            temp_coords_updated = np.delete(temp_coords, ind_skipped, axis=0)
             all_coords_updated.append(temp_coords_updated)
-        
+
         centroid_list = [np.array(item) for item in centroid_list]
 
     return cluster_matrix, centroid_list, all_coords_updated, image_stack_updated
 
+
 def running_total_spots(centroid_list):
-    """ Returns a running total of the number of detections in each image 
+    """ Returns a running total of the number of detections in each image
 
     Parameters:
     ------------
     centroid_list : matrix
-        List with length (number of images), where each entry has dimensions (number of detections) x 2, filled with the centroids 
-        of all clusters of detections
+        List with length (number of images), where each entry has dimensions
+        (number of detections) x 2, filled with the centroids of all clusters of detections
 
-    Returns: 
+    Returns:
     --------
     running_total : array
         Array of running total number of detections from each image
@@ -273,21 +313,23 @@ def running_total_spots(centroid_list):
 
     return running_total
 
+
 def cluster_to_adjacency_matrix(cluster_matrix):
     """ Converts cluster_matrix to adjacency matrix.
     Parameters:
     -------------
     cluster_matrix : matrix
-        Output of cluster_coords. 
-        Matrix with dimensions (number of detections) x (number of algorithms), filled with value 1 if the algorithm detected
-        that cluster, and 0 if it did not
+        Output of cluster_coords.
+        Matrix with dimensions (number of detections) x (number of algorithms), filled with value 1
+        if the algorithm detected that cluster, and 0 if it did not
     A : matrix
-        Adjacency matrix with dimensions (number of detections) x (number of detections), filled with value 1 if two detections 
-        (nodes) are connected because they are closer than some threshold distance
+        Adjacency matrix with dimensions (number of detections) x (number of detections), filled
+        with value 1 if two detections (nodes) are connected because they are closer than some
+        threshold distance
     """
     num_clusters = np.shape(cluster_matrix)[0]
     num_annnotators = np.shape(cluster_matrix)[1]
-    tot_det_list = [sum(cluster_matrix[:,i]) for i in range(num_annnotators)]
+    tot_det_list = [sum(cluster_matrix[:, i]) for i in range(num_annnotators)]
     tot_num_detections = int(sum(tot_det_list))
 
     A = np.zeros((tot_num_detections, tot_num_detections))
@@ -298,54 +340,59 @@ def cluster_to_adjacency_matrix(cluster_matrix):
         for ii in range(len(combos)):
             ann_index0 = combos[ii][0]
             ann_index1 = combos[ii][1]
-            det_index0 = int(sum(tot_det_list[:ann_index0]) + sum(cluster_matrix[:i,ann_index0]))
-            det_index1 = int(sum(tot_det_list[:ann_index1]) + sum(cluster_matrix[:i,ann_index1]))
+            det_index0 = int(
+                sum(tot_det_list[:ann_index0]) + sum(cluster_matrix[:i, ann_index0]))
+            det_index1 = int(
+                sum(tot_det_list[:ann_index1]) + sum(cluster_matrix[:i, ann_index1]))
 
             A[det_index0, det_index1] += 1
             A[det_index1, det_index0] += 1
 
     return A
 
+
 def check_spot_ann_num(G, coords):
-    """ Check that each annotator only has one spot per cluster, break up clusters that have multiple spots per annotator"""
+    """ Check that each annotator only has one spot per cluster, break up clusters that have
+    multiple spots per annotator"""
     # Get all node labels
-    node_labels = list(nx.get_node_attributes(G,'name').values())
+    node_labels = list(nx.get_node_attributes(G, 'name').values())
     # Get all connected nodes = clusters
     clusters = list(nx.connected_components(G))
     flat_coords = np.vstack(coords)
 
-    # Iterate through clusters 
+    # Iterate through clusters
     for i in range(len(clusters)):
         # Get points in a cluster
         cluster_pts = list(clusters[i])
 
-        # Get labels for points in cluster 
+        # Get labels for points in cluster
         pt_labels = np.array(node_labels)[cluster_pts]
-        
+
         # Check for repeated labels
         if len(pt_labels) != len(np.unique(pt_labels)):
             pt_labels = pt_labels.tolist()
             # Find which labels repeat
             repeats = set([x for x in pt_labels if pt_labels.count(x) > 1])
             repeats = list(repeats)
-            # Calculate the centroid of the cluster 
+            # Calculate the centroid of the cluster
             pt_locs = flat_coords[cluster_pts]
-            centroid = [np.mean(pt_locs[:,0]), np.mean(pt_locs[:,1])]
+            centroid = [np.mean(pt_locs[:, 0]), np.mean(pt_locs[:, 1])]
 
-            # Iterate through the repeated clusters 
+            # Iterate through the repeated clusters
             for ii in range(len(repeats)):
                 # Get points with a particular repeated label
                 repeat_pts = np.argwhere(np.array(pt_labels) == repeats[ii])
                 repeat_pts = repeat_pts.tolist()
 
-                # Find point that is the closest to the centroid of the cluster 
-                pt_dists = [distance.euclidean(pt_locs[item],centroid) for item in repeat_pts]
+                # Find point that is the closest to the centroid of the cluster
+                pt_dists = [distance.euclidean(
+                    pt_locs[item], centroid) for item in repeat_pts]
                 min_ind = np.argmin(pt_dists)
 
-                # Remove the point that is the closest to the centroid of the cluster 
+                # Remove the point that is the closest to the centroid of the cluster
                 repeat_pts.pop(min_ind)
 
-                #need to break all edges that have repeating annotators 
+                # need to break all edges that have repeating annotators
                 for item in repeat_pts:
                     repeat_node = cluster_pts[item[0]]
                     edges = list(G.edges(repeat_node))
@@ -353,11 +400,13 @@ def check_spot_ann_num(G, coords):
                         G.remove_edge(*edge)
     return G
 
+
 def ca_matrix(G):
-    """Convert graph into cluster x annotators matrix (cluster_matrix) where 0 means annotator did not find a point in that cluster
-    and 1 means that the annotator did find a point in that cluster"""
+    """Convert graph into cluster x annotators matrix (cluster_matrix) where 0 means annotator did
+    not find a point in that cluster and 1 means that the annotator did find a point in that
+    cluster"""
     clusters = list(nx.connected_components(G))
-    node_labels = list(nx.get_node_attributes(G,'name').values())
+    node_labels = list(nx.get_node_attributes(G, 'name').values())
     num_ann = len(np.unique(node_labels))
 
     ca_matrix = np.zeros((len(clusters), num_ann))
@@ -365,29 +414,33 @@ def ca_matrix(G):
         cluster_pts = list(clusters[i])
 
         for item in cluster_pts:
-            ca_matrix[i,node_labels[item]] += 1
+            ca_matrix[i, node_labels[item]] += 1
 
     return ca_matrix
 
+
 def define_edges(coords, threshold):
-    """Defines that adjacency matrix for the multiple annotators, connecting points that are sufficiently close to one another
-    It is assumed that these spots are derived from the same ground truth spot in the original image
-    
+    """Defines that adjacency matrix for the multiple annotators, connecting points that are
+    sufficiently close to one another. It is assumed that these spots are derived from the same
+    ground truth spot in the original image
+
     Parameters:
     -----------
     coords : array-like
-        Array of coordinates from each annotator, length is equal to the number of annotators. Each item in the array is a matrix
-        of detection locations with dimensions (number of detections)x2.
+        Array of coordinates from each annotator, length is equal to the number of annotators. Each
+        item in the array is a matrix of detection locations with dimensions
+        (number of detections)x2.
     threshold : float
-        The distance in pixels. Detections closer than the threshold distance will be grouped into a "cluster" of detections, 
-        assumed to be derived from the same ground truth detection. 
+        The distance in pixels. Detections closer than the threshold distance will be grouped into
+        a "cluster" of detections, assumed to be derived from the same ground truth detection.
 
     Returns:
     ----------
     A : matrix
-        Matrix of dimensions (number of detections) x (number of detections) defining edges of a graph clustering detections by 
-        detections from different annotators derived from the same ground truth detection. A value of 1 denotes two connected nodes
-        in the eventual graph and a value of 0 denotes disconnected nodes. 
+        Matrix of dimensions (number of detections) x (number of detections) defining edges of a
+        graph clustering detections by detections from different annotators derived from the same
+        ground truth detection. A value of 1 denotes two connected nodes in the eventual graph and
+        a value of 0 denotes disconnected nodes.
     """
     # flatten detection coordinates into single 1d array
     all_coords = np.vstack(coords)
@@ -415,15 +468,18 @@ def cluster_centroids(G, coords):
     Parameters:
     -------------
     G : networkx graph
-        Graph with edges connecting nodes representing detections derived from the same ground truth detection
+        Graph with edges connecting nodes representing detections derived from the same ground
+        truth detection
     coords : matrix
-        Array of coordinates from each annotator, length is equal to the number of annotators. Each item in the array is a matrix
-        of detection locations with dimensions (number of detections)x2.
+        Array of coordinates from each annotator, length is equal to the number of annotators. Each
+        item in the array is a matrix of detection locations with dimensions
+        (number of detections)x2.
 
     Returns:
     ---------
     centroid_list : matrix
-        Matrix with dimensions (number of detections) x 2, filled with the centroids of all clusters of detections
+        Matrix with dimensions (number of detections) x 2, filled with the centroids of all
+        clusters of detections
 
     """
     clusters = list(nx.connected_components(G))
@@ -433,22 +489,27 @@ def cluster_centroids(G, coords):
     for i in range(len(clusters)):
         cluster_pts = list(clusters[i])
         pt_locs = flat_coords[cluster_pts]
-        centroid = [np.mean(pt_locs[:,0]), np.mean(pt_locs[:,1])]
+        centroid = [np.mean(pt_locs[:, 0]), np.mean(pt_locs[:, 1])]
         centroid_list.append(centroid)
 
     return centroid_list
 
-def consensus_coords(p_matrix,centroid_list,running_total,threshold=0.5):
-    """Converts EM output to a list of consensus spot coordinate locations. 
 
-    Args:
-    p_matrix: matrix with the dimensions (number of cluster)x2, each entry is the probability that the detection is a true detection or false detection
+def consensus_coords(p_matrix, centroid_list, running_total, threshold=0.5):
+    """Converts EM output to a list of consensus spot coordinate locations.
+
+    Parameters:
+    -------------
+    p_matrix: matrix with the dimensions (number of cluster)x2, each entry is the probability that
+                the detection is a true detection or false detection
     centroid_list: list of coordinate locations of the centroids of each of the clusters
     running_total: list with running total for the number of clusters in each image
     threshold: value for probability threshold for a cluster to be considered a true detection
 
     Returns:
-    y: nested list with length (number of images) with the coordinate locations of spots in each image
+    -------------
+    y: nested list with length (number of images) with the coordinate locations of spots in each
+        image
     """
     y = []
     for i in range(len(running_total)-1):
@@ -456,7 +517,7 @@ def consensus_coords(p_matrix,centroid_list,running_total,threshold=0.5):
         start_ind = running_total[i]
         end_ind = running_total[i+1]
 
-        labels = p_matrix[start_ind:end_ind,0]
+        labels = p_matrix[start_ind:end_ind, 0]
         labels = np.array([item > threshold for item in labels])
 
         temp_y = []
@@ -465,5 +526,5 @@ def consensus_coords(p_matrix,centroid_list,running_total,threshold=0.5):
                 temp_y.append(temp_spots[ii])
 
         y.append(temp_y)
-    
+
     return y

@@ -36,6 +36,7 @@ from tensorflow.python.platform import test
 
 from spots_application import Application
 
+
 class DummyModel():
 
     def __init__(self, n_out=1):
@@ -44,6 +45,7 @@ class DummyModel():
     def predict(self, x, batch_size=4):
         y = np.random.rand(*x.shape)
         return [y] * self.n_out
+
 
 class TestApplication(test.TestCase):
 
@@ -263,8 +265,9 @@ class TestApplication(test.TestCase):
 
         x = np.random.rand(1, 128, 128, 1)
         y = app._predict_segmentation(x, image_mpp=1.3)
-        y = app._resize_output(y,x.shape)
+        y = app._resize_output(y, x.shape)
         self.assertEqual(x.shape, y.shape)
+
 
 if __name__ == '__main__':
     test.main()
