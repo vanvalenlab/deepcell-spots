@@ -220,4 +220,6 @@ class TestSimulateData(test.TestCase):
         img, label = next(g)
         self.assertEqual(np.shape(img),(L,L))
         self.assertEqual(np.shape(label),(L,L))
-test.main()
+
+if __name__ == '__main__':
+    test.main()

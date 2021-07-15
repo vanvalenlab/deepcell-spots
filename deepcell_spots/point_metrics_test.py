@@ -197,5 +197,5 @@ class TestPointMetrics(test.TestCase):
         self.assertEqual(stats_dict['RMSE'],None)
         self.assertEqual(stats_dict['d_md'],None)
 
-
-test.main()
+if __name__ == '__main__':
+    test.main()

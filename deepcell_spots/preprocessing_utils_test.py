@@ -34,4 +34,5 @@ class TestPreProcUtils(test.TestCase):
 
         self.assertEqual(image.shape,norm_image.shape)
 
-test.main()
+if __name__ == '__main__':
+    test.main()

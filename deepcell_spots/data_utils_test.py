@@ -215,4 +215,5 @@ class TestDataUtils(test.TestCase):
         with self.assertRaises(KeyError):
             _, _ = get_data(bad_file)
 
-test.main()
+if __name__ == '__main__':
+    test.main()

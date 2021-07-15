@@ -16,5 +16,5 @@ class TestClusterVis(test.TestCase):
 
     
 
-
-test.main()
+if __name__ == '__main__':
+    test.main()

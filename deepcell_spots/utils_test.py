@@ -33,5 +33,5 @@ class TestUtils(test.TestCase):
     # def test_generate_transformation_matrix(self):
     #     # not sure what to test beside the shape
 
-
-test.main()
+if __name__ == '__main__':
+    test.main()

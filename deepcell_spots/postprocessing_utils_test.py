@@ -136,4 +136,5 @@ class TestPostProcUtils(test.TestCase):
                 for dim in range(2):
                     self.assertEqual(coords[i][ii][dim],2)
 
-test.main()
+if __name__ == '__main__':
+    test.main()

@@ -136,4 +136,5 @@ class TestSpotEM(test.TestCase):
         self.assertLessEqual(len(y),len(centroid_list))
         self.assertLessEqual(len(y),len(running_total)-1)
 
-test.main()
+if __name__ == '__main__':
+    test.main()
