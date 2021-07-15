@@ -14,4 +14,4 @@ show_missing = True
 
 omit =
     **/*_test.py
-    deepcell-spots/data/*
+    data/*
