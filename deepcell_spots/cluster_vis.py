@@ -27,6 +27,29 @@ def jitter(coords, size):
     return np.array(result)
 
 
+def ca_to_adjacency_matrix(ca_matrix):
+    num_clusters = np.shape(ca_matrix)[0]
+    num_annnotators = np.shape(ca_matrix)[1]
+    tot_det_list = [sum(ca_matrix[:, i]) for i in range(num_annnotators)]
+    tot_num_detections = sum(tot_det_list)
+
+    A = np.zeros((tot_num_detections, tot_num_detections))
+    for i in range(num_clusters):
+        det_list = np.ndarray.flatten(np.argwhere(ca_matrix[i] == 1))
+        combos = list(combinations(det_list, 2))
+
+        for ii in range(len(combos)):
+            ann_index0 = combos[ii][0]
+            ann_index1 = combos[ii][1]
+            det_index0 = sum(tot_det_list[:ann_index0]) + sum(ca_matrix[:i, ann_index0])
+            det_index1 = sum(tot_det_list[:ann_index1]) + sum(ca_matrix[:i, ann_index1])
+
+            A[det_index0, det_index1] += 1
+            A[det_index1, det_index0] += 1
+
+    return A
+
+
 def label_graph_ann(G, coords, exclude_last=False):
     """Labels the annotator associated with each node in the graph
     Parameters:

@@ -104,14 +104,6 @@ class TestSpotEM(test.TestCase):
 
         self.assertEqual(len(running_total), num_images+1)
 
-    def test_ca_to_adjacency_matrix(self):
-        num_clusters = 10
-        num_annotators = 3
-        ca_matrix = np.ones((num_clusters, num_annotators))
-        A = ca_to_adjacency_matrix(ca_matrix)
-
-        self.assertEqual(np.shape(A)[0], np.shape(A)[1], ca_matrix[0])
-
     def test_define_edges(self):
         num_detections = 10
         num_annotators = 3
