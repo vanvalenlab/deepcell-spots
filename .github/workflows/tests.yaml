@@ -42,7 +42,7 @@ jobs:
 
     - name: PyTest
       run: |
-        python -m pytest --cov deepcell_spots --pep8
+        python -m pytest deepcell_spots --pep8 --cov deepcell_spots
 
     - name: Coveralls
       if: env.COVERALLS_REPO_TOKEN != null
