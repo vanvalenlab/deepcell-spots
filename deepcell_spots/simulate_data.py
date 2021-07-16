@@ -246,8 +246,8 @@ def is_overlapping(x_list, y_list, a_list, x, y, a):
     x_list = np.array(x_list)
     y_list = np.array(y_list)
     a_list = np.array(a_list)
-    not_overlapping = ((x + a) < x_list) | ((x_list + a_list) < x) |
-    ((y + a) < y_list) | ((y_list + a_list) < y)
+    not_overlapping = ((x + a) < x_list) | ((x_list + a_list) < x) | \
+        ((y + a) < y_list) | ((y_list + a_list) < y)
     return not all(not_overlapping)
 
 
