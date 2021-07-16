@@ -42,8 +42,8 @@ def subpixel_distance_transform(point_list, image_shape, dy=1, dx=1):
     pixel_to_contained_point_ind = {}
 
     for ind, [y, x] in enumerate(point_list):
-        nearest_pixel_y_ind = int(round(y/dy))
-        nearest_pixel_x_ind = int(round(x/dx))
+        nearest_pixel_y_ind = int(round(y / dy))
+        nearest_pixel_x_ind = int(round(x / dx))
         contains_point[nearest_pixel_y_ind, nearest_pixel_x_ind] = 0
         pixel_to_contained_point_ind[(
             nearest_pixel_y_ind, nearest_pixel_x_ind)] = ind
@@ -65,7 +65,7 @@ def subpixel_distance_transform(point_list, image_shape, dy=1, dx=1):
             nearest_point[i, j] = pixel_to_contained_point_ind[(
                 inds[0][i, j], inds[1][i, j])]
             delta_y[i, j] = dy * (point_list[int(nearest_point[i, j])][0] - i)
-            delta_x[i, j] = dx*(point_list[int(nearest_point[i, j])][1] - j)
+            delta_x[i, j] = dx * (point_list[int(nearest_point[i, j])][1] - j)
 
     return delta_y, delta_x, nearest_point
 
@@ -240,15 +240,15 @@ def affine_transform_points(points, transform_parameters,
         #   image x position
         # find the unit cells that potentially intersect with the parallelogram domain that is
         #   mapped to the output:
-        y_cell_inds = input_parallelogram_corners[:, 0]//Ly
-        x_cell_inds = input_parallelogram_corners[:, 1]//Lx
+        y_cell_inds = input_parallelogram_corners[:, 0] // Ly
+        x_cell_inds = input_parallelogram_corners[:, 1] // Lx
         y_cell_min_ind = np.min(y_cell_inds)
         y_cell_max_ind = np.max(y_cell_inds)
         x_cell_min_ind = np.min(x_cell_inds)
         x_cell_max_ind = np.max(x_cell_inds)
         # list indices of unit cells that may be transformed into the output image range
-        y_cell_ind_list = range(int(y_cell_min_ind), int(y_cell_max_ind+1))
-        x_cell_ind_list = range(int(x_cell_min_ind), int(x_cell_max_ind+1))
+        y_cell_ind_list = range(int(y_cell_min_ind), int(y_cell_max_ind + 1))
+        x_cell_ind_list = range(int(x_cell_min_ind), int(x_cell_max_ind + 1))
 
         # allocate empty np.array to append point images from each unit cell
         point_images = np.empty((0, 2))
@@ -258,19 +258,19 @@ def affine_transform_points(points, transform_parameters,
                 for j in x_cell_ind_list:
                     this_cell_points = points.copy()
                     this_cell_points[:, 0] = (
-                        i*Ly + this_cell_points[:, 0]) if (i % 2 == 0) \
-                        else ((i+1)*Ly - this_cell_points[:, 0])
+                        i * Ly + this_cell_points[:, 0]) if (i % 2 == 0) \
+                        else ((i + 1) * Ly - this_cell_points[:, 0])
                     this_cell_points[:, 1] = (
-                        j*Lx + this_cell_points[:, 1]) if (j % 2 == 0) \
-                        else ((j+1)*Lx - this_cell_points[:, 1])
+                        j * Lx + this_cell_points[:, 1]) if (j % 2 == 0) \
+                        else ((j + 1) * Lx - this_cell_points[:, 1])
                     point_images = np.append(
                         point_images, this_cell_points, axis=0)
         elif fill_mode == 'wrap':
             for i in y_cell_ind_list:
                 for j in x_cell_ind_list:
                     this_cell_points = points.copy()
-                    this_cell_points[:, 0] = this_cell_points[:, 0] + i*Ly
-                    this_cell_points[:, 1] = this_cell_points[:, 1] + j*Lx
+                    this_cell_points[:, 0] = this_cell_points[:, 0] + i * Ly
+                    this_cell_points[:, 1] = this_cell_points[:, 1] + j * Lx
                     point_images = np.append(
                         point_images, this_cell_points, axis=0)
 
@@ -302,7 +302,7 @@ def affine_transform_points(points, transform_parameters,
     # delete transformed points that are not inside the output image
     def point_in_image(points, image_shape, img_row_axis, img_col_axis):
         p_in_y = (-0.5 <= points[:, img_row_axis]) & \
-             (points[:, img_row_axis] <= (image_shape[img_row_axis] - 0.5))
+            (points[:, img_row_axis] <= (image_shape[img_row_axis] - 0.5))
         p_in_x = (-0.5 <= points[:, img_col_axis]) & \
             (points[:, img_col_axis] <= (image_shape[img_col_axis] - 0.5))
         res = p_in_y & p_in_x

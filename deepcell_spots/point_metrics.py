@@ -291,7 +291,7 @@ def stats_points(points_true,
     if p == 0 or r == 0:
         F1 = 0
     else:
-        F1 = 2*p*r / (p+r)
+        F1 = 2 * p * r / (p + r)
 
     # calculate the Jaccard index from the F1 score
     J = F1 / (2 - F1)
@@ -303,7 +303,7 @@ def stats_points(points_true,
     else:
         dist_sq_sum = np.sum(
             np.sum((points_true[row_ind] - points_pred[col_ind]) ** 2, axis=1))
-        RMSE = np.sqrt(dist_sq_sum/len(row_ind)/2)
+        RMSE = np.sqrt(dist_sq_sum / len(row_ind) / 2)
 
         # RMSE = np.sqrt(mean_squared_error(points_true[row_ind], points_pred[col_ind]))
 
@@ -330,10 +330,10 @@ def get_mean_stats(y_test, y_pred, threshold=0.98, d_thresh=1):
     # threshold = 0.95 # threshold for classification
     n_test = len(y_test)  # number of test images
 
-    d_md_list = [None]*n_test
-    precision_list = [None]*n_test
-    recall_list = [None]*n_test
-    F1_list = [None]*n_test
+    d_md_list = [None] * n_test
+    precision_list = [None] * n_test
+    recall_list = [None] * n_test
+    F1_list = [None] * n_test
 
     y_pred = y_annotations_to_point_list_max(y_pred, threshold)
     for ind in range(n_test):  # loop over test images

@@ -22,7 +22,7 @@ def jitter(coords, size):
     result = []
     for item in coords:
         noise = np.random.normal(0, size)
-        result.append(item+noise)
+        result.append(item + noise)
 
     return np.array(result)
 
@@ -41,10 +41,11 @@ def ca_to_adjacency_matrix(ca_matrix):
         for ii in range(len(combos)):
             ann_index0 = combos[ii][0]
             ann_index1 = combos[ii][1]
-            det_index0 = int(sum(tot_det_list[:ann_index0]) + sum(ca_matrix[:i, ann_index0]))
-            det_index1 = int(sum(tot_det_list[:ann_index1]) + sum(ca_matrix[:i, ann_index1]))
+            det_index0 = int(
+                sum(tot_det_list[:ann_index0]) + sum(ca_matrix[:i, ann_index0]))
+            det_index1 = int(
+                sum(tot_det_list[:ann_index1]) + sum(ca_matrix[:i, ann_index1]))
 
-            
             A[det_index0, det_index1] += 1
             A[det_index1, det_index0] += 1
 
@@ -53,11 +54,10 @@ def ca_to_adjacency_matrix(ca_matrix):
 
 def label_graph_ann(G, coords, exclude_last=False):
     """Labels the annotator associated with each node in the graph
-    Parameters:
-    ------------
-    G : networkx graph
-        Graph with edges indicating clusters of points assumed to be derived from the same ground
-        truth detection
+
+    Args:
+        G (networkx graph): Graph with edges indicating clusters of points assumed to be derived
+        from the same ground truth detection
     coords : matrix
         2d-array of detected point locations for each classical algorithm used
     exclude_last : boolean
@@ -72,15 +72,15 @@ def label_graph_ann(G, coords, exclude_last=False):
     num_spots = [len(x) for x in coords]
 
     # Create list of annotator labels
-    ann_labels = np.array([0]*num_spots[0])
+    ann_labels = np.array([0] * num_spots[0])
     for i in range(1, len(num_spots)):
-        temp_labels = np.array([i]*num_spots[i])
+        temp_labels = np.array([i] * num_spots[i])
         ann_labels = np.hstack((ann_labels, temp_labels))
 
     nodes = list(G_new.nodes)
 
     if exclude_last:
-        for i in range(len(nodes)-1):
+        for i in range(len(nodes) - 1):
             G_new.nodes[i]['name'] = ann_labels[i]
     else:
         for i in range(len(nodes)):
@@ -126,7 +126,7 @@ def label_graph_gt(G, detection_data, gt):
 
     nodes = list(G.nodes)
 
-    for i in range(len(nodes)-1):
+    for i in range(len(nodes) - 1):
         G_new.nodes[i]['name'] = labels[i]
 
     return G_new
@@ -167,7 +167,7 @@ def label_graph_prob(G, detection_data, p_matrix):
 
     nodes = list(G.nodes)
 
-    for i in range(len(nodes)-1):
+    for i in range(len(nodes) - 1):
         G_new.nodes[i]['name'] = labels[i]
 
     return G_new

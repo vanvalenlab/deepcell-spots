@@ -73,7 +73,7 @@ class TestPostProcUtils(test.TestCase):
         y_pred = np.zeros((2, num_images, image_dim, image_dim, 2))
         y_pred[1, :, 1, 1, 1] = np.ones(num_images)
         y_pred[0, :, :, :, :] = np.ones(
-            (1, num_images, image_dim, image_dim, 2))*0.4
+            (1, num_images, image_dim, image_dim, 2)) * 0.4
         threshold = 0.9
         coords = y_annotations_to_point_list(y_pred, threshold)
 

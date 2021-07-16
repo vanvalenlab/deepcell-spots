@@ -125,8 +125,8 @@ class ImageFullyConvDotIterator(Iterator):
 
         contains_point = np.zeros(image_shape)
         for ind, [y, x] in enumerate(points):
-            nearest_pixel_x_ind = int(round(x/dx))
-            nearest_pixel_y_ind = int(round(y/dy))
+            nearest_pixel_x_ind = int(round(x / dx))
+            nearest_pixel_y_ind = int(round(y / dy))
             contains_point[nearest_pixel_y_ind, nearest_pixel_x_ind] = 1
 
         delta_y, delta_x, _ = subpixel_distance_transform(

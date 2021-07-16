@@ -45,9 +45,9 @@ def calc_tpr_fpr(gt, data):
             elif data[i] == 0:
                 tn += 1
 
-    tpr = tp / (tp+fn)
+    tpr = tp / (tp + fn)
 
-    fpr = fp / (fp+tn)
+    fpr = fp / (fp + tn)
 
     return tpr, fpr
 
@@ -83,7 +83,7 @@ def det_likelihood(cluster_data, pr_list):
         if cluster_data[i] == 1:
             likelihood *= pr_list[i]
         elif cluster_data[i] == 0:
-            likelihood *= (1-pr_list[i])
+            likelihood *= (1 - pr_list[i])
     return likelihood
 
 
@@ -115,9 +115,9 @@ def norm_marg_likelihood(cluster_data, tp_list, fp_list, prior):
     fp_likelihood = det_likelihood(cluster_data, fp_list)
 
     norm_tp_likelihood = tp_likelihood * prior / \
-        (tp_likelihood * prior + fp_likelihood * (1-prior))
+        (tp_likelihood * prior + fp_likelihood * (1 - prior))
     norm_fp_likelihood = fp_likelihood * \
-        (1-prior) / (tp_likelihood * prior + fp_likelihood * (1-prior))
+        (1 - prior) / (tp_likelihood * prior + fp_likelihood * (1 - prior))
 
     return norm_tp_likelihood, norm_fp_likelihood
 
@@ -195,9 +195,9 @@ def em_spot(cluster_matrix, tp_list, fp_list, prior=0.9, max_iter=10):
                        for i in range(np.shape(cluster_matrix)[1])]
 
         # Calculate the MLE estimate for the TPR/FPR
-        tp_list = [tp_sum_list[i] / (tp_sum_list[i]+fn_sum_list[i])
+        tp_list = [tp_sum_list[i] / (tp_sum_list[i] + fn_sum_list[i])
                    for i in range(np.shape(cluster_matrix)[1])]
-        fp_list = [fp_sum_list[i] / (fp_sum_list[i]+tn_sum_list[i])
+        fp_list = [fp_sum_list[i] / (fp_sum_list[i] + tn_sum_list[i])
                    for i in range(np.shape(cluster_matrix)[1])]
 
     likelihood_matrix = np.round(likelihood_matrix, 2)
@@ -304,10 +304,10 @@ def running_total_spots(centroid_list):
         Array of running total number of detections from each image
     """
     num_spots_list = [len(item) for item in centroid_list]
-    running_total = np.zeros(len(num_spots_list)+1)
+    running_total = np.zeros(len(num_spots_list) + 1)
 
     for i in range(len(num_spots_list)):
-        running_total[i+1] = sum(num_spots_list[:i+1])
+        running_total[i + 1] = sum(num_spots_list[:i + 1])
 
     running_total = running_total.astype(int)
 
@@ -448,7 +448,7 @@ def define_edges(coords, threshold):
 
     A = np.zeros((num_spots, num_spots))
     for i in range(num_spots):
-        for ii in range(i+1, num_spots):
+        for ii in range(i + 1, num_spots):
             # calculate distance between points
             dist = np.linalg.norm(all_coords[i] - all_coords[ii])
             if dist < threshold:
@@ -512,10 +512,10 @@ def consensus_coords(p_matrix, centroid_list, running_total, threshold=0.5):
         image
     """
     y = []
-    for i in range(len(running_total)-1):
+    for i in range(len(running_total) - 1):
         temp_spots = centroid_list[i]
         start_ind = running_total[i]
-        end_ind = running_total[i+1]
+        end_ind = running_total[i + 1]
 
         labels = p_matrix[start_ind:end_ind, 0]
         labels = np.array([item > threshold for item in labels])

@@ -192,7 +192,7 @@ class DotNetLosses(object):
             K.sum(y_pred_padded[:, :, 1:, 1] * y_pred_padded[:, :, :-1, 1])
 
         normalizer = K.cast(
-            K.shape(y_pred)[0]*K.shape(y_pred)[1]*K.shape(y_pred)[2], K.floatx())
+            K.shape(y_pred)[0] * K.shape(y_pred)[1] * K.shape(y_pred)[2], K.floatx())
         inter_loss = inter_loss / normalizer
 
         return loss + mu * N_loss + beta * inter_loss

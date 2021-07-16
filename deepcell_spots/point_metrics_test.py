@@ -30,11 +30,11 @@ class TestPointMetrics(test.TestCase):
         coords1 = np.array([[1, 1], [3, 3], [5, 5]])
         coords2 = np.array([[1.5, 1.5], [3.5, 3.5], [5.5, 5.5]])
         d_md = sum_of_min_distance(coords1, coords2)
-        self.assertEqual(d_md, 3*0.5*np.sqrt(2))
+        self.assertEqual(d_md, 3 * 0.5 * np.sqrt(2))
 
         # Example with normalized error
         d_md = sum_of_min_distance(coords1, coords2, normalized=True)
-        self.assertEqual(d_md, 0.5*np.sqrt(2))
+        self.assertEqual(d_md, 0.5 * np.sqrt(2))
 
     def test_match_points_min_dist(self):
         # Two matching points
@@ -155,7 +155,7 @@ class TestPointMetrics(test.TestCase):
         points_pred = np.array([[1.5, 1.5]])
         f1 = point_F1_score(points_true, points_pred, threshold=1)
 
-        self.assertEqual(f1, 2/3)
+        self.assertEqual(f1, 2 / 3)
 
         # Example with no detected points
         points_true = np.array([1, 1])
@@ -175,7 +175,7 @@ class TestPointMetrics(test.TestCase):
         self.assertEqual(stats_dict['F1'], 1)
         self.assertEqual(stats_dict['JAC'], 1)
         self.assertEqual(stats_dict['RMSE'], 0.5)
-        self.assertEqual(stats_dict['d_md'], 0.5*np.sqrt(2))
+        self.assertEqual(stats_dict['d_md'], 0.5 * np.sqrt(2))
 
         # Example with no predicted points
         points_true = np.array([[1, 1], [3, 3]])

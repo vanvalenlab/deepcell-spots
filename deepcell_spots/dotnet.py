@@ -33,12 +33,12 @@ def default_heads(input_shape, num_classes):
     offset regression
 
     Args:
-      input_shape
-      num_classes
+        input_shape
+        num_classes
 
     Returns:
-      A list of tuple, where the first element is the name of the submodel
-      and the second element is the submodel itself.
+        A list of tuple, where the first element is the name of the submodel
+        and the second element is the submodel itself.
 
     """
     # regress x and y coordinates (pixel center signed distance from  nearest object center)
@@ -57,18 +57,19 @@ def classification_head(input_shape,
                         reg=1e-5,
                         init='he_normal',
                         name='classification_head'):
-    """
-    Creates a classification head
 
-    Args:
-        n_features (int): Number of output features (number of possible classes for each pixel.
-        default is 2: contains point / does not contain point)
-        reg (int): regularization value
-        init (str): Method for initalizing weights.
+    # """
+    # Creates a classification head
 
-    Returns:
-        tensorflow.keras.Model for classification (softmax output)
-    """
+    # Args:
+    #     n_features (int): Number of output features (number of possible classes for each pixel.
+    #     default is 2: contains point / does not contain point)
+    #     reg (int): regularization value
+    #     init (str): Method for initalizing weights.
+
+    # Returns:
+    #     tensorflow.keras.Model for classification (softmax output)
+    # """
 
     channel_axis = 1 if K.image_data_format() == 'channels_first' else -1
 

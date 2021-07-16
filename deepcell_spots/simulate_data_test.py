@@ -13,7 +13,7 @@ class TestSimulateData(test.TestCase):
         gt = sim_gt_clusters(num_clusters, tp_ratio)
 
         self.assertEqual(len(gt), num_clusters)
-        self.assertEqual(np.round(sum(gt)/len(gt), 1), tp_ratio)
+        self.assertEqual(np.round(sum(gt) / len(gt), 1), tp_ratio)
 
         # test TP ratio greater than 1
         tp_ratio = 1.1
@@ -35,8 +35,8 @@ class TestSimulateData(test.TestCase):
 
         self.assertEqual(len(gt_tp), len(det_list_tp))
         self.assertEqual(len(gt_fp), len(det_list_fp))
-        self.assertEqual(np.round(sum(det_list_tp)/len(det_list_tp), 1), tpr)
-        self.assertEqual(np.round(sum(det_list_fp)/len(det_list_fp), 1), fpr)
+        self.assertEqual(np.round(sum(det_list_tp) / len(det_list_tp), 1), tpr)
+        self.assertEqual(np.round(sum(det_list_fp) / len(det_list_fp), 1), fpr)
 
         # test TPR greater than 1
         tpr = 1.1
@@ -63,9 +63,9 @@ class TestSimulateData(test.TestCase):
         self.assertEqual(np.shape(data_array_fp), (len(gt_fp), len(tpr_list)))
         for i in range(len(tpr_list)):
             self.assertEqual(
-                np.round(sum(data_array_tp[:, i])/len(data_array_tp[:, i]), 1), tpr_list[i])
+                np.round(sum(data_array_tp[:, i]) / len(data_array_tp[:, i]), 1), tpr_list[i])
             self.assertEqual(
-                np.round(sum(data_array_fp[:, i])/len(data_array_fp[:, i]), 1), fpr_list[i])
+                np.round(sum(data_array_fp[:, i]) / len(data_array_fp[:, i]), 1), fpr_list[i])
 
         # test incorrect type for tpr and fpr
         tpr = 1.1
@@ -74,14 +74,14 @@ class TestSimulateData(test.TestCase):
             data_array_tp = sim_annotators(gt_tp, tpr, fpr)
 
         # test different lengths for tpr_list and fpr_list
-        tpr_list = [0.9]*4
-        fpr_list = [0.1]*3
+        tpr_list = [0.9] * 4
+        fpr_list = [0.1] * 3
         with self.assertRaises(AssertionError):
             data_array_tp = sim_annotators(gt_tp, tpr_list, fpr_list)
 
         # test TPR greater than 1
         tpr_list = [0.9, 1, 1.1]
-        fpr_list = [0.1]*3
+        fpr_list = [0.1] * 3
         with self.assertRaises(AssertionError):
             data_array_tp = sim_annotators(gt_tp, tpr_list, fpr_list)
 
@@ -111,14 +111,14 @@ class TestSimulateData(test.TestCase):
         self.assertEqual(perc_corr, 1)
 
         # test half correct detections
-        data_array = np.array([np.concatenate((np.zeros(int(num_detections/2)),
-                                               np.ones(int(num_detections/2)))),
-                               np.concatenate((np.ones(int(num_detections/2)),
-                                               np.zeros(int(num_detections/2))))]).T
+        data_array = np.array([np.concatenate((np.zeros(int(num_detections / 2)),
+                                               np.ones(int(num_detections / 2)))),
+                               np.concatenate((np.ones(int(num_detections / 2)),
+                                               np.zeros(int(num_detections / 2))))]).T
         perc_corr = percent_correct(gt, data_array)
         self.assertEqual(perc_corr, 0.5)
 
-        data_array = np.ones(num_detections-1)
+        data_array = np.ones(num_detections - 1)
         with self.assertRaises(AssertionError):
             perc_corr = percent_correct(gt, data_array)
 

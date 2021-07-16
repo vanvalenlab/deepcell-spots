@@ -102,7 +102,7 @@ class TestSpotEM(test.TestCase):
             (num_images, num_detections, 2))
         running_total = running_total_spots(centroid_list)
 
-        self.assertEqual(len(running_total), num_images+1)
+        self.assertEqual(len(running_total), num_images + 1)
 
     def test_define_edges(self):
         num_detections = 10
@@ -133,13 +133,13 @@ class TestSpotEM(test.TestCase):
     def test_consensus_coords(self):
         num_clusters = 10  # per image
         num_images = 10
-        p_matrix = np.random.random_sample((num_clusters*num_images, 2))
+        p_matrix = np.random.random_sample((num_clusters * num_images, 2))
         centroid_list = np.random.random_sample((num_images, num_clusters, 2))
         running_total = np.arange(0, 110, 10)
         y = consensus_coords(p_matrix, centroid_list, running_total)
 
         self.assertLessEqual(len(y), len(centroid_list))
-        self.assertLessEqual(len(y), len(running_total)-1)
+        self.assertLessEqual(len(y), len(running_total) - 1)
 
 
 if __name__ == '__main__':

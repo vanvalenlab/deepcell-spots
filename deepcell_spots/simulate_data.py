@@ -198,7 +198,7 @@ def is_in_image(x, y, a, L):
         True if square is contained in image dimensions, false if it is not
     """
 
-    return (x+a <= (L-1)) and (y+a <= (L-1)) and (x >= 0) and (y >= 0)
+    return (x + a <= (L - 1)) and (y + a <= (L - 1)) and (x >= 0) and (y >= 0)
 
 
 # # NOT TESTED BC NOT USED
@@ -246,8 +246,8 @@ def is_overlapping(x_list, y_list, a_list, x, y, a):
     x_list = np.array(x_list)
     y_list = np.array(y_list)
     a_list = np.array(a_list)
-    not_overlapping = ((x+a) < x_list) | ((x_list+a_list) <
-                                          x) | ((y+a) < y_list) | ((y_list+a_list) < y)
+    not_overlapping = ((x + a) < x_list) | ((x_list + a_list) <
+                                          x) | ((y + a) < y_list) | ((y_list + a_list) < y)
     return not all(not_overlapping)
 
 
@@ -761,8 +761,8 @@ def gaussian_spot_image_generator(L,
         # loop on all dots, generate the intensity for each dot and sum into img
         for ind in range(N):
             # draw the position (x,y) uniformly from [-0.5,L-0.5]*[-0.5,L-0.5]
-            x = random.uniform(-0.5, L-0.5)
-            y = random.uniform(-0.5, L-0.5)
+            x = random.uniform(-0.5, L - 0.5)
+            y = random.uniform(-0.5, L - 0.5)
             x_list.append(x)
             y_list.append(y)
 
@@ -788,7 +788,7 @@ def gaussian_spot_image_generator(L,
             # mu = np.array([x, y])
             # sigma = np.array([[sigma , 0], [0,  sigma]])
             # Z = A*multivariate_normal.pdf(pos,mean=mu, cov=sigma)
-            Z = A*np.exp(-((X-x)**2+(Y-y)**2)/(2*sigma**2))
+            Z = A * np.exp(-((X - x)**2+(Y - y)**2) / (2 * sigma**2))
             img += Z
 
             # add white noise to the image
@@ -804,7 +804,7 @@ def gaussian_spot_image_generator(L,
             for spot_ind in range(len(x_list)):
                 rr, cc = skimage.draw.circle(
                     x_list[spot_ind], y_list[spot_ind], sigma_list[spot_ind], shape=label.shape)
-                label[cc, rr] = spot_ind+1
+                label[cc, rr] = spot_ind + 1
         else:
             # create image with background 0, spot centers labeled with 1
             # use floor function since pixel with indices (i,j) covers the area [i,i+1] x [j,j+1]
