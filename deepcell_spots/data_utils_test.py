@@ -65,7 +65,7 @@ class TestDataUtils(test.TestCase):
 
         self.assertEqual(np.shape(slice_X), (10 * num_slices_x * num_slices_y,
                                              slice_size[0], slice_size[1], 1))
-        self.assertEqual((slice_X[num_slices_x-1::num_slices_x, :,
+        self.assertEqual((slice_X[num_slices_x - 1::num_slices_x, :,
                                   -1 * slice_size[0] * num_slices_x:]).all(),
                          (slice_X[num_slices_x::num_slices_x, :,
                                   :slice_size[0] * num_slices_x]).all())
@@ -114,7 +114,7 @@ class TestDataUtils(test.TestCase):
         slice_X = slice_image(X, slice_size, overlap=1)
 
         self.assertEqual(np.shape(slice_X),
-                         (10*num_slices_x * num_slices_y, 5, 5, overlap))
+                         (10 * num_slices_x * num_slices_y, 5, 5, overlap))
 
     # FUNCTION DID NOT PASS TEST
     # def test_stitch_image(self):
@@ -162,7 +162,7 @@ class TestDataUtils(test.TestCase):
                                              slice_size[0], slice_size[1], 1))
         self.assertEqual(np.shape(slice_y), num_images *
                          num_slices_x * num_slices_y)
-        self.assertEqual((slice_X[num_slices_x-1::num_slices_x, :,
+        self.assertEqual((slice_X[num_slices_x - 1::num_slices_x, :,
                                   -1 * slice_size[0] * num_slices_x:]).all(),
                          (slice_X[num_slices_x::num_slices_x, :,
                                   :slice_size[0] * num_slices_x]).all())

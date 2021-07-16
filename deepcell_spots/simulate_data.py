@@ -246,8 +246,8 @@ def is_overlapping(x_list, y_list, a_list, x, y, a):
     x_list = np.array(x_list)
     y_list = np.array(y_list)
     a_list = np.array(a_list)
-    not_overlapping = ((x + a) < x_list) | ((x_list + a_list) <
-                                          x) | ((y + a) < y_list) | ((y_list + a_list) < y)
+    not_overlapping = ((x + a) < x_list) | ((x_list + a_list) < x) |
+    ((y + a) < y_list) | ((y_list + a_list) < y)
     return not all(not_overlapping)
 
 
@@ -788,7 +788,7 @@ def gaussian_spot_image_generator(L,
             # mu = np.array([x, y])
             # sigma = np.array([[sigma , 0], [0,  sigma]])
             # Z = A*multivariate_normal.pdf(pos,mean=mu, cov=sigma)
-            Z = A * np.exp(-((X - x)**2+(Y - y)**2) / (2 * sigma**2))
+            Z = A * np.exp(-((X - x)**2 + (Y - y)**2) / (2 * sigma**2))
             img += Z
 
             # add white noise to the image
