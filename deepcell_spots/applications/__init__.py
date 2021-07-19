@@ -27,4 +27,4 @@
 from deepcell_spots._version import __version__
 
 from deepcell_spots.applications.spots_application import Application
-from deepcell_spots.spot_detection import SpotDetection
+from deepcell_spots.applications.spot_detection import SpotDetection
