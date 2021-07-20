@@ -38,7 +38,7 @@ from scipy.spatial.distance import cdist
 import scipy.spatial  # cKDTree - neighbor finder (cython)
 from sklearn.metrics import *
 # from deepcell_spots.postprocessing_utils import *
-from postprocessing_utils import *
+from deepcell_spots.postprocessing_utils import *
 
 
 def sum_of_min_distance(pts1, pts2, normalized=False):
