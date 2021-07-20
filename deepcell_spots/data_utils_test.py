@@ -32,7 +32,7 @@ from tensorflow.python.keras import backend as K
 from tensorflow.python.platform import test
 from sklearn.model_selection import train_test_split
 
-from data_utils import *
+from deepcell_spots.data_utils import *
 
 
 class TestDataUtils(test.TestCase):

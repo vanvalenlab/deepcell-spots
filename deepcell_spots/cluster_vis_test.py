@@ -31,7 +31,7 @@ from scipy.spatial import distance
 from itertools import combinations
 
 from tensorflow.python.platform import test
-from cluster_vis import jitter, ca_to_adjacency_matrix
+from deepcell_spots.cluster_vis import jitter, ca_to_adjacency_matrix
 
 
 class TestClusterVis(test.TestCase):

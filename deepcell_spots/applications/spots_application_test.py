@@ -34,7 +34,7 @@ import numpy as np
 from tensorflow.keras.layers import Input
 from tensorflow.python.platform import test
 
-from spots_application import Application
+from deepcell_spots.applications.spots_application import Application
 
 
 class DummyModel():

@@ -31,7 +31,7 @@ import numpy as np
 
 from tensorflow.python.platform import test
 
-from simulate_data import *
+from deepcell_spots.simulate_data import *
 
 
 class TestSimulateData(test.TestCase):

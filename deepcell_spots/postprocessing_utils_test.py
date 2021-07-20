@@ -31,7 +31,7 @@ from skimage.feature import peak_local_max
 from skimage import measure
 from tensorflow.python.platform import test
 
-from postprocessing_utils import *
+from deepcell_spots.postprocessing_utils import *
 
 
 class TestPostProcUtils(test.TestCase):

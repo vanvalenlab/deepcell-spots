@@ -36,8 +36,8 @@ from sklearn.metrics import *
 from tensorflow.python.keras import backend as K
 from tensorflow.python.platform import test
 
-from point_metrics import *
-from postprocessing_utils import *
+from deepcell_spots.point_metrics import *
+from deepcell_spots.postprocessing_utils import *
 
 
 class TestPointMetrics(test.TestCase):

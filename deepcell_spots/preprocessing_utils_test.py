@@ -30,7 +30,7 @@ import random
 import numpy as np
 from tensorflow.python.platform import test
 
-from preprocessing_utils import *
+from deepcell_spots.preprocessing_utils import *
 
 
 class TestPreProcUtils(test.TestCase):

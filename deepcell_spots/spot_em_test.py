@@ -31,7 +31,7 @@ import numpy as np
 
 from tensorflow.python.platform import test
 
-from spot_em import *
+from deepcell_spots.spot_em import *
 
 
 class TestSpotEM(test.TestCase):
