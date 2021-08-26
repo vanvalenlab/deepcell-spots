@@ -380,7 +380,10 @@ class Application(object):
             pad_mode=pad_mode, preprocess_kwargs=preprocess_kwargs
         )
 
+        # Resize output_images back to original resolution if necessary
+        label_image = self._resize_output(output_images, image.shape)
+
         # Postprocess predictions to create label image
-        predicted_spots = self._postprocess(output_images, **postprocess_kwargs)
+        predicted_spots = self._postprocess(label_image, **postprocess_kwargs)
 
         return predicted_spots
