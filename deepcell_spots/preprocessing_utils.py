@@ -67,8 +67,9 @@ def min_max_normalize(image):
     for batch in range(image.shape[0]):
         for channel in range(image.shape[-1]):
             img = image[batch, ..., channel]
-            min_val = min(map(min, img))
-            max_val = max(map(max, img))
+            min_val = np.min(img)
+            max_val = np.max(img)
+            img = np.clip(img, a_min=np.percentile(img, 0.01), a_max=np.percentile(img, 99.9))
             normal_image = (img - min_val) / (max_val - min_val)
             image[batch, ..., channel] = normal_image
     return image
