@@ -36,24 +36,18 @@ import skimage
 
 
 def sim_gt_clusters(num_clusters, tp_ratio):
-    """ Generate random simulated labels (true detection or false detection) for clusters, with a
+    """Generate random simulated labels (true detection or false detection) for clusters, with a
         specified rate of true detections and false detections, tp_ratio.
 
     Returns a list of length num_clusters of cluster labels with value 1 for a true detection and 0
-    for a false detection.
+    for a false detection.[summary]
 
-    Parameters:
-    -----------
-    num_clusters : integer
-        The number of cluster labels to be generated
-    tp_ratio : float
-        The average percentage of the detections that are true detections
+    Args:
+        num_clusters (int): The number of cluster labels to be generated
+        tp_ratio (float): The average percentage of the detections that are true detections
 
     Returns:
-    ----------
-    gt : list
-        List of random simulated cluster labels 1 or 0
-
+        gt (list): List of random simulated cluster labels 1 or 0
     """
 
     assert tp_ratio >= 0 and tp_ratio <= 1, "TP ratio must be between 0 and 1"
@@ -70,32 +64,28 @@ def sim_gt_clusters(num_clusters, tp_ratio):
 
 
 def sim_detections(gt, tpr, fpr):
+
     """Simulates detection data for a set of ground truth cluster labels and an annotator with a
     specified TPR and FPR.
 
     Returns an array of with same length as input gt, where 1 indicates the simulated annotator
     detected a cluster and 0 indicates an undetected cluster.
 
-    Parameters:
-    -------------
-    gt : array-like
-        Array of ground truth cluster labels. 1 indicates a true detection and 0 indicates a false
-        detection.
-    tpr : float
-        The true positive rate of the annotator. For a ground truth value of 1, it is the
-        probability that the function will output 1, indicating that the simulated annotator
-        detected the true cluster.
-    fpr : float
-        The false positive rate of the annotator. For a ground truth value of 0, it is the
-        probability that the funciton will output 1, indicating that the simulated annotator
-        falsely detected the cluster.
+    Args:
+        gt (array): Array of ground truth cluster labels. 1 indicates a true detection and 0
+            indicates a false detection.
+        tpr (float): The true positive rate of the annotator. For a ground truth value of 1, it is
+            the probability that the function will output 1, indicating that the simulated annotator
+            detected the true cluster.
+        fpr (float): The false positive rate of the annotator. For a ground truth value of 0, it is
+            the probability that the funciton will output 1, indicating that the simulated annotator
+            falsely detected the cluster.
 
     Returns:
-    ----------
-    det_list : array-like
-        Array of detected cluster labels. A value of 1 indicates that a cluster was detected by the
-        annotator, and 0 indicates that the cluster was not detected by the annotator.
-         """
+        det_list (array): Array of detected cluster labels. A value of 1 indicates that a cluster
+        was detected by the annotator, and 0 indicates that the cluster was not detected by the
+        annotator.
+    """
 
     assert tpr >= 0 and tpr <= 1, "TPR must be between 0 and 1"
     assert fpr >= 0 and fpr <= 1, "FPR must be between 0 and 1"
@@ -118,30 +108,26 @@ def sim_detections(gt, tpr, fpr):
 
 
 def sim_annotators(gt, tpr_list, fpr_list):
+
     """Simulate the detections of multiple annotators with different TPRs and FPRs on the same
     ground truth data.
 
     Returns a matrix of simulated detection data with dimensions clusters x annotators.
 
-    Parameters:
-    ------------
-    gt : array-like
-        Array of ground truth cluster labels. 1 indicates a true detection and 0 indicates a false
-        detection.
-    tpr_list : array-like
-        Array of TPR values for each annotator. For a ground truth value of 1, the TPR is the
-        probability that the function will output 1, indicating that the simulated annotator
-        detected the true cluster.
-    fpr_list : array-like
-        Array of FPR values for each annotator. For a ground truth value of 0, the FPR is the
-        probability that the funciton will output 1, indicating that the simulated annotator
-        falsely detected the cluster.
+    Args:
+        gt (array): Array of ground truth cluster labels. 1 indicates a true detection and 0
+            indicates a false detection.
+        tpr_list (array): Array of TPR values for each annotator. For a ground truth value of 1,
+            the TPR is the probability that the function will output 1, indicating that the
+            simulated annotator detected the true cluster.
+        fpr_list (array): Array of FPR values for each annotator. For a ground truth value of 0,
+            the FPR is the probability that the funciton will output 1, indicating that the
+            simulated annotator falsely detected the cluster.
 
     Returns:
-    --------
-    data_matrix : matrix
-        Matrix of simulated detection data with dimensions clusters x annotators. A value of 1
-        indicates a detected clsuter and a value of 0 indicates an undetected cluster.
+        data_matrix (matrix): Matrix of simulated detection data with dimensions clusters x
+        annotators. A value of 1 indicates a detected clsuter and a value of 0 indicates an
+        undetected cluster.
     """
 
     assert type(tpr_list) == list or type(
@@ -162,24 +148,20 @@ def sim_annotators(gt, tpr_list, fpr_list):
 
 
 def percent_correct(gt, data_array):
-    """ Calculates the percent of detections correctly labeled.
+
+    """Calculates the percent of detections correctly labeled.
 
     Returns a value from 0 to 1 indicating the fraction of detections correctly labeled.
 
-    Parameters:
-    -------------
-    gt : array-like
-        Array of ground truth cluster labels. 1 indicates a true detection and 0 indicates a false
-        detection.
-    data_array : array-like
-        Array of simulated detections with length number of detections. A value of 1 indicates a
-        detected clsuter and a value of 0 indicates an undetected cluster.
+    Args:
+        gt (array): Array of ground truth cluster labels. 1 indicates a true detection and 0
+            indicates a false detection.
+        data_array (array): Array of simulated detections with length number of detections. A value
+            of 1 indicates a detected clsuter and a value of 0 indicates an undetected cluster.
 
     Returns:
-    -----------
-    percent_corr : float
-        Value for fraction of detections correctly labeled compared to ground truth.
-
+        percent_corr (float): Value for fraction of detections correctly labeled compared to ground
+            truth.
     """
 
     assert len(gt) == np.shape(data_array)[
@@ -203,25 +185,19 @@ def percent_correct(gt, data_array):
 
 
 def is_in_image(x, y, a, L):
-    """ Determines if a square with defined vertices is contained in an image with larger dimensions
+
+    """Determines if a square with defined vertices is contained in an image with larger dimensions
 
     Returns a boolean
 
-    Parameters:
-    ------------
-    x : integer
-        Value for the x coordinate of the top left corner of the square of interest
-    y : integer
-        Value for the y coordinate of the top left corner of the square of interest
-    a : integer
-        Value for the side length of the square of interest
-    L : integer
-        Value for the dimensions of the larger image
+    Args:
+        x (int): Value for the x coordinate of the top left corner of the square of interest
+        y (int): Value for the y coordinate of the top left corner of the square of interest
+        a (int): Value for the side length of the square of interest
+        L (int): Value for the dimensions of the larger image
 
     Returns:
-    ------------
-    boolean
-        True if square is contained in image dimensions, false if it is not
+        boolean: True if square is contained in image dimensions, false if it is not
     """
 
     return (x + a <= (L - 1)) and (y + a <= (L - 1)) and (x >= 0) and (y >= 0)
@@ -237,33 +213,25 @@ def is_in_image(x, y, a, L):
 def is_overlapping(x_list, y_list, a_list, x, y, a):
     # check if a square with left corner at x,y,a
     # overlaps with other squares with corner coordinates and side length in the list
-    """ Determines if a square overlaps with a list of other squares.
+
+    """Determines if a square overlaps with a list of other squares.
 
     Returns boolean, true if square overlaps with any of squares in list, false if it doesn't
     overlap with any of squares in list
 
-    Parameters:
-    ------------
-    x_list : list
-        List of x coordinates for top left corners of squares to be compared with square of
-        interest.
-    y_list : list
-        List of y coordinates for top left corners of squares to be compared with square of
-        interest.
-    a_list : list
-        List of side lengths of squares to be compared with square of interest.
-    x : integer
-        Value for the x coordinate of the top left corner of the square of interest
-    y : integer
-        Value for the y coordinate of the top left corner of the square of interest
-    a : integer
-        Value for the side length of the square of interest
+    Args:
+        x_list (list): List of x coordinates for top left corners of squares to be compared with
+            square of interest.
+        y_list (list): List of y coordinates for top left corners of squares to be compared with
+            square of interest.
+        a_list (list): List of side lengths of squares to be compared with square of interest.
+        x (int): Value for the x coordinate of the top left corner of the square of interest
+        y (int): Value for the y coordinate of the top left corner of the square of interest
+        a (int): Value for the side length of the square of interest
 
     Returns:
-    -----------
-    boolean
-        True if square overlaps with any of squares in list, False if it doesn't overlap with any
-        of squares in list
+        boolean: True if square overlaps with any of squares in list, False if it doesn't overlap
+        with any of squares in list
     """
 
     assert len(x_list) == len(y_list) == len(
@@ -289,445 +257,6 @@ def add_gaussian_noise(image, m, s):
     gauss = gauss.reshape(row, col)
     noisy = image + gauss
     return noisy
-
-# def generate_nonoverlapping_square_img(L,N_min,N_max):
-#     '''
-#     Generates an L*L image with pixel values in [0,1] which has a background of 0s and
-#     non-overlapping squares with various intensities.
-
-#     Args:
-#         L: length in pixels of image side
-#         N_min: integer minimal number of squares to be drawn on the image
-#         N_max: integer maximal number of squares to be drawn on the image
-#             The number of generated squares is drawn uniformly from the set
-#             of integers in [Nmin Nmax]
-
-#     Returns:
-#         img: The generated image of squares with a background of 0s
-#     '''
-
-#     # length of square side: vary uniformly in a range
-#     a_min = 1
-#     a_max = 100
-
-#     # intensity - assume uniform distribution
-#     A_min = 0.2
-#     A_max = 1.0
-
-#     # create the image
-#     img = np.zeros((L,L))
-#     # coordinates for grid of pixels
-#     X = np.arange(0,L,1) + 0.5
-#     Y = np.arange(0,L,1) + 0.5
-#     X, Y = np.meshgrid(X, Y)
-#     pos = np.empty(X.shape + (2,))
-#     pos[:, :, 0] = X
-#     pos[:, :, 1] = Y
-
-#     # draw the number of objects that will be created in the image
-#       - an integer N_min <= N <= N_max
-#     N = random.randint(N_min, N_max)
-
-
-#     # allocate variables to store dot positions
-#     x_list = []
-#     y_list = []
-#     side_length_list = []
-#     # loop on all squares, draw each square until it does not overlap with previous ones,
-#     # then draw its intensity and add it to img
-#     for ind in range(N):
-#         # draw the position (x,y) of the lower left corner of the square uniformly
-#         # from [0,L-1]*[0,L-1]
-#         x = random.randint(0, L-1)
-#         y = random.randint(0, L-1)
-
-#         # draw the side length of the square
-#         a = random.randint(a_min, a_max)
-
-#         # check if square overlaps with others
-#         while ((not is_in_image(x,y,a,L)) or
-#                 is_overlapping(x_list,y_list,side_length_list,x,y,a)):
-#             # draw the position (x,y) of the lower left corner of the square uniformly
-#             # from [0,L-1]*[0,L-1]
-#             x = random.randint(0, L-1)
-#             y = random.randint(0, L-1)
-
-#             # draw the side length of the square
-#             a = random.randint(a_min, a_max)
-
-#         # draw the intensity from a uniform distribution
-#         A = random.uniform(A_min, A_max)
-
-#         # add new square properties to lists
-#         x_list.append(x)
-#         y_list.append(y)
-#         side_length_list.append(a)
-
-#         # add the square to the image
-#         in_square = (X>=x) & (X<=x+a) & (Y>=y) & (Y<=y+a)
-#         img[in_square] += A
-
-#     #img = add_gaussian_noise(img, 0, 0.002)
-
-#     return img
-
-
-# def generate_nonoverlapping_square_img_with_segmask(L,N_min,N_max):
-#     '''
-#     Generates an L*L image with pixel values in [0,1] which has a background of 0s and
-#     non-overlapping squares with various intensities.
-
-#     Args:
-#         L: length in pixels of image side
-#         N_min: integer minimal number of squares to be drawn on the image
-#         N_max: integer maximal number of squares to be drawn on the image
-#             The number of generated squares is drawn uniformly from the set
-#             of integers in [Nmin Nmax]
-
-#     Returns:
-#         img: The generated image of squares with a background of 0s
-#         segmask: The segmentation mask for the image: background=0, each object's pixels are
-#                   marked with value i for i=1,...,N for N=number of objects in the image
-#     '''
-
-
-#     # simulated data:
-#     # grascale image L*L pixels of N squares at random positions with varying intensities
-
-#     #L = 256
-
-#     # parameters
-#     # number of squares: vary uniformly in a range
-#     #N_min = 1
-#     #N_max = 10
-
-#     # length of square side: vary uniformly in a range
-#     a_min = 1
-#     a_max = 100
-
-#     # intensity - assume uniform distribution
-#     A_min = 0.2
-#     A_max = 1.0
-
-#     # create the image
-#     img = np.zeros((L,L))
-#     segmask = np.zeros((L,L)) # create the matching segmentation mask
-#     # coordinates for grid of pixels
-#     X = np.arange(0,L,1) + 0.5
-#     Y = np.arange(0,L,1) + 0.5
-#     X, Y = np.meshgrid(X, Y)
-#     pos = np.empty(X.shape + (2,))
-#     pos[:, :, 0] = X
-#     pos[:, :, 1] = Y
-
-#     # draw the number of objects that will be created in the image
-#     # - an integer N_min <= N <= N_max
-#     N = random.randint(N_min, N_max)
-
-
-#     # allocate variables to store square positions
-#     x_list = []
-#     y_list = []
-#     side_length_list = []
-#     # loop on all squares, draw each square until it does not overlap with previous ones, then
-#     # draw its intensity and add it to img
-#     for ind in range(N):
-#         # draw the position (x,y) of the lower left corner of the square uniformly
-#         # from [0,L-1]*[0,L-1]
-#         x = random.randint(0, L-1)
-#         y = random.randint(0, L-1)
-
-#         # draw the side length of the square
-#         a = random.randint(a_min, a_max)
-
-#         # check if square overlaps with others
-#         while ((not is_in_image(x,y,a,L)) or
-#                 is_overlapping(x_list,y_list,side_length_list,x,y,a)):
-#             # draw the position (x,y) of the lower left corner of the square uniformly
-#             # from [0,L-1]*[0,L-1]
-#             x = random.randint(0, L-1)
-#             y = random.randint(0, L-1)
-
-#             # draw the side length of the square
-#             a = random.randint(a_min, a_max)
-
-#         # draw the intensity from a uniform distribution
-#         A = random.uniform(A_min, A_max)
-
-#         # add new square properties to lists
-#         x_list.append(x)
-#         y_list.append(y)
-#         side_length_list.append(a)
-
-#         # add the square to the image and to the segmentation mask
-#         in_square = (X>=x) & (X<=x+a) & (Y>=y) & (Y<=y+a)
-#         img[in_square] += A
-#         segmask[in_square] = ind+1
-
-#     #img = add_gaussian_noise(img, 0, 0.002)
-
-#     return (img, segmask)
-
-
-# def uniform_dist_size_nonoverlapping_square_img_generator(L,N_max,a_min,a_max,noise=False):
-#     '''
-#     Generates L*L images with pixel values in [0,1] which has a background of 0s and
-#     non-overlapping squares with various intensities.
-#     The side length of generated squares is drawn uniformly from the set of integers
-#     in [a_min a_max].
-#     A position for the square is drawn randomly, and redrawn up to a max_trial amount of times
-#     until a position in which it doesn't overlap with existing squares in the image is
-#     successfully drawn. If after max_trial redraws the square still overlaps with existing
-#     squares, the image is returned and the square is saved for the next image
-#     This way, the square sizes over all the images are distributed uniformly, while the
-#     distribution of number of squares is probably not uniform
-
-#     Args:
-#         L: length in pixels of image side
-#         a_min: the minimal square side length to be generated
-#         a_max: the maximal square side length to be generated
-#         N_max: integer maximal number of squares to be drawn on the image
-#         noise: if True, white noise will be added to the image
-
-#     Returns:
-#         img: The generated image of squares with a background of 0s
-#         segmask: The segmentation mask for the image: background=0, each object's pixels are
-#                  marked with value i for i=1,...,N for N=number of objects in the image
-#     '''
-#     # parameters for simulated data:
-#     # grascale image L*L pixels of N squares at random positions with varying intensities
-
-#     #L = 256
-
-#     # parameters
-#     # number of squares: vary uniformly in a range
-#     #N_min = 1
-#     #N_max = 10
-
-#     # length of square side: vary uniformly in a range
-#     #a_min = 1
-#     #a_max = 100
-
-#     resample_max = 10
-#       # maximal number of times to redraw object position before saving it for plotting in the
-#       # next image
-
-#     # intensity - assume uniform distribution
-#     A_min = 0.2
-#     A_max = 1.0
-
-#     noise_std = 0.01 # white noise standard deviation
-
-#     # coordinates for grid of pixels
-#     X = np.arange(0,L,1)
-#     Y = np.arange(0,L,1)
-#     X, Y = np.meshgrid(X, Y)
-
-#     while True:
-#         # create a new image
-#         img = np.zeros((L,L))
-#         segmask = np.zeros((L,L)) # create the matching segmentation mask
-
-#         N = 0 # number of objects plotted to the image
-#         resample_num = 0 # number of times object position was redrawn
-#         # allocate variables to store square positions in a single image
-#         x_list = []
-#         y_list = []
-#         side_length_list = []
-#         # loop on all squares, draw each square until it does not overlap with previous ones,
-#         # then draw its intensity and add it to img
-#         while N<=N_max:
-#             # draw the side length of the square
-#             a = random.randint(a_min, a_max)
-
-#             # draw the position (x,y) of the lower left corner of the square uniformly from
-#             # [0,L-a-1]*[0,L-a-1] (uniformly inside image boundaries)
-#             x = random.randint(0, L-a-1)
-#             y = random.randint(0, L-a-1)
-
-#             # check if square overlaps with others, if so resample the lower left corner position
-#             # form a uniform distribution in the image
-#             while resample_num<=resample_max and
-#                   is_overlapping(x_list,y_list,side_length_list,x,y,a):
-#                 # draw the position (x,y) of the lower left corner of the square uniformly from
-#                 # [0,L-1]*[0,L-1]
-#                 x = random.randint(0, L-a-1)
-#                 y = random.randint(0, L-a-1)
-
-#                 resample_num += 1 # increase number of samples counter by 1
-
-#             if is_overlapping(x_list,y_list,side_length_list,x,y,a):
-#               # done resampling, still haven't found an empty space for this square
-#                 if noise==True: # add white noise to the image
-#                     img = add_gaussian_noise(img, 0, noise_std)
-#                     img[img<0] = 0
-#                       # when white noise was added to 0 background, negative pixel values are
-#                       # obtained - set them to zero
-#                 yield (img, segmask)
-
-#                 # create a new image
-#                 img = np.zeros((L,L))
-#                 segmask = np.zeros((L,L)) # create the matching segmentation mask
-
-#                 N = 0 # number of objects plotted to the image
-#                 resample_num = 0 # number of times object position was redrawn
-#                 # allocate variables to store square positions in a single image
-#                 x_list = []
-#                 y_list = []
-#                 side_length_list = []
-
-#             # if found a place for this square, save it to this image
-#             # draw the intensity from a uniform distribution
-#             A = random.uniform(A_min, A_max)
-
-#             # add new square properties to lists
-#             x_list.append(x)
-#             y_list.append(y)
-#             side_length_list.append(a)
-
-#             # add the square to the image and to the segmentation mask
-#             in_square = (X>=x) & (X<=x+a) & (Y>=y) & (Y<=y+a)
-#             img[in_square] += A
-#             segmask[in_square] = N+1
-#             N += 1 # increase number of objects in image counter by 1
-
-
-#         # reached the maximal number of squares in a single image - save it and start a new one
-#         if noise==True: # add white noise to the image
-#             img = add_gaussian_noise(img, 0, noise_std)
-#             img[img<0] = 0
-#               # when white noise was added to 0 background, negative pixel values are obtained
-#               # - set them to zero
-#         yield (img, segmask)
-
-
-# def is_circle_overlapping(x_list,y_list,r_list,x,y,r):
-#     # check if a circle with center at x,y and radius r
-#     # overlaps with other circles with center coordinates and radius on the list
-#     x_list = np.array(x_list)
-#     y_list = np.array(y_list)
-#     r_list = np.array(r_list)
-#     dist_sq = (x_list-x)**2 + (y_list-y)**2
-#     overlapping = dist_sq < (r_list+r)**2
-#     return any(overlapping)
-
-# def uniform_dist_size_nonoverlapping_circle_img_generator(L,N_max,r_min,r_max,noise=False):
-#     '''
-#     Generates L*L images with pixel values in [0,1] which has a background of 0s and
-#     non-overlapping squares with various intensities.
-#     The radius of the circles is drawn uniformly from the set of integers in [r_min r_max].
-#     A position for the circle is drawn randomly, and redrawn up to a max_trial amount of times
-#     until a position in which it doesn't overlap with existing squares in the image is
-#     successfully drawn. If after max_trial redraws the circle still overlaps with existing
-#     squares, the image is returned and the square is saved for the next image
-#     This way, the square sizes over all the images are distributed uniformly, while the
-#     distribution of number of circles is probably not uniform
-
-#     Args:
-#         L: length in pixels of image side
-#         r_min: the minimal square radius to be generated
-#         r_max: the maximal square radius to be generated
-#         N_max: integer maximal number of squares to be drawn on the image
-#         noise: if True, white noise will be added to the image
-
-#     Returns:
-#         img: The generated image of squares with a background of 0s
-#         segmask: The segmentation mask for the image: background=0, each object's pixels are
-#                   marked with value i for i=1,...,N for N=number of objects in the image
-#     '''
-#     # parameters for simulated data:
-#     resample_max = 10 # maximal number of times to redraw object position before saving it for
-#                       # plotting in the next image
-
-#     # intensity - assume uniform distribution
-#     A_min = 0.2
-#     A_max = 1.0
-
-#     noise_std = 0.01 # white noise standard deviation
-
-#     # coordinates for grid of pixels
-#     X = np.arange(0,L,1)
-#     Y = np.arange(0,L,1)
-#     X, Y = np.meshgrid(X, Y)
-
-#     while True:
-#         # create a new image
-#         img = np.zeros((L,L))
-#         segmask = np.zeros((L,L)) # create the matching segmentation mask
-
-#         N = 0 # number of objects plotted to the image
-#         resample_num = 0 # number of times object position was redrawn
-#         # allocate variables to store square positions in a single image
-#         x_list = []
-#         y_list = []
-#         r_list = []
-#         # loop on all squares, draw each square until it does not overlap with previous ones,
-#         # then draw its intensity and add it to img
-#         while N<=N_max:
-#             # draw the radius of the circle
-#             r = random.randint(r_min, r_max)
-#             # draw the position (x,y) of the circle center uniformly s.t. the circle is entirely
-#             # inside the image
-#             x = random.randint(r, L-r-1)
-#             y = random.randint(r, L-r-1)
-
-#             # check if square overlaps with others, if so resample the lower left corner position
-#             # form a uniform distribution in the image
-#             while resample_num<=resample_max and
-#                   is_circle_overlapping(x_list,y_list,r_list,x,y,r):
-#                 # draw the position (x,y) of the circle center uniformly s.t. the circle is
-#                 # entirely inside the image
-#                 x = random.randint(r, L-r-1)
-#                 y = random.randint(r, L-r-1)
-
-#                 resample_num += 1 # increase number of samples counter by 1
-
-#             if is_circle_overlapping(x_list,y_list,r_list,x,y,r):
-#               # done resampling, still haven't found an empty space for this square
-#                 if noise==True: # add white noise to the image
-#                     img = add_gaussian_noise(img, 0, noise_std)
-#                     img[img<0] = 0
-#                   # when white noise was added to 0 background, negative pixel values are
-#                   # obtained - set them to zero
-#                 yield (img, segmask)
-
-#                 # create a new image
-#                 img = np.zeros((L,L))
-#                 segmask = np.zeros((L,L)) # create the matching segmentation mask
-
-#                 N = 0 # number of objects plotted to the image
-#                 resample_num = 0 # number of times object position was redrawn
-#                 # allocate variables to store square positions in a single image
-#                 x_list = []
-#                 y_list = []
-#                 r_list = []
-
-#             # if found a place for this square, save it to this image
-#             # draw the intensity from a uniform distribution
-#             A = random.uniform(A_min, A_max)
-
-#             # add new square properties to lists
-#             x_list.append(x)
-#             y_list.append(y)
-#             r_list.append(r)
-
-#             # add the circle to the image and to the segmentation mask
-#             #in_square = (X>=x) & (X<=x+a) & (Y>=y) & (Y<=y+a)
-#             #img[in_square] += A
-#             #segmask[in_square] = N+1
-#             rr, cc = skimage.draw.circle(x, y, r, shape=img.shape)
-#             img[rr,cc] += A
-#             segmask[rr,cc] = N+1
-#             N += 1 # increase number of objects in image counter by 1
-
-
-#         # reached the maximal number of squares in a single image - save it and start a new one
-#         if noise==True: # add white noise to the image
-#             img = add_gaussian_noise(img, 0, noise_std)
-#             img[img<0] = 0
-#               # when white noise was added to 0 background, negative pixel values are obtained
-#               # - set them to zero
-#         yield (img, segmask)
 
 
 def gaussian_spot_image_generator(L,
