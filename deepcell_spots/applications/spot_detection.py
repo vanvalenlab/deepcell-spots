@@ -37,7 +37,7 @@ import tensorflow as tf
 from deepcell_spots.preprocessing_utils import min_max_normalize
 from deepcell_spots.postprocessing_utils import y_annotations_to_point_list_max
 
-from deepcell_spots.applications.spots_application import Application
+from deepcell_spots.applications.spots_application import SpotsApplication
 from deepcell_spots.dotnet_losses import DotNetLosses
 from deepcell_spots.dotnet import *
 
@@ -45,7 +45,7 @@ MODEL_PATH = ('https://deepcell-data.s3-us-west-1.amazonaws.com/'
               'saved-models/SpotDetection-3.tar.gz')
 
 
-class SpotDetection(Application):
+class SpotDetection(SpotsApplication):
     """Loads a :mod:`deepcell.model_zoo.panopticnet.PanopticNet` model
     for nuclear segmentation with pretrained weights.
     The ``predict`` method handles prep and post processing steps
