@@ -30,7 +30,7 @@ def read_images(root_dir, image_files, dataorg, verbose=True):
     """
 
     max_im_dict = {}
-    fiducial_dict = {}
+    reference_dict = {}
     cytoplasm_dict = {}
 
     for i in range(len(image_files)):
@@ -44,7 +44,7 @@ def read_images(root_dir, image_files, dataorg, verbose=True):
 
         # Grab ID names for each image in stack
         rounds = round_df['readoutName'].values
-        rounds = [item for item in rounds if item in codebook.columns]
+        rounds = [item for item in rounds if 'Spots' in item]
 
         for item in rounds:
             if verbose:
@@ -66,12 +66,20 @@ def read_images(root_dir, image_files, dataorg, verbose=True):
             im = np.expand_dims(im, axis=[0, -1])
 
             max_im_dict[item] = im
-            fiducial_dict[item] = np.expand_dims(
-                        image_stack[:, :, round_df['fiducialFrame'].values[0]], axis=[0, -1])
-            cytoplasm_dict[item] = np.expand_dims(
-                        image_stack[:, :, round_df['cytoplasmFrame'].values[0]], axis=[0, -1])
 
-    return(max_im_dict, fiducial_dict, cytoplasm_dict)
+            ref_frame = dataorg.loc[dataorg['readoutName'] == 'Reference']['frame'].values[0]
+            ref_frame = ref_frame.strip('][').split(', ')
+            ref_frame = np.array(ref_frame).astype(int)
+            ref_frame = np.mean([ref_frame[0], ref_frame[-1]]).astype(int)
+            reference_dict[item] = np.expand_dims(image_stack[:, :, ref_frame], axis=[0, -1])
+
+            cyto_frame = dataorg.loc[dataorg['readoutName'] == 'Cytoplasm']['frame'].values[0]
+            cyto_frame = cyto_frame.strip('][').split(', ')
+            cyto_frame = np.array(cyto_frame).astype(int)
+            cyto_frame = np.mean([cyto_frame[0], cyto_frame[-1]]).astype(int)
+            cytoplasm_dict[item] = np.expand_dims(image_stack[:, :, cyto_frame], axis=[0, -1])
+
+    return(max_im_dict, reference_dict, cytoplasm_dict)
 
 
 def align_images(image_dict, reference_dict):
