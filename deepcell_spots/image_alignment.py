@@ -33,6 +33,12 @@ def read_images(root_dir, image_files, dataorg, verbose=True):
     reference_dict = {}
     cytoplasm_dict = {}
 
+    # Grab all file names
+    image_files = list(dataorg['fileName'].unique())
+
+    # Remove invalid file names
+    image_files = [x for x in image_files if type(x) == str]
+
     for i in range(len(image_files)):
 
         # Slice data organization table to get information for this image stack
