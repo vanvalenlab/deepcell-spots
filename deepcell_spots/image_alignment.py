@@ -4,7 +4,7 @@ import cv2
 import os
 
 
-def read_images(root_dir, image_files, dataorg, verbose=True):
+def read_images(root_dir, dataorg, verbose=True):
     """Reads in image files from given directories and parses them into dictionaries of different
     types.
 
