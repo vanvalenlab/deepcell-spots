@@ -29,6 +29,9 @@ from skimage.feature import register_translation
 from scipy.spatial import distance
 import collections
 import os
+from skimage.feature import peak_local_max
+import pandas as pd
+from deepcell_spots.postcode import *
 
 
 def read_images(root_dir, image_files, dataorg, verbose=True):
@@ -311,8 +314,8 @@ def assign_gene_identities(cp_dict, dataorg, threshold, codebook):
     spots_s = np.array(spots_s)
     coords_array = np.array(coords_list)
     
-    r = dataorg['imagingRound'].unique()
-    c = dataorg['color'].unique()
+    r = len(dataorg['imagingRound'].unique())
+    c = len(dataorg.loc[dataorg['readoutName'].str.contains('Spots')]['color'].unique())
     
     spots_s = np.reshape(spots_s, (np.shape(spots_s)[0], r, c))
     spots_s = np.swapaxes(spots_s, 1, 2)
