@@ -28,6 +28,7 @@ import numpy as np
 from skimage.feature import register_translation
 from scipy.spatial import distance
 import collections
+import os
 
 
 def read_images(root_dir, image_files, dataorg, verbose=True):
@@ -202,7 +203,7 @@ def multiplex_match_spots_to_cells(coords_dict, cytoplasm_pred):
             coords_dict
     """
     coords = [item[0] for item in coords_dict.values()]
-    keys = [coords_dict.keys]
+    keys = list(coords_dict.keys())
 
     spots_to_cells_dict = {}
 
@@ -229,7 +230,7 @@ def gene_count(spots_to_cells_dict, threshold, codebook):
 
     Returns:
         gene_count_per_cell (dict): Dictionary of dictionaries where the keys are the cell IDs
-            assigned during cytoplasmic segmentation, values are dictionaries where keys are 
+            assigned during cytoplasmic segmentation, values are dictionaries where keys are
             names of genes and values are counts detected in that cell
     """
     gene_count_per_cell = {}
@@ -289,3 +290,65 @@ def gene_count(spots_to_cells_dict, threshold, codebook):
         gene_count_per_cell[cell_id] = sorted_gene_count
 
     return(gene_count_per_cell)
+
+def assign_gene_identities(cp_dict, dataorg, threshold, codebook):
+    # Create array from classification prediction dictionary
+    cp_array = np.array(list(cp_dict.values()))[:,1,0,:,:,1]
+    
+    # Create maximum projection
+    max_cp = np.max(cp_array, axis=0)
+    # Convert classification prediction to list of points
+    coords = peak_local_max(max_cp, threshold_abs=threshold)
+    
+    # Prepare spot intensities for postcode
+    spots_s = []
+    coords_list = []
+    for c in coords:
+        ints = cp_array[:,c[0],c[1]]
+        coords_list.append([c[0],c[1]])
+        spots_s.append(ints)
+
+    spots_s = np.array(spots_s)
+    coords_array = np.array(coords_list)
+    
+    r = dataorg['imagingRound'].unique()
+    c = dataorg['color'].unique()
+    
+    spots_s = np.reshape(spots_s, (np.shape(spots_s)[0], r, c))
+    spots_s = np.swapaxes(spots_s, 1, 2)
+    
+    # Prepare codebook for postcode
+    full_codebook = pd.DataFrame()
+    full_codebook['name'] = codebook['name']
+
+    for item in dataorg['readoutName']:
+        if 'Spots' in item:
+            if item in codebook.columns:
+                full_codebook[item] = codebook[item]
+            else:
+                full_codebook[item] = np.zeros(len(full_codebook))
+    
+    barcodes_01 = np.reshape(full_codebook.values[:,1:], (len(full_codebook), r, c))
+    barcodes_01 = np.swapaxes(barcodes_01, 1, 2).astype(int)
+    
+    # Predict gene identities with postcode
+    out = decoding_function(spots_s, barcodes_01, up_prc_to_remove=100, print_training_progress=True)
+    
+    # Write results into pandas dataframe
+    df_class_names = np.concatenate((codebook['name'].values,['infeasible','background','nan']))
+    df_class_codes = np.concatenate((np.arange(len(df_class_names)),['inf','0000','NA']))
+    decoded_spots_df = decoding_output_to_dataframe(out, df_class_names, df_class_codes)
+    decoded_spots_df['X'] = coords_array[:,0]
+    decoded_spots_df['Y'] = coords_array[:,1]
+    
+    return(decoded_spots_df)
+
+def assign_spots_to_cells(decoded_spots_df, labeled_im_cyto):
+
+    cell_list = []
+    for i in range(len(decoded_spots_df)):
+        cell_list.append(labeled_im_cyto[0,decoded_spots_df.iloc[i]['X'],decoded_spots_df.iloc[i]['Y'],0])
+
+    decoded_spots_df['Cell'] = cell_list
+    
+    return(decoded_spots_df)
