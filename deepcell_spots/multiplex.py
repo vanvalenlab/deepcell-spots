@@ -32,162 +32,7 @@ import os
 from skimage.feature import peak_local_max
 import pandas as pd
 from deepcell_spots.postcode import *
-
-
-def read_images(root_dir, image_files, dataorg, verbose=True):
-    """Reads in image files from given directories and parses them into dictionaries of different
-    types.
-
-    Args:
-        root_dir (str): Directory containing all image files
-        image_files (list): List of image names (str) in root directory. Paths must be to images
-            must be saved in .npy format.
-        dataorg (pandas.DataFrame): Data frame with required columns 'fileName' (item in
-            image_files), 'readoutName' (unique ID name given to each channel in each image),
-            'fiducialFrame' (frame number for image to be used for alignment), 'cytoplasmFrame'
-            (frame number for image to be used for cell segmentation)
-        verbose (bool, optional): Boolean determining if file names are printed as they are
-            processed. Defaults to True.
-
-    Returns:
-        max_im_dict (dict): Dictionary where keys are image IDs ('readoutName') and values are
-            maximum intensity projections of frames associated with that readout name
-        fiducial_dict (dict): Dictionary where keys are image IDs ('readoutName') and values are
-            fiducial channel (image used for alignment) for each readout name
-            (multiple readout names may have the same)
-        cytoplasm_dict (dict): Dictionary where keys are image IDs ('readoutName') and values are
-            cytoplasm label image for each readout name (multiple readout names may have the same)
-    """
-
-    max_im_dict = {}
-    fiducial_dict = {}
-    cytoplasm_dict = {}
-
-    for i in range(len(image_files)):
-
-        # Slice data organization table to get information for this image stack
-        round_df = dataorg.loc[dataorg['fileName'] == image_files[i]]
-        image_file = os.path.join(root_dir, image_files[i])
-
-        # Load image stack
-        image_stack = np.load(image_file)
-
-        # Grab ID names for each image in stack
-        rounds = round_df['readoutName'].values
-        rounds = [item for item in rounds if item in codebook.columns]
-
-        for item in rounds:
-            if verbose:
-                print('Working on: {}'.format(item))
-
-            # Get frames associated with a round in the image stack
-            frame_list = round_df['frame'].loc[round_df['readoutName'] == item].values[0]
-            frame_list = frame_list.strip('][').split(', ')
-            frame_list = np.array(frame_list).astype(int)
-
-            start_frame = frame_list[0]
-            end_frame = frame_list[-1]
-
-            # Maximum projection
-            max_im = np.max(image_stack[:, :, start_frame:end_frame+1], axis=2)
-
-            # Clip outlier high pixel values
-            im = np.clip(max_im, np.min(max_im), np.percentile(max_im, 99.9))
-            im = np.expand_dims(im, axis=[0, -1])
-
-            max_im_dict[item] = im
-            fiducial_dict[item] = np.expand_dims(
-                                        image_stack[:, :, round_df['fiducialFrame'].values[0]],
-                                        axis=[0, -1])
-            cytoplasm_dict[item] = np.expand_dims(
-                                        image_stack[:, :, round_df['cytoplasmFrame'].values[0]],
-                                        axis=[0, -1])
-
-    return(max_im_dict, fiducial_dict, cytoplasm_dict)
-
-
-def align_images(image_dict, fiducial_dict):
-    """Aligns images in given dictionary based on alignment learned from fiducial dictionary.
-
-    Args:
-        image_dict (dict): Dictionary (created by read_images) where keys are image IDs
-            ('readoutName') and values are the images to be aligned
-        fiducial_dict (dict): Dictionary (created by read_images) where keys are image IDs
-            ('readoutName') and values are the images that are the fiducial channel (or images with
-            objects that are to be used to learn the alignment transformation)
-
-    Returns:
-        aligned_dict (dict): Dictionary where keys are image IDs
-            ('readoutName') and values are the images from image_dict after the alignment
-            transformation has been applied
-    """
-
-    image_keys = list(image_dict.keys())
-    num_images = len(image_keys)
-    image_shifts = np.zeros((num_images, 2))
-
-    # calculate image shifts
-    for idx in range(num_images):
-        if idx == 0:
-            pass
-        else:
-            image = fiducial_dict[image_keys[idx-1]]
-            offset_image = fiducial_dict[image_keys[idx]]
-
-            shift, error, diffphase = register_translation(image, offset_image)
-            image_shifts[idx, :] = image_shifts[idx-1, :] + shift[1:3]
-
-    image_shifts = image_shifts.astype(int)
-    aligned_dict = {}
-    # apply image shifts
-    for idx in range(num_images):
-        im = image_dict[image_keys[idx]]
-        non = lambda s: s if s < 0 else None
-        mom = lambda s: max(0, s)
-        padded = np.zeros_like(im)
-        oy, ox = image_shifts[idx, :]
-        padded[:, mom(oy):non(oy), mom(ox):non(ox)] = im[:, mom(-oy):non(-oy), mom(-ox):non(-ox)]
-        aligned_dict[image_keys[idx]] = padded.copy()
-
-    return aligned_dict
-
-
-def crop_images(aligned_dict):
-    """ Crops black space from edges of images after alignment has been applied.
-
-    Args:
-        aligned_dict (dict): Dictionary where keys are image IDs
-            ('readoutName') and values are the images with black space to be cropped away
-
-    Returns:
-        crop_dict (dict): Dictionary where keys are image IDs ('readoutName') and values are
-        cropped images
-
-    """
-    crop_dict = {}
-
-    crop_bool = np.array(list(aligned_dict.values())) > 0
-    crop_bool_all = np.min(crop_bool, axis=0)
-
-    top = 0
-    while np.array([crop_bool_all[0, :, :, 0][top] == 0]).any():
-        top += 1
-    bottom = np.shape(crop_bool_all)[1]-1
-    while np.array([crop_bool_all[0, :, :, 0][bottom] == 0]).any():
-        bottom -= 1
-
-    left = 0
-    while np.array([crop_bool_all[0, :, :, 0][:, left] == 0]).any():
-        left += 1
-    right = np.shape(crop_bool_all)[2]-1
-    while np.array([crop_bool_all[0, :, :, 0][:, right] == 0]).any():
-        right -= 1
-
-    for item in aligned_dict.keys():
-        crop_temp = aligned_dict[item] * crop_bool_all
-        crop_dict[item] = crop_temp[:, top:bottom, left:right, :]
-
-    return(crop_dict)
+from tqdm import tqdm
 
 
 def multiplex_match_spots_to_cells(coords_dict, cytoplasm_pred):
@@ -217,82 +62,284 @@ def multiplex_match_spots_to_cells(coords_dict, cytoplasm_pred):
     return(spots_to_cells_dict)
 
 
-def gene_count(spots_to_cells_dict, threshold, codebook):
-    """Converts detected spot coordinates and codebook into a count of detected transcripts for
-    each gene for a specified gene.
+def cluster_points(spots_to_cells_dict, cell_id, threshold=1.5, match_method='min_dist'):
+    """Clusters points between rounds with one of two methods: 'min_dist' or
+    'mutual_nearest_neighbor'.
 
     Args:
-        spots_to_cells_dict (list): List of dictionaries, dictionary keys are cell
-            cytoplasm labels and values are detected spots associated with that cell label,
-            there is one item in list for each image in coords_dict
-        threshold (float): Distance in pixels within which detections will be connected during
-            barcode assignment
-        codebook (pandas DataFrame): Data frame with columns for each imaging round, rows are
+        spots_to_cells_dict ([type]): Dictionary of dictionaries, keys are image IDs (readoutName),
+            values are dictionaries where keys are cell cytoplasm labels and values are detected
+            spots associated with that cell label, there is one item in list for each image in
+            coords_dict
+        cell_id (int): Integer key in spots_to_cells_dict
+        threshold (float, optional): Distance threshold in pixels for matching points between
+            rounds. Defaults to 1.5.
+        match_method (str, optional): Method for matching spots between rounds. Options are
+            'min_dist' and 'mutual_nearest_neighbor'. Defaults to 'min_dist'.
+    """
+    col_names = list(spots_to_cells_dict.keys())
+
+    # Get up data frame of clustered points
+    cluster_df = pd.DataFrame(columns=['centroids']+col_names)
+
+    # Add points from first round
+    cluster_df['centroids'] = spots_to_cells_dict[col_names[0]][cell_id]
+    cluster_df[col_names[0]] = spots_to_cells_dict[col_names[0]][cell_id]
+
+    for i in range(1, len(col_names)):
+        # Get points for current round
+        cell_coords = spots_to_cells_dict[col_names[i]][cell_id][:]
+        if len(cell_coords) == 0:
+            continue
+
+        # Match points with existing points
+        if len(list(cluster_df['centroids'].values)) > 0:
+            if match_method == 'min_dist':
+                matches = match_points_min_dist(list(cluster_df['centroids'].values),
+                                                cell_coords, threshold=threshold)
+            if match_method == 'mutual_nearest_neighbor':
+                matches = match_points_mutual_nearest_neighbor(list(cluster_df['centroids'].values),
+                                                               cell_coords, threshold=threshold)
+        curr = [np.nan]*len(cluster_df)
+        for ii in range(np.shape(matches)[1]):
+            # Set up to replace current column in clustering data frame
+            curr[matches[0][ii]] = cell_coords[matches[1][ii]]
+
+        # Replace column
+        cluster_df[col_names[i]] = curr
+
+        update_centroids = []
+        # Recalculate centroid
+        for ii in range(len(cluster_df)):
+            # Exclude current centroid
+            row_vals = cluster_df.iloc[ii].values[1:]
+            # Drops NaNs
+            row_vals = np.array([item for item in row_vals if type(item) == np.ndarray])
+            new_centroid = [np.mean(row_vals[:, 0]), np.mean(row_vals[:, 1])]
+            update_centroids.append(new_centroid)
+
+        # Replace column
+        cluster_df['centroids'] = update_centroids
+
+        # Add unmatched spots to data frame
+        alr_matched = sorted(matches[1], reverse=True)
+        for idx in alr_matched:
+            cell_coords.pop(idx)
+
+        temp_df = pd.DataFrame(columns=['centroids']+col_names)
+        temp_df[col_names[i]] = cell_coords
+        temp_df['centroids'] = cell_coords
+
+        cluster_df = pd.concat([cluster_df, temp_df])
+        cluster_df = cluster_df.reset_index(drop=True)
+
+    return(cluster_df)
+
+
+def gene_counts(spots_to_cells_dict, codebook, threshold=1.5,
+                match_method='min_dist', error_corr=True):
+    """Assigns combinatorial barcodes corresponding to gene identities. Matches spots between
+    rounds with one of two methods: 'min_dist' or 'mutual_nearest_neighbor'.
+
+    Args:
+        spots_to_cells_dict (dict): Dictionary of dictionaries, keys are image IDs (readoutName),
+            values are dictionaries where keys are cell cytoplasm labels and values are detected
+            spots associated with that cell label, there is one item in list for each image in
+            coords_dict
+        codebook (Pandas DataFrame): Data frame with columns for each imaging round, rows are
             barcodes for genes values in data frame are 0 if that barcode includes that imaging
             round and 1 if the barcode does not
+        threshold (float, optional): Distance threshold in pixels for matching points between rounds
+        match_method (str, optional): Method for matching spots between rounds. Options are
+            'min_dist' and 'mutual_nearest_neighbor'. Defaults to 'min_dist'.
+        error_corr (bool, optional): Boolean that determines whether error correction is performed
+            on barcodes that don't have an exact match. Defaults to True.
 
     Returns:
-        gene_count_per_cell (dict): Dictionary of dictionaries where the keys are the cell IDs
-            assigned during cytoplasmic segmentation, values are dictionaries where keys are
-            names of genes and values are counts detected in that cell
+        gene_counts_df (Pandas DateFrame): DataFrame containing gene counts for each cell.
     """
     gene_count_per_cell = {}
+    # codebook = codebook[['name']+col_names]
     col_names = list(spots_to_cells_dict.keys())
-    codebook = codebook[['name']+col_names]
 
-    for cell_id in spots_to_cells_list[col_names[0]].keys():
-        # Get all detected spots for the given cell_id
-        cell_coords = []
-        for name in col_names:
-            cell_coords.append(spots_to_cells_list[name][cell_id])
+    codebook_dict = {}
+    for i in range(len(codebook)):
+        codebook_dict[str(list(codebook.loc[i].values[1:-1]))] = codebook.loc[i].values[0]
 
-        # Pairwise distances
-        try:
-            flatten_cell_coords = np.vstack([item for item in cell_coords if len(item) > 0])
-        except ValueError:
-            return('No spots detected in this cell')
-        distance_mat = distance.cdist(flatten_cell_coords, flatten_cell_coords, 'euclidean')
+    gene_counts_df = pd.DataFrame(columns=['cellID']+list(codebook_dict.values()))
 
-        # Find spots closer than threshold distance
-        A = distance_mat < threshold
-        A = np.array(A).astype(int)
-        sum_A = np.sum(A, axis=1)
+    cell_id_list = list(spots_to_cells_dict[col_names[0]].keys())
+    for i_cell, cell_id in enumerate(tqdm(cell_id_list)):
 
-        # Get clusters with valid barcodes
-        filter_A = np.squeeze(A[np.argwhere(sum_A == 4)], axis=1)
-        num_coords = np.array([len(item) for item in cell_coords])
-        running_total = [0] + [sum(num_coords[:i+1]) for i in range(len(num_coords))]
+        cluster_df = cluster_points(spots_to_cells_dict, cell_id, threshold,
+                                    match_method=match_method)
 
-        # Assign barcodes
+        cluster_results = np.array(list(cluster_df.values))[:, 1:]
+
         barcodes = []
-        for i in range(len(running_total)-1):
-            barcodes.append(np.sum(filter_A[:, running_total[i]:running_total[i+1]], axis=1))
-        barcodes = np.array(barcodes).T
-
-        if len(barcodes) == 0:
-            return('No spots detected in this cell')
-
-        codebook_dict = {}
-        for i in range(len(codebook)):
-            codebook_dict[str(list(codebook.loc[i].values[1:]))] = codebook.loc[i].values[0]
-
-        gene_count = {}
-        for i in range(len(barcodes)):
-            try:
-                gene = codebook_dict[str(list(barcodes[i]))]
-
-                if gene in gene_count:
-                    gene_count[gene] += 1
+        for i, row in enumerate(cluster_results):
+            barcodes.append([])
+            for item in row:
+                if type(item) == np.ndarray:
+                    barcodes[i].append(1)
                 else:
-                    gene_count[gene] = 1
+                    barcodes[i].append(0)
+
+        filter_barcodes = [item for item in barcodes
+                           if sum(item) == 4 or sum(item) == 3 or sum(item) == 5]
+
+        temp_gene_counts_df = pd.DataFrame(columns=['cellID']+list(codebook_dict.values()))
+        temp_gene_counts_df['cellID'] = [cell_id]
+
+        for barcode in filter_barcodes:
+            try:
+                gene = codebook_dict[str(barcode)]
+                if type(temp_gene_counts_df.at[0, gene]) == int:
+                    temp_gene_counts_df.at[0, gene] += 1
+                else:
+                    temp_gene_counts_df.at[0, gene] = 1
+
             except KeyError:
-                pass
+                if error_corr:
+                    corrected_gene = error_correction(str(barcode), codebook_dict)
+                    if corrected_gene == 'No match':
+                        continue
+                    else:
+                        if type(temp_gene_counts_df.at[0, corrected_gene]) == int:
+                            temp_gene_counts_df.at[0, corrected_gene] += 1
+                        else:
+                            temp_gene_counts_df.at[0, corrected_gene] = 1
+                else:
+                    continue
 
-        sorted_gene_count = collections.OrderedDict(sorted(gene_count.items()))
+        gene_counts_df = pd.concat([gene_counts_df, temp_gene_counts_df])
 
-        gene_count_per_cell[cell_id] = sorted_gene_count
+    return(gene_counts_df)
 
-    return(gene_count_per_cell)
+
+def gene_counts_DBSCAN(spots_to_cells_dict, codebook, threshold, error_corr=True):
+    """Assigns combinatorial barcodes corresponding to gene identities. Matches spots between
+    rounds with DBSCAN clustering.
+
+    Args:
+        spots_to_cells_dict (dict): Dictionary of dictionaries, keys are image IDs (readoutName),
+            values are dictionaries where keys are cell cytoplasm labels and values are detected
+            spots associated with that cell label, there is one item in list for each image in
+            coords_dict
+        codebook (Pandas DataFrame): Data frame with columns for each imaging round, rows are
+            barcodes for genes values in data frame are 0 if that barcode includes that imaging
+            round and 1 if the barcode does not
+        threshold (float): Distance threshold in pixels for matching points between rounds
+        error_corr (bool, optional): Boolean that determines whether error correction is performed
+            on barcodes that don't have an exact match. Defaults to True.
+
+    Returns:
+        gene_counts_df (Pandas DateFrame): DataFrame containing gene counts for each cell.
+    """
+    # Codebook data frame to dictionary
+    codebook_dict = {}
+    for i in range(len(codebook)):
+        codebook_dict[str(list(codebook.loc[i].values[1:-1]))] = codebook.loc[i].values[0]
+    col_names = list(spots_to_cells_dict.keys())
+
+    gene_counts_df = pd.DataFrame(columns=['cellID']+list(codebook_dict.values()))
+
+    # Iterate through cells
+    cell_id_list = list(spots_to_cells_dict[col_names[0]].keys())
+    for i_cell, cell_id in enumerate(tqdm(cell_id_list)):
+
+        # Get cooridnates for all spots in a cell
+        cell_coords = []
+        for i in range(len(col_names)):
+            # Get points for current round
+            cell_coords.append(spots_to_cells_dict[col_names[i]][cell_id][:])
+
+        # Flatten across rounds
+        num_spots_list = [len(item) for item in cell_coords]
+        running_total = [sum(num_spots_list[:(i+1)]) for i in range(len(num_spots_list))]
+        cell_coords_flat = np.vstack(cell_coords)
+
+        # Cluster spots
+        clustering = DBSCAN(eps=threshold, min_samples=2).fit(cell_coords_flat)
+        labels = clustering.labels_
+
+        # Data frame with gene counts for this cell
+        temp_gene_counts_df = pd.DataFrame(columns=['cellID']+list(codebook_dict.values()))
+        temp_gene_counts_df['cellID'] = [cell_id]
+
+        # Iterate through clusters
+        for item in np.unique(labels):
+            # Throw out noisy clusters
+            if item == -1:
+                continue
+
+            # Get indices of all spots in a cluster
+            spot_ids = np.argwhere(labels == item)
+
+            # Throw out clusters with more than five spots
+            if len(spot_ids) > 5:
+                continue
+
+            # Instantiate barcode
+            barcode = np.zeros(10)
+
+            # Create barcode
+            for i in range(len(spot_ids)):
+
+                counter = 0
+                while spot_ids[i] > running_total[counter]:
+                    counter += 1
+
+                barcode[counter] += 1
+            barcode_str = str(list(barcode.astype(int)))
+
+            try:
+                gene = codebook_dict[barcode_str]
+                if type(temp_gene_counts_df.at[0, gene]) == int:
+                    temp_gene_counts_df.at[0, gene] += 1
+                else:
+                    temp_gene_counts_df.at[0, gene] = 1
+
+            except KeyError:
+                if error_corr:
+                    corrected_gene = error_correction(barcode_str, codebook_dict)
+                    if corrected_gene == 'No match':
+                        continue
+                    else:
+                        if type(temp_gene_counts_df.at[0, corrected_gene]) == int:
+                            temp_gene_counts_df.at[0, corrected_gene] += 1
+                        else:
+                            temp_gene_counts_df.at[0, corrected_gene] = 1
+                else:
+                    continue
+
+        gene_counts_df = pd.concat([gene_counts_df, temp_gene_counts_df])
+
+    return(gene_counts_df)
+
+
+def error_correction(barcode, codebook_dict):
+    """Corrects barcodes that have no match in codebook. To be assigned, a barcode may have a
+    maximum of one bit flipped (Hamming distance of one) from input barcode.
+
+    Args:
+        barcode (str): String of binary barcode list, where values are 1 or 0 depending on whether
+            transcripts with that barcode are labeled in a particular round.
+        codebook_dict (dict): Codebook converted into a dictionary where the keys are the binary
+            barcode and the values are the gene names.
+    """
+    dist_list = []
+    for key in codebook_dict.keys():
+        codebook_barcode = np.array(key.strip('][').split(', ')).astype(int)
+
+        dist = distance.euclidean(codebook_barcode, barcode)
+        if dist == 1:
+            gene = codebook_dict[key]
+            return(gene)
+
+    return('No match')
+
+# -----------------------------------------------------------------------------------------------
 
 
 def assign_gene_identities(cp_dict, dataorg, threshold, codebook):
