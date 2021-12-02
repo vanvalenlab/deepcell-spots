@@ -31,8 +31,11 @@ from deepcell_spots import cluster_vis
 from deepcell_spots import data_utils
 from deepcell_spots import dotnet_losses
 from deepcell_spots import dotnet
+from deepcell_spots import image_alignment
 from deepcell_spots import image_generators
+from deepcell_spots import multiplex
 from deepcell_spots import point_metrics
+from deepcell_spots import postcode
 from deepcell_spots import postprocessing_utils
 from deepcell_spots import preprocessing_utils
 from deepcell_spots import simulate_data
