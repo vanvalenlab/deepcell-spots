@@ -91,7 +91,7 @@ def read_images(root_dir, dataorg, verbose=True):
             end_frame = frame_list[-1]
 
             # Maximum projection
-            max_im = np.max(image_stack[:, :, start_frame:end_frame+1], axis=2)
+            max_im = np.max(image_stack[:, :, start_frame:end_frame + 1], axis=2)
 
             # Clip outlier high pixel values
             im = np.clip(max_im, np.min(max_im), np.percentile(max_im, 99.9))
@@ -140,12 +140,12 @@ def align_images(image_dict, reference_dict):
 
     orb = cv2.ORB_create(MAX_FEATURES)
     reference_im = cv2.convertScaleAbs(reference_dict[image_keys[0]][0, :, :, :],
-                                       alpha=(255.0/65535.0))
+                                       alpha=(255.0 / 65535.0))
     keypoints2, descriptors2 = orb.detectAndCompute(reference_im, None)
 
     for idx in range(num_images):
         im1 = cv2.convertScaleAbs(reference_dict[image_keys[idx]][0, :, :, :],
-                                  alpha=(255.0/65535.0))
+                                  alpha=(255.0 / 65535.0))
         orb = cv2.ORB_create(MAX_FEATURES)
 
         keypoints1, descriptors1 = orb.detectAndCompute(im1, None)
@@ -205,19 +205,19 @@ def crop_images(aligned_dict):
     top = 0
     while np.array([crop_bool_all[0, :, :, 0][top] == 0]).all():
         top += 1
-    bottom = np.shape(crop_bool_all)[1]-1
+    bottom = np.shape(crop_bool_all)[1] - 1
     while np.array([crop_bool_all[0, :, :, 0][bottom] == 0]).all():
         bottom -= 1
 
     left = 0
     while np.array([crop_bool_all[0, :, :, 0][:, left] == 0]).all():
         left += 1
-    right = np.shape(crop_bool_all)[2]-1
+    right = np.shape(crop_bool_all)[2] - 1
     while np.array([crop_bool_all[0, :, :, 0][:, right] == 0]).all():
         right -= 1
 
     for item in aligned_dict.keys():
         # increment one more because sometimes low value pixels at edges of image from alignment
-        crop_dict[item] = aligned_dict[item][:, top+1:bottom, left+1:right, :]
+        crop_dict[item] = aligned_dict[item][:, top + 1:bottom, left + 1:right, :]
 
     return(crop_dict)

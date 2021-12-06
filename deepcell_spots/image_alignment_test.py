@@ -47,7 +47,7 @@ class TestImageAlignment(test.TestCase):
 
     def test_crop_images(self):
         # With padding
-        im = np.random.random((8, 8))+0.1
+        im = np.random.random((8, 8)) + 0.1
         im = np.pad(im, [(1, 1), (1, 1)], mode='constant')
         im = np.expand_dims(im, axis=[0, -1])
         aligned_dict = {0: im}
@@ -58,7 +58,7 @@ class TestImageAlignment(test.TestCase):
         self.assertEqual(np.shape(crop_dict[0]), (1, 6, 6, 1))
 
         # Without padding
-        im = np.random.random((8, 8))+0.1
+        im = np.random.random((8, 8)) + 0.1
         im = np.expand_dims(im, axis=[0, -1])
         aligned_dict = {0: im}
 

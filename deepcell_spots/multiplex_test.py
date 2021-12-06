@@ -26,6 +26,8 @@
 
 """Tests for analysis of multiplex FISH images"""
 
+import numpy as np
+
 from tensorflow.python.platform import test
 from deepcell_spots.multiplex import multiplex_match_spots_to_cells
 

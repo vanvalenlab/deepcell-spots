@@ -80,7 +80,7 @@ def cluster_points(spots_to_cells_dict, cell_id, threshold=1.5, match_method='mi
     col_names = list(spots_to_cells_dict.keys())
 
     # Get up data frame of clustered points
-    cluster_df = pd.DataFrame(columns=['centroids']+col_names)
+    cluster_df = pd.DataFrame(columns=['centroids'] + col_names)
 
     # Add points from first round
     cluster_df['centroids'] = spots_to_cells_dict[col_names[0]][cell_id]
@@ -100,7 +100,7 @@ def cluster_points(spots_to_cells_dict, cell_id, threshold=1.5, match_method='mi
             if match_method == 'mutual_nearest_neighbor':
                 matches = match_points_mutual_nearest_neighbor(list(cluster_df['centroids'].values),
                                                                cell_coords, threshold=threshold)
-        curr = [np.nan]*len(cluster_df)
+        curr = [np.nan] * len(cluster_df)
         for ii in range(np.shape(matches)[1]):
             # Set up to replace current column in clustering data frame
             curr[matches[0][ii]] = cell_coords[matches[1][ii]]
@@ -126,7 +126,7 @@ def cluster_points(spots_to_cells_dict, cell_id, threshold=1.5, match_method='mi
         for idx in alr_matched:
             cell_coords.pop(idx)
 
-        temp_df = pd.DataFrame(columns=['centroids']+col_names)
+        temp_df = pd.DataFrame(columns=['centroids'] + col_names)
         temp_df[col_names[i]] = cell_coords
         temp_df['centroids'] = cell_coords
 
@@ -166,7 +166,7 @@ def gene_counts(spots_to_cells_dict, codebook, threshold=1.5,
     for i in range(len(codebook)):
         codebook_dict[str(list(codebook.loc[i].values[1:-1]))] = codebook.loc[i].values[0]
 
-    gene_counts_df = pd.DataFrame(columns=['cellID']+list(codebook_dict.values()))
+    gene_counts_df = pd.DataFrame(columns=['cellID'] + list(codebook_dict.values()))
 
     cell_id_list = list(spots_to_cells_dict[col_names[0]].keys())
     for i_cell, cell_id in enumerate(tqdm(cell_id_list)):
@@ -188,7 +188,7 @@ def gene_counts(spots_to_cells_dict, codebook, threshold=1.5,
         filter_barcodes = [item for item in barcodes
                            if sum(item) == 4 or sum(item) == 3 or sum(item) == 5]
 
-        temp_gene_counts_df = pd.DataFrame(columns=['cellID']+list(codebook_dict.values()))
+        temp_gene_counts_df = pd.DataFrame(columns=['cellID'] + list(codebook_dict.values()))
         temp_gene_counts_df['cellID'] = [cell_id]
 
         for barcode in filter_barcodes:
@@ -242,7 +242,7 @@ def gene_counts_DBSCAN(spots_to_cells_dict, codebook, threshold, error_corr=True
         codebook_dict[str(list(codebook.loc[i].values[1:-1]))] = codebook.loc[i].values[0]
     col_names = list(spots_to_cells_dict.keys())
 
-    gene_counts_df = pd.DataFrame(columns=['cellID']+list(codebook_dict.values()))
+    gene_counts_df = pd.DataFrame(columns=['cellID'] + list(codebook_dict.values()))
 
     # Iterate through cells
     cell_id_list = list(spots_to_cells_dict[col_names[0]].keys())
@@ -256,7 +256,7 @@ def gene_counts_DBSCAN(spots_to_cells_dict, codebook, threshold, error_corr=True
 
         # Flatten across rounds
         num_spots_list = [len(item) for item in cell_coords]
-        running_total = [sum(num_spots_list[:(i+1)]) for i in range(len(num_spots_list))]
+        running_total = [sum(num_spots_list[:(i + 1)]) for i in range(len(num_spots_list))]
         cell_coords_flat = np.vstack(cell_coords)
 
         # Cluster spots
@@ -264,7 +264,7 @@ def gene_counts_DBSCAN(spots_to_cells_dict, codebook, threshold, error_corr=True
         labels = clustering.labels_
 
         # Data frame with gene counts for this cell
-        temp_gene_counts_df = pd.DataFrame(columns=['cellID']+list(codebook_dict.values()))
+        temp_gene_counts_df = pd.DataFrame(columns=['cellID'] + list(codebook_dict.values()))
         temp_gene_counts_df['cellID'] = [cell_id]
 
         # Iterate through clusters
