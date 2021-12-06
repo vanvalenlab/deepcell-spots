@@ -31,7 +31,10 @@ from skimage.feature import peak_local_max
 from skimage import measure
 from tensorflow.python.platform import test
 
-from deepcell_spots.postprocessing_utils import *
+from deepcell_spots.postprocessing_utils import (y_annotations_to_point_list,
+                                                 y_annotations_to_point_list_restrictive,
+                                                 y_annotations_to_point_list_max,
+                                                 y_annotations_to_point_list_cc)
 
 
 class TestPostProcUtils(test.TestCase):

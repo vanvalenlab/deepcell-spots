@@ -31,7 +31,9 @@ import numpy as np
 
 from tensorflow.python.platform import test
 
-from deepcell_spots.spot_em import *
+from deepcell_spots.spot_em import (calc_tpr_fpr, det_likelihood, norm_marg_likelihood, em_spot,
+                                    cluster_coords, running_total_spots, define_edges,
+                                    consensus_coords)
 
 
 class TestSpotEM(test.TestCase):

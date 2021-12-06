@@ -34,7 +34,7 @@ from tensorflow.python.keras.preprocessing.image import ImageDataGenerator
 from keras_preprocessing.image.affine_transformations import transform_matrix_offset_center
 from tensorflow.python.platform import test
 
-from deepcell_spots.utils import *
+from deepcell_spots.utils import subpixel_distance_transform
 
 
 class TestUtils(test.TestCase):

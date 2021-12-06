@@ -32,7 +32,7 @@ from tensorflow.python.keras import backend as K
 from tensorflow.python.platform import test
 from sklearn.model_selection import train_test_split
 
-from deepcell_spots.data_utils import *
+from deepcell_spots.data_utils import slice_image, slice_annotated_image, get_data
 
 
 class TestDataUtils(test.TestCase):

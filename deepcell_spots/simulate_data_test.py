@@ -31,7 +31,9 @@ import numpy as np
 
 from tensorflow.python.platform import test
 
-from deepcell_spots.simulate_data import *
+from deepcell_spots.simulate_data import (sim_gt_clusters, sim_detections, sim_annotators,
+                                          percent_correct, is_in_image, is_overlapping,
+                                          add_gaussian_noise, gaussian_spot_image_generator)
 
 
 class TestSimulateData(test.TestCase):

@@ -26,9 +26,10 @@
 
 """Tests for loading and aligning images"""
 
+import numpy as np
 from tensorflow.python.platform import test
-# from deepcell_spots.image_alignment import *
-from image_alignment import *
+from deepcell_spots.image_alignment import crop_images
+# from image_alignment import *
 
 
 class TestImageAlignment(test.TestCase):

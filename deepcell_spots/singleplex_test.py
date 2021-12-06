@@ -27,7 +27,8 @@
 """Tests for analysis of singleplex FISH images"""
 
 from tensorflow.python.platform import test
-from deepcell_spots.singleplex import *
+from deepcell_spots.singleplex import (match_spots_to_cells, process_spot_dict,
+                                       remove_nuc_spots_from_cyto)
 from collections import defaultdict
 import numpy as np
 

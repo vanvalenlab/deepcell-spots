@@ -30,7 +30,7 @@ import random
 import numpy as np
 from tensorflow.python.platform import test
 
-from deepcell_spots.preprocessing_utils import *
+from deepcell_spots.preprocessing_utils import mean_std_normalize, min_max_normalize
 
 
 class TestPreProcUtils(test.TestCase):

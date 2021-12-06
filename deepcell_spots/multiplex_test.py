@@ -27,8 +27,7 @@
 """Tests for analysis of multiplex FISH images"""
 
 from tensorflow.python.platform import test
-# from deepcell_spots.multiplex import *
-from multiplex import *
+from deepcell_spots.multiplex import multiplex_match_spots_to_cells
 
 
 class TestImageAlignment(test.TestCase):
@@ -42,7 +41,6 @@ class TestImageAlignment(test.TestCase):
         self.assertEqual(spots_dict[0], [[0, 0], [1, 1]])
 
     # def test_cluster_points(self):
-
 
 
 if __name__ == '__main__':

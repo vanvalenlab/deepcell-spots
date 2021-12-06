@@ -36,8 +36,9 @@ from sklearn.metrics import *
 from tensorflow.python.keras import backend as K
 from tensorflow.python.platform import test
 
-from deepcell_spots.point_metrics import *
-from deepcell_spots.postprocessing_utils import *
+from deepcell_spots.point_metrics import (sum_of_min_distance, match_points_min_dist,
+                                          match_points_mutual_nearest_neighbor, point_precision,
+                                          point_recall, point_F1_score, stats_points)
 
 
 class TestPointMetrics(test.TestCase):
