@@ -66,7 +66,6 @@ setup(
         'networkx>=2.1',
         'opencv-python>=3.4.2.17,<4',
         'cython>=0.28',
-        'pathlib==1.0.1',
         'deepcell~=0.9.0',
         'trackpy==0.4.2'
     ],
