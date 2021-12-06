@@ -104,22 +104,27 @@ def remove_nuc_spots_from_cyto(labeled_im_nuc, labeled_im_cyto, coords):
         values are spot coordinates corresponding with that labeled region (cytoplasm excluding
         nucleus)
     """
+    # Match spots to nuclei and cytoplasms
     spot_dict_nuc = match_spots_to_cells(labeled_im_nuc, coords)
     spot_dict_cyto = match_spots_to_cells(labeled_im_cyto, coords)
 
+    # Remove spots assigned to background in nuclei image
     del spot_dict_nuc[0]
-
     nuclear_spots = np.vstack(np.array(list(spot_dict_nuc.values())))
 
+    # Fill new dictionary with spots outside of nuclei
     spot_dict_cyto_updated = defaultdict(list)
     for i in range(np.shape(coords)[0]):
         if coords[i] not in nuclear_spots:
+            # Assign spots according to cytoplasm labels
             assigned_cell = labeled_im_cyto[0, int(
                 coords[i][0]), int(coords[i][1]), 0]
 
+        # Assign spots to background if inside nuclei
         else:
             assigned_cell = 0
 
+        # Add to dictionary
         if assigned_cell in spot_dict_cyto_updated.keys():
             spot_dict_cyto_updated[assigned_cell].append(coords[i])
         else:

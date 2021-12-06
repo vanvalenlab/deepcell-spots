@@ -218,6 +218,6 @@ def crop_images(aligned_dict):
 
     for item in aligned_dict.keys():
         # increment one more because sometimes low value pixels at edges of image from alignment
-        crop_dict[item] = aligned_dict[item][:, top+1:bottom-1, left+1:right-1, :]
+        crop_dict[item] = aligned_dict[item][:, top+1:bottom, left+1:right, :]
 
     return(crop_dict)
