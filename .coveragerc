@@ -12,6 +12,6 @@ ignore_errors = True
 fail_under = 50
 show_missing = True
 
- omit =
+omit =
     **/*_test.py
-    deepcell-spots/data/*
+    data/*

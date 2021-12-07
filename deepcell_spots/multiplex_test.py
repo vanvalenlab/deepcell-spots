@@ -24,31 +24,25 @@
 # limitations under the License.
 # ==============================================================================
 
-"""Tests for expectation maximization cluster visualization"""
-
-from itertools import combinations
+"""Tests for analysis of multiplex FISH images"""
 
 import numpy as np
-from deepcell_spots.cluster_vis import ca_to_adjacency_matrix, jitter
-from scipy.spatial import distance
+from deepcell_spots.multiplex import multiplex_match_spots_to_cells
 from tensorflow.python.platform import test
 
 
-class TestClusterVis(test.TestCase):
-    def test_jitter(self):
-        coords = np.zeros((10, 2))
-        size = 5
-        noisy_coords = jitter(coords, size)
-        self.assertEqual(np.shape(coords), np.shape(noisy_coords))
-        self.assertNotEqual(coords.all(), noisy_coords.all())
+class TestImageAlignment(test.TestCase):
+    def test_multiplex_match_spots_to_cells(self):
+        coords_dict = {0: [[[0, 0], [1, 1]]]}
+        cytoplasm_pred = np.zeros((1, 10, 10, 1))
 
-    def test_ca_to_adjacency_matrix(self):
-        num_clusters = 10
-        num_annotators = 3
-        ca_matrix = np.ones((num_clusters, num_annotators))
-        A = ca_to_adjacency_matrix(ca_matrix)
+        spots_dict = multiplex_match_spots_to_cells(coords_dict, cytoplasm_pred)
 
-        self.assertEqual(np.shape(A)[0], np.shape(A)[1], ca_matrix[0])
+        print(spots_dict)
+        self.assertEqual(list(spots_dict.keys()), [0])
+        self.assertEqual(spots_dict[0], {0.0: [[0, 0], [1, 1]]})
+
+    # def test_cluster_points(self):
 
 
 if __name__ == '__main__':

@@ -1,4 +1,4 @@
-# Copyright 2016-2021 The Van Valen Lab at the California Institute of
+# Copyright 2019-2021 The Van Valen Lab at the California Institute of
 # Technology (Caltech), with support from the Paul Allen Family Foundation,
 # Google, & National Institutes of Health (NIH) under Grant U24CA224309-01.
 # All rights reserved.
@@ -7,7 +7,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#     http://www.github.com/vanvalenlab/deepcell-tf/LICENSE
+#     http://www.github.com/vanvalenlab/deepcell-spots/LICENSE
 #
 # The Work provided may be used for non-commercial academic purposes only.
 # For any other use of the Work, including commercial use, please contact:
@@ -25,27 +25,23 @@
 # ==============================================================================
 """Spot detection application"""
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
+from __future__ import absolute_import, division, print_function
 
-import os
 import glob
+import os
 
 import tensorflow as tf
-
-from deepcell_spots.preprocessing_utils import min_max_normalize
-from deepcell_spots.postprocessing_utils import y_annotations_to_point_list_max
-
-from deepcell_spots.applications.application import Application
-from deepcell_spots.losses import DotNetLosses
+from deepcell_spots.applications.spots_application import SpotsApplication
 from deepcell_spots.dotnet import *
+from deepcell_spots.dotnet_losses import DotNetLosses
+from deepcell_spots.postprocessing_utils import y_annotations_to_point_list_max
+from deepcell_spots.preprocessing_utils import min_max_normalize
 
 MODEL_PATH = ('https://deepcell-data.s3-us-west-1.amazonaws.com/'
               'saved-models/SpotDetection-3.tar.gz')
 
 
-class SpotDetection(Application):
+class SpotDetection(SpotsApplication):
     """Loads a :mod:`deepcell.model_zoo.panopticnet.PanopticNet` model
     for nuclear segmentation with pretrained weights.
     The ``predict`` method handles prep and post processing steps
@@ -58,7 +54,7 @@ class SpotDetection(Application):
         im = imread('HeLa_nuclear.png')
         # Expand image dimensions to rank 4
         im = np.expand_dims(im, axis=-1)
-        im = np.expand_dims(im, axis=0) 
+        im = np.expand_dims(im, axis=0)
         # Create the application
         app = SpotDetection()
         # create the lab
@@ -70,8 +66,9 @@ class SpotDetection(Application):
 
     #: Metadata for the dataset used to train the model
     dataset_metadata = {
-        'name': 'general_train', #update
-        'other': 'Pooled FISH data including MERFISH data and SunTag viral RNA data' #update
+        'name': 'general_train',  # update
+        'other': """Pooled FISH data including MERFISH data
+                    and SunTag viral RNA data"""  # update
     }
 
     #: Metadata for the model and training process
@@ -94,8 +91,12 @@ class SpotDetection(Application):
                 extract=True, cache_subdir='models'
             )
             model_path = os.path.splitext(archive_path)[0]
-            model = tf.keras.models.load_model(model_path, custom_objects={'regression_loss':DotNetLosses.regression_loss,
-                                                                             'classification_loss':DotNetLosses.classification_loss})
+            model = tf.keras.models.load_model(
+                model_path, custom_objects={
+                    'regression_loss': DotNetLosses.regression_loss,
+                    'classification_loss': DotNetLosses.classification_loss
+                }
+            )
 
         super(SpotDetection, self).__init__(
             model,
@@ -129,26 +130,28 @@ class SpotDetection(Application):
                 pre-processing function.
             postprocess_kwargs (dict): Keyword arguments to pass to the
                 post-processing function.
-            threshold (float): Probability threshold for a pixel to be considered as a spot. 
+            threshold (float): Probability threshold for a pixel to be
+                                considered as a spot.
         Raises:
             ValueError: Input data must match required rank of the application,
-                calculated as one dimension more (batch dimension) than expected
-                by the model.
+                calculated as one dimension more (batch dimension) than
+                expected by the model.
             ValueError: Input data must match required number of channels.
         Returns:
-            numpy.array: Coordinate locations of detected spots. 
+            numpy.array: Coordinate locations of detected spots.
         """
 
         if threshold < 0 or threshold > 1:
-            raise ValueError('Enter a probability threshold value between 0 and 1.')
+            raise ValueError("""Enter a probability threshold value between
+                                0 and 1.""")
 
         if preprocess_kwargs is None:
             preprocess_kwargs = {}
 
         if postprocess_kwargs is None:
             postprocess_kwargs = {
-                'threshold':threshold,
-                'min_distance':1}
+                'threshold': threshold,
+                'min_distance': 1}
 
         return self._predict_segmentation(
             image,

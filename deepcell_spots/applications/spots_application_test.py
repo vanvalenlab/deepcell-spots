@@ -1,4 +1,4 @@
-# Copyright 2016-2021 The Van Valen Lab at the California Institute of
+# Copyright 2019-2021 The Van Valen Lab at the California Institute of
 # Technology (Caltech), with support from the Paul Allen Family Foundation,
 # Google, & National Institutes of Health (NIH) under Grant U24CA224309-01.
 # All rights reserved.
@@ -7,7 +7,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#     http://www.github.com/vanvalenlab/deepcell-tf/LICENSE
+#     http://www.github.com/vanvalenlab/deepcell-spots/LICENSE
 #
 # The Work provided may be used for non-commercial academic purposes only.
 # For any other use of the Work, including commercial use, please contact:
@@ -25,16 +25,13 @@
 # ==============================================================================
 """Tests for Application"""
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
+from __future__ import absolute_import, division, print_function
 
 import numpy as np
-
+from deepcell_spots.applications.spots_application import Application
 from tensorflow.keras.layers import Input
 from tensorflow.python.platform import test
 
-from application import Application
 
 class DummyModel():
 
@@ -44,6 +41,7 @@ class DummyModel():
     def predict(self, x, batch_size=4):
         y = np.random.rand(*x.shape)
         return [y] * self.n_out
+
 
 class TestApplication(test.TestCase):
 
@@ -263,7 +261,9 @@ class TestApplication(test.TestCase):
 
         x = np.random.rand(1, 128, 128, 1)
         y = app._predict_segmentation(x, image_mpp=1.3)
-        y = app._resize_output(y,x.shape)
+        y = app._resize_output(y, x.shape)
         self.assertEqual(x.shape, y.shape)
 
-test.main()
+
+if __name__ == '__main__':
+    test.main()

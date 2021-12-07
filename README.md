@@ -1,5 +1,6 @@
 # DeepCell Spots
 
+[![Build Status](https://github.com/vanvalenlab/deepcell-tf/workflows/build/badge.svg)](https://github.com/vanvalenlab/deepcell-spots/actions)
 [![Coverage Status](https://coveralls.io/repos/github/vanvalenlab/deepcell-spots/badge.svg?branch=master)](https://coveralls.io/github/vanvalenlab/deepcell-spots?branch=master)
 
 `deepcell-spots` is a deep learning library for fluorescent spot detection image analysis. It allows you to apply pre-existing models and train new deep learning models for spot detection. It is written in Python and built using [TensorFlow](https://github.com/tensorflow/tensorflow), [Keras](https://www.tensorflow.org/guide/keras) and [DeepCell](https://github.com/vanvalenlab/deepcell-tf).
@@ -13,7 +14,7 @@ Build and run a local docker container, similarly to the instructions for deepce
 ```bash
 git clone https://github.com/vanvalenlab/deepcell-spots.git
 cd deepcell-spots
-docker build --build-arg TF_VERSION=2.4.1-gpu -t $USER/deepcell-spots . 
+docker build --build-arg TF_VERSION=2.5.1-gpu -t $USER/deepcell-spots . 
 ```
 
 ### Run the new docker image
@@ -54,7 +55,7 @@ coords = app.predict(image,threshold=0.9)
 
 ## Copyright
 
-Copyright © 2019-2020 [The Van Valen Lab](http://www.vanvalen.caltech.edu/) at the California Institute of Technology (Caltech), with support from the Shurl and Kay Curci Foundation, Google Research Cloud, the Paul Allen Family Foundation, & National Institutes of Health (NIH) under Grant U24CA224309-01.
+Copyright © 2019-2021 [The Van Valen Lab](http://www.vanvalen.caltech.edu/) at the California Institute of Technology (Caltech), with support from the Shurl and Kay Curci Foundation, Google Research Cloud, the Paul Allen Family Foundation, & National Institutes of Health (NIH) under Grant U24CA224309-01.
 All rights reserved.
 
 ## License

@@ -24,32 +24,21 @@
 # limitations under the License.
 # ==============================================================================
 
-"""Tests for expectation maximization cluster visualization"""
+from deepcell_spots import applications
+from deepcell_spots._version import __version__
 
-from itertools import combinations
-
-import numpy as np
-from deepcell_spots.cluster_vis import ca_to_adjacency_matrix, jitter
-from scipy.spatial import distance
-from tensorflow.python.platform import test
-
-
-class TestClusterVis(test.TestCase):
-    def test_jitter(self):
-        coords = np.zeros((10, 2))
-        size = 5
-        noisy_coords = jitter(coords, size)
-        self.assertEqual(np.shape(coords), np.shape(noisy_coords))
-        self.assertNotEqual(coords.all(), noisy_coords.all())
-
-    def test_ca_to_adjacency_matrix(self):
-        num_clusters = 10
-        num_annotators = 3
-        ca_matrix = np.ones((num_clusters, num_annotators))
-        A = ca_to_adjacency_matrix(ca_matrix)
-
-        self.assertEqual(np.shape(A)[0], np.shape(A)[1], ca_matrix[0])
-
-
-if __name__ == '__main__':
-    test.main()
+# from deepcell_spots import cluster_vis
+# from deepcell_spots import data_utils
+# from deepcell_spots import dotnet_losses
+# from deepcell_spots import dotnet
+# from deepcell_spots import image_alignment
+# from deepcell_spots import image_generators
+# from deepcell_spots import multiplex
+# from deepcell_spots import point_metrics
+# from deepcell_spots import postprocessing_utils
+# from deepcell_spots import preprocessing_utils
+# from deepcell_spots import simulate_data
+# from deepcell_spots import singleplex
+# from deepcell_spots import spot_em
+# from deepcell_spots import training
+# from deepcell_spots import utils

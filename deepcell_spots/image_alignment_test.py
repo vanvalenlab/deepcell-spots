@@ -24,31 +24,49 @@
 # limitations under the License.
 # ==============================================================================
 
-"""Tests for expectation maximization cluster visualization"""
-
-from itertools import combinations
+"""Tests for loading and aligning images"""
 
 import numpy as np
-from deepcell_spots.cluster_vis import ca_to_adjacency_matrix, jitter
-from scipy.spatial import distance
+from deepcell_spots.image_alignment import crop_images
 from tensorflow.python.platform import test
 
+# from image_alignment import *
 
-class TestClusterVis(test.TestCase):
-    def test_jitter(self):
-        coords = np.zeros((10, 2))
-        size = 5
-        noisy_coords = jitter(coords, size)
-        self.assertEqual(np.shape(coords), np.shape(noisy_coords))
-        self.assertNotEqual(coords.all(), noisy_coords.all())
 
-    def test_ca_to_adjacency_matrix(self):
-        num_clusters = 10
-        num_annotators = 3
-        ca_matrix = np.ones((num_clusters, num_annotators))
-        A = ca_to_adjacency_matrix(ca_matrix)
+class TestImageAlignment(test.TestCase):
+    # def test_align_images(self):
+    #     im = np.random.random((1, 10, 10, 1)) > 0.9
+    #     im = im*65535
+    #     im_dict = {}
+    #     ref_dict = {}
+    #     for i in range(10):
+    #         im_dict[i] = im
+    #         ref_dict[i] = im
+    #     aligned_dict = align_images(im_dict, ref_dict)
 
-        self.assertEqual(np.shape(A)[0], np.shape(A)[1], ca_matrix[0])
+    #     self.assertEqual(np.shape(im_dict.values()), np.shape(aligned_dict.values()))
+
+    def test_crop_images(self):
+        # With padding
+        im = np.random.random((8, 8)) + 0.1
+        im = np.pad(im, [(1, 1), (1, 1)], mode='constant')
+        im = np.expand_dims(im, axis=[0, -1])
+        aligned_dict = {0: im}
+
+        crop_dict = crop_images(aligned_dict)
+
+        self.assertEqual(list(crop_dict.keys()), [0])
+        self.assertEqual(np.shape(crop_dict[0]), (1, 6, 6, 1))
+
+        # Without padding
+        im = np.random.random((8, 8)) + 0.1
+        im = np.expand_dims(im, axis=[0, -1])
+        aligned_dict = {0: im}
+
+        crop_dict = crop_images(aligned_dict)
+
+        self.assertEqual(list(crop_dict.keys()), [0])
+        self.assertEqual(np.shape(crop_dict[0]), (1, 6, 6, 1))
 
 
 if __name__ == '__main__':

@@ -1,22 +1,45 @@
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import division
+# Copyright 2019-2021 The Van Valen Lab at the California Institute of
+# Technology (Caltech), with support from the Paul Allen Family Foundation,
+# Google, & National Institutes of Health (NIH) under Grant U24CA224309-01.
+# All rights reserved.
+#
+# Licensed under a modified Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.github.com/vanvalenlab/deepcell-spots/LICENSE
+#
+# The Work provided may be used for non-commercial academic purposes only.
+# For any other use of the Work, including commercial use, please contact:
+# vanvalenlab@gmail.com
+#
+# Neither the name of Caltech nor the names of its contributors may be used
+# to endorse or promote products derived from this software without specific
+# prior written permission.
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ==============================================================================
+
+"""Functions for training convolutional neural networks"""
+
+from __future__ import absolute_import, division, print_function
 
 import datetime
 import os
 
 import numpy as np
-from tensorflow.python.keras import backend as K
-from tensorflow.python.keras import callbacks
-from tensorflow.keras.optimizers import SGD
-
-#import deepcell.losses
+# import deepcell.losses
 from deepcell.utils import train_utils
 from deepcell.utils.train_utils import rate_scheduler
-
-from deepcell_spots import losses
-from deepcell_spots import image_generators
+from deepcell_spots import dotnet_losses, image_generators
 from deepcell_spots.data_utils import get_data
+from tensorflow.keras.optimizers import SGD
+from tensorflow.python.keras import backend as K
+from tensorflow.python.keras import callbacks
 
 
 def train_model_dot(model,
@@ -28,7 +51,8 @@ def train_model_dot(model,
                     batch_size=1,
                     num_gpus=None,
                     frames_per_batch=5,
-                    optimizer=SGD(lr=0.01, decay=1e-6, momentum=0.9, nesterov=True),
+                    optimizer=SGD(lr=0.01, decay=1e-6,
+                                  momentum=0.9, nesterov=True),
                     log_dir='/data/tensorboard_logs',
                     model_dir='/data/models',
                     model_name=None,
@@ -44,7 +68,6 @@ def train_model_dot(model,
                     fill_mode='nearest',
                     cval=0.,
                     **kwargs):
-
     """Train a dot center detection model using fully convolutional mode.
         Args:
             model (tensorflow.keras.Model): The model to train.
@@ -70,8 +93,10 @@ def train_model_dot(model,
             flip (bool): Enables horizontal and vertical flipping for augmentation
             shear (int): Maximum shear range for image augmentation
             zoom_range (tuple): Minimum and maximum zoom values (0.8, 1.2)
-            fill_mode (str): padding style for data augmentation (input parameter of tf.keras.preprocessing.image.ImageDataGenerator)
-            cval (float or int): used for pixels outside the boundaries of the input image when fill_mode='constant'
+            fill_mode (str): padding style for data augmentation (input parameter of
+                            tf.keras.preprocessing.image.ImageDataGenerator)
+            cval (float or int): used for pixels outside the boundaries of the input image when
+                            fill_mode='constant'
             kwargs (dict): Other parameters to pass to _transform_masks
         Returns:
             tensorflow.keras.Model: The trained model
@@ -86,7 +111,8 @@ def train_model_dot(model,
     model_path = os.path.join(model_dir, '{}.h5'.format(model_name))
     loss_path = os.path.join(model_dir, '{}.npz'.format(model_name))
 
-    train_dict, test_dict = get_data(dataset, test_size=test_size, seed=seed, allow_pickle=True)
+    train_dict, test_dict = get_data(
+        dataset, test_size=test_size, seed=seed, allow_pickle=True)
 
     n_classes = model.layers[-1].output_shape[1 if is_channels_first else -1]
     # the data, shuffled and split between train and test sets
@@ -97,7 +123,6 @@ def train_model_dot(model,
     print('Output Shape:', model.layers[-1].output_shape)
     print('Number of Classes:', n_classes)
 
-
     if num_gpus is None:
         num_gpus = train_utils.count_gpus()
 
@@ -107,16 +132,17 @@ def train_model_dot(model,
 
     print('Training on {} GPUs'.format(num_gpus))
 
-    dotnet_losses = losses.DotNetLosses(sigma=sigma, alpha=alpha, gamma=gamma, focal=focal)
+    losses = dotnet_losses.DotNetLosses(
+        sigma=sigma, alpha=alpha, gamma=gamma, focal=focal)
 
     loss = {
-        'offset_regression': dotnet_losses.regression_loss,
-        'classification': dotnet_losses.classification_loss
+        'offset_regression': losses.regression_loss,
+        'classification': losses.classification_loss
     }
 
     loss_weights = {"offset_regression": 1.0, "classification": 1.0}
-    model.compile(loss=loss, loss_weights=loss_weights, optimizer=optimizer, metrics=['accuracy'])
-
+    model.compile(loss=loss, loss_weights=loss_weights,
+                  optimizer=optimizer, metrics=['accuracy'])
 
     if num_gpus >= 2:
         # Each GPU must have at least one validation example
@@ -156,27 +182,27 @@ def train_model_dot(model,
     if train_dict['X'].ndim == 5:
         train_data = datagen.flow(
             train_dict,
-            #skip=skip,
+            # skip=skip,
             seed=seed,
             batch_size=batch_size,
             frames_per_batch=frames_per_batch)
 
         val_data = datagen_val.flow(
             test_dict,
-            #skip=skip,
+            # skip=skip,
             seed=seed,
             batch_size=batch_size,
             frames_per_batch=frames_per_batch)
     else:
         train_data = datagen.flow(
             train_dict,
-            #skip=skip,
+            # skip=skip,
             seed=seed,
             batch_size=batch_size)
 
         val_data = datagen_val.flow(
             test_dict,
-            #skip=skip,
+            # skip=skip,
             seed=seed,
             batch_size=batch_size)
 

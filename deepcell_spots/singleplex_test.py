@@ -24,31 +24,43 @@
 # limitations under the License.
 # ==============================================================================
 
-"""Tests for expectation maximization cluster visualization"""
+"""Tests for analysis of singleplex FISH images"""
 
-from itertools import combinations
+from collections import defaultdict
 
 import numpy as np
-from deepcell_spots.cluster_vis import ca_to_adjacency_matrix, jitter
-from scipy.spatial import distance
+from deepcell_spots.singleplex import (match_spots_to_cells, process_spot_dict,
+                                       remove_nuc_spots_from_cyto)
 from tensorflow.python.platform import test
 
 
-class TestClusterVis(test.TestCase):
-    def test_jitter(self):
-        coords = np.zeros((10, 2))
-        size = 5
-        noisy_coords = jitter(coords, size)
-        self.assertEqual(np.shape(coords), np.shape(noisy_coords))
-        self.assertNotEqual(coords.all(), noisy_coords.all())
+class TestSingleplex(test.TestCase):
+    def test_match_spots_to_cells(self):
+        labeled_im = np.zeros((1, 10, 10, 1))
+        coords = np.array([[0, 0], [1, 1]])
 
-    def test_ca_to_adjacency_matrix(self):
-        num_clusters = 10
-        num_annotators = 3
-        ca_matrix = np.ones((num_clusters, num_annotators))
-        A = ca_to_adjacency_matrix(ca_matrix)
+        spot_dict = match_spots_to_cells(labeled_im, coords)
 
-        self.assertEqual(np.shape(A)[0], np.shape(A)[1], ca_matrix[0])
+        self.assertEqual(list(spot_dict.keys()), [0])
+        self.assertAllEqual(spot_dict[0], [[0, 0], [1, 1]])
+
+    def test_process_spot_dict(self):
+        spot_dict = {0: [[0, 0], [1, 1]]}
+
+        coords, cmap_list = process_spot_dict(spot_dict)
+
+        self.assertAllEqual(coords, [[0, 0], [1, 1]])
+        self.assertAllEqual(cmap_list, [0, 0])
+
+    def test_remove_nuc_spots_from_cyto(self):
+        labeled_im_nuc = np.concatenate((np.zeros((1, 5, 10, 1)), np.ones((1, 5, 10, 1))), axis=1)
+        labeled_im_cyto = np.ones((1, 10, 10, 1))
+
+        coords = [[0, 0], [1, 1], [7, 7]]
+        spot_dict = remove_nuc_spots_from_cyto(labeled_im_nuc,
+                                               labeled_im_cyto, coords)
+
+        self.assertEqual(spot_dict, defaultdict(list, {1.0: [[0, 0], [1, 1]], 0: [[7, 7]]}))
 
 
 if __name__ == '__main__':

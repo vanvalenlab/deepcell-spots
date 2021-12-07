@@ -1,12 +1,44 @@
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import division
+# Copyright 2019-2021 The Van Valen Lab at the California Institute of
+# Technology (Caltech), with support from the Paul Allen Family Foundation,
+# Google, & National Institutes of Health (NIH) under Grant U24CA224309-01.
+# All rights reserved.
+#
+# Licensed under a modified Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.github.com/vanvalenlab/deepcell-spots/LICENSE
+#
+# The Work provided may be used for non-commercial academic purposes only.
+# For any other use of the Work, including commercial use, please contact:
+# vanvalenlab@gmail.com
+#
+# Neither the name of Caltech nor the names of its contributors may be used
+# to endorse or promote products derived from this software without specific
+# prior written permission.
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ==============================================================================
+
+"""Spot detection image generators"""
+
+from __future__ import absolute_import, division, print_function
 
 import os
-import numpy as np
 
+import numpy as np
+from deepcell_spots.utils import (affine_transform_points,
+                                  subpixel_distance_transform)
 from skimage.segmentation import clear_border
+from tensorflow.keras.utils import to_categorical
 from tensorflow.python.keras import backend as K
+from tensorflow.python.keras.preprocessing.image import (ImageDataGenerator,
+                                                         Iterator,
+                                                         array_to_img)
 
 try:
     import scipy
@@ -17,14 +49,6 @@ try:
 except ImportError:
     scipy = None
 
-from tensorflow.python.keras.preprocessing.image import array_to_img
-from tensorflow.python.keras.preprocessing.image import Iterator
-from tensorflow.python.keras.preprocessing.image import ImageDataGenerator
-from tensorflow.keras.utils import to_categorical
-
-from deepcell_spots.utils import subpixel_distance_transform
-from deepcell_spots.utils import affine_transform_points
-
 
 class ImageFullyConvDotIterator(Iterator):
     """Iterator yielding data from Numpy arrays (`X and `y`).
@@ -32,7 +56,8 @@ class ImageFullyConvDotIterator(Iterator):
     Args:
         train_dict: dictionary consisting of numpy arrays for `X` and `y`.
         X - (batch, Ly, Lx, channel)
-        y - np.array of length batch containing np.arrays of shape (N, 2) N = # of points in the image
+        y - np.array of length batch containing np.arrays of shape (N, 2) N = # of points
+        in the image
         image_data_generator: Instance of `ImageDataGenerator`
             to use for random transformations and normalization.
         batch_size: Integer, size of a batch.
@@ -76,9 +101,7 @@ class ImageFullyConvDotIterator(Iterator):
                              'with shape', self.x.shape)
 
         self.y = y
-        #self.y = _transform_masks(y, transform, data_format=data_format, **transform_kwargs) # keep this line even if transform=None because it performs to_categorical
         self.channel_axis = 3 if data_format == 'channels_last' else 1
-        #self.skip = skip # copied from FullyConv pipeline but not needed here? since skip connections output kept internal
         self.image_data_generator = image_data_generator
         self.data_format = data_format
         self.save_to_dir = save_to_dir
@@ -93,10 +116,10 @@ class ImageFullyConvDotIterator(Iterator):
         Args:
             points:
             (N, 2) numpy array which contains points in the format [y, x]
-            
+
             image_shape:
                 tuple of length 2 of the image shape
-                
+
             dy:
                 pixel y width
 
@@ -106,26 +129,27 @@ class ImageFullyConvDotIterator(Iterator):
         Returns:
             annotations dictionary:
             detections:
-            numpy array of shape (image_shape,2), with (i,j,:) being a one-hot encoding of the classification of
-            each pixel as containing a point in points, or not containing one.
-            
+            numpy array of shape (image_shape,2), with (i,j,:) being a one-hot encoding of the
+            classification of each pixel as containing a point in points, or not containing one.
+
             offset: two stacked images with the shape of the input image
             delta_x:
                 numpy array of shape image_shape, each pixel is = the signed x distance between
                 a point from points that is near pixel [i,j] and the center of the pixel
-                
+
             delta_y:
                 numpy array of shape image_shape, each pixel is = the signed y distance between
                 a point from points that is near pixel [i,j] and the center of the pixel
         """
 
-        contains_point = np.zeros(image_shape) 
+        contains_point = np.zeros(image_shape)
         for ind, [y, x] in enumerate(points):
-            nearest_pixel_x_ind = int(round(x/dx))
-            nearest_pixel_y_ind = int(round(y/dy))
+            nearest_pixel_x_ind = int(round(x / dx))
+            nearest_pixel_y_ind = int(round(y / dy))
             contains_point[nearest_pixel_y_ind, nearest_pixel_x_ind] = 1
-        
-        delta_y, delta_x, _ = subpixel_distance_transform(points, image_shape, dy=1, dx=1)
+
+        delta_y, delta_x, _ = subpixel_distance_transform(
+            points, image_shape, dy=1, dx=1)
         offset = np.stack((delta_y, delta_x), axis=-1)
 
         one_hot_encoded_cp = to_categorical(contains_point)
@@ -133,34 +157,36 @@ class ImageFullyConvDotIterator(Iterator):
         annotations = {'detections': one_hot_encoded_cp, 'offset': offset}
         return annotations
 
-
     def _get_batches_of_transformed_samples(self, index_array):
         batch_x = np.zeros(tuple([len(index_array)] + list(self.x.shape)[1:]))
-        #batch_y = np.zeros(tuple([len(index_array)] + list(self.y.shape)[1:]))
-        # DELETE batch_y? its size above is not true - y is a point list but batch output will be image*3 size
+        # batch_y = np.zeros(tuple([len(index_array)] + list(self.y.shape)[1:]))
+        # DELETE batch_y? its size above is not true - y is a point list but batch output will be
+        # image*3 size
 
-        batch_detections = [] # eventual shape: (batch, Lx, Ly, 2)
-        batch_offset = [] # eventual shape: (batch, Lx, Ly, 2)
+        batch_detections = []  # eventual shape: (batch, Lx, Ly, 2)
+        batch_offset = []  # eventual shape: (batch, Lx, Ly, 2)
 
         for i, j in enumerate(index_array):
             x = self.x[j]
 
             if self.y is not None:
                 y = self.y[j]
-                x, y = self.image_data_generator.random_transform(x.astype(K.floatx()), y)
+                x, y = self.image_data_generator.random_transform(
+                    x.astype(K.floatx()), y)
 
                 annotations = self.point_list_to_annotations(y, x.shape[:2])
-                
+
                 batch_detections.append(annotations['detections'])
                 batch_offset.append(annotations['offset'])
             else:
-                x = self.image_data_generator.random_transform(x.astype(K.floatx()))
+                x = self.image_data_generator.random_transform(
+                    x.astype(K.floatx()))
 
             x = self.image_data_generator.standardize(x)
 
             batch_x[i] = x
 
-        if self.save_to_dir:   # CHECK IF THIS WORKS: ARE THE INDICES RIGHT IN THE FIRST LINES THAT GET THE IMAGE?
+        if self.save_to_dir:
             for i, j in enumerate(index_array):
                 if self.data_format == 'channels_first':
                     img_x = np.expand_dims(batch_x[i, 0, ...], 0)
@@ -177,7 +203,8 @@ class ImageFullyConvDotIterator(Iterator):
                 # save the 3 images of labels for each x image
                 if self.y is not None:
                     # Save detections image
-                    img_y = np.expand_dims(batch_detections[i, ..., 0], -1) # get first channel of i-th image in batch
+                    # get first channel of i-th image in batch
+                    img_y = np.expand_dims(batch_detections[i, ..., 0], -1)
                     img_y = np.expand_dims(img_y, axis=self.channel_axis - 1)
                     img = array_to_img(img_y, self.data_format, scale=True)
                     fname = 'y_det_{prefix}_{index}_{hash}.{format}'.format(
@@ -188,7 +215,8 @@ class ImageFullyConvDotIterator(Iterator):
                     img.save(os.path.join(self.save_to_dir, fname))
 
                     # save offset images
-                    img_y = np.expand_dims(batch_offset[i, ..., 0, 0], -1) # y offset, first channel, i-th image of batch
+                    # y offset, first channel, i-th image of batch
+                    img_y = np.expand_dims(batch_offset[i, ..., 0, 0], -1)
                     img_y = np.expand_dims(img_y, axis=self.channel_axis - 1)
                     img = array_to_img(img_y, self.data_format, scale=True)
                     fname = 'y_y_offset_{prefix}_{index}_{hash}.{format}'.format(
@@ -198,7 +226,7 @@ class ImageFullyConvDotIterator(Iterator):
                         format=self.save_format)
                     img.save(os.path.join(self.save_to_dir, fname))
 
-                    img_y = np.expand_dims(batch_offset[i,...,0,1], -1)
+                    img_y = np.expand_dims(batch_offset[i, ..., 0, 1], -1)
                     img_y = np.expand_dims(img_y, axis=self.channel_axis - 1)
                     img = array_to_img(img_y, self.data_format, scale=True)
                     fname = 'y_x_offset_{prefix}_{index}_{hash}.{format}'.format(
@@ -334,11 +362,12 @@ class ImageFullyConvDotDataGenerator(ImageDataGenerator):
             save_format=save_format)
 
     def apply_points_transform(self, y, transform_parameters, image_shape):
-        """Applies an affine transformation to a list of point coordinates according to given parameters.
+        """Applies an affine transformation to a list of point coordinates according to
+        given parameters.
 
         Args:
-            y: (N, 2) numpy array which contains points in the format [y, x] or list of such arrays (y Cartesian
-            coordinate before the x, as in matrix/image indexing convention.
+            y: (N, 2) numpy array which contains points in the format [y, x] or list of such arrays
+            (y Cartesian coordinate before the x, as in matrix/image indexing convention.
             Not to confuse with the variables X,y - data and labels)
 
             transform_parameters: Dictionary with string - parameter pairs
@@ -355,29 +384,28 @@ class ImageFullyConvDotDataGenerator(ImageDataGenerator):
                 - `'flip_vertical'`: Boolean. Vertical flip.
                 - `'channel_shift_intensity'`: Float. Channel shift intensity.
                 - `'brightness'`: Float. Brightness shift intensity.
-            (   taken from: keras ImageDataGenerator documentation:
-            https://github.com/keras-team/keras-preprocessing/blob/master/keras_preprocessing/image/image_data_generator.py  )
+                (taken from: keras ImageDataGenerator documentation)
 
             image_shape: tuple of length 2 of the image shape
         """
-        
+
         # x is a single image, so it doesn't have image number at index 0
         img_row_axis = self.row_axis - 1
         img_col_axis = self.col_axis - 1
         img_channel_axis = self.channel_axis - 1
 
         y = affine_transform_points(y, transform_parameters,
-                                       image_shape=image_shape,
-                                       img_row_axis=img_row_axis,
-                                       img_col_axis=img_col_axis,
-                                       fill_mode=self.fill_mode)
+                                    image_shape=image_shape,
+                                    img_row_axis=img_row_axis,
+                                    img_col_axis=img_col_axis,
+                                    fill_mode=self.fill_mode)
 
         return y
 
-
     def random_transform(self, x, y=None, seed=None):
-        """Applies a random transformation to an image, 
-        and (optional) to point labels referring to coordinates in the image - with -0.5 <= x <= Lx, -0.5 <= y <= Ly, for Ly, Lx = x.shape[0,1]
+        """Applies a random transformation to an image,
+        and (optional) to point labels referring to coordinates in the image - with -0.5 <= x <= Lx,
+        -0.5 <= y <= Ly, for Ly, Lx = x.shape[0,1]
 
         Args:
             x: 3D tensor or list of 3D tensors,
@@ -385,25 +413,27 @@ class ImageFullyConvDotDataGenerator(ImageDataGenerator):
             y: (N, 2) numpy array which contains points in the format [y, x] or list of such arrays
                 referring to coordinates in the image `x`, optional.
             seed: Random seed.
-            fill_mode: type of padding used for points outside of the input image which correspond to points inside the output image.
-                One of {"constant", "nearest", "reflect" or "wrap"}.
+            fill_mode: type of padding used for points outside of the input image which correspond
+            to points inside the output image. One of {"constant", "nearest", "reflect" or "wrap"}.
 
         Returns:
             A randomly transformed version of the input (same shape).
             If `y` is passed, it is transformed if necessary and returned.
-            the transformed y contains input and padding (for fill_mode='reflect' or 'wrap') points mapped to output image space, 
-            which are inside the output image (transformed points mapped to outside of the output image boundaries are deleted)
+            the transformed y contains input and padding (for fill_mode='reflect' or 'wrap') points
+            mapped to output image space, which are inside the output image (transformed points
+            mapped to outside of the output image boundaries are deleted)
 
 
             NOTICE: NO CHANNEL SUPPORT HERE! CAN ADD LATER (SEE OLDER BUGGY FILE -
-            need to decide how to save y with channels, could be (batch, channel, N, 2) or switch batch and channel.
+            need to decide how to save y with channels, could be (batch, channel, N, 2) or switch
+            batch and channel.
         """
         params = self.get_random_transform(x.shape, seed)
 
         # channel support code below (?) commented out for now
-        #if isinstance(x, list):
+        # if isinstance(x, list):
         #    x = [self.apply_transform(x_i, params) for x_i in x]
-        #else:
+        # else:
         x = self.apply_transform(x, params)
 
         if y is None:
@@ -411,9 +441,9 @@ class ImageFullyConvDotDataGenerator(ImageDataGenerator):
 
         # apply the transform to the point labels
         # channel support code below (?) commented out for now
-        #if isinstance(y, list):
+        # if isinstance(y, list):
         #    y = [self.apply_points_transform(y_i, params, image_shape=x.shape[:2]) for y_i in y]
-        #else:
+        # else:
         y = self.apply_points_transform(y, params, image_shape=x.shape[:2])
 
         return x, y

@@ -1,11 +1,38 @@
+# Copyright 2019-2021 The Van Valen Lab at the California Institute of
+# Technology (Caltech), with support from the Paul Allen Family Foundation,
+# Google, & National Institutes of Health (NIH) under Grant U24CA224309-01.
+# All rights reserved.
+#
+# Licensed under a modified Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.github.com/vanvalenlab/deepcell-spots/LICENSE
+#
+# The Work provided may be used for non-commercial academic purposes only.
+# For any other use of the Work, including commercial use, please contact:
+# vanvalenlab@gmail.com
+#
+# Neither the name of Caltech nor the names of its contributors may be used
+# to endorse or promote products derived from this software without specific
+# prior written permission.
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ==============================================================================
+
+"""Custom loss functions for DeepCell spots"""
+
 # loss:
 # focal loss for classification of pixels
 # L1 loss for regression of the point coordinates
 
 import tensorflow as tf
-from tensorflow.python.keras import backend as K
-
 from deepcell import losses
+from tensorflow.python.keras import backend as K
 
 
 # DIFFERENCE FROM DEEPCELL.losses: doesn't sum over channel axis.
@@ -41,7 +68,15 @@ def smooth_l1(y_true, y_pred, sigma=3.0):  # , axis=None):
 
 
 class DotNetLosses(object):
-    def __init__(self, alpha=0.25, gamma=2.0, sigma=3.0, n_classes=2, focal=False, d_pixels=1, mu=0, beta=0):
+    def __init__(self,
+                 alpha=0.25,
+                 gamma=2.0,
+                 sigma=3.0,
+                 n_classes=2,
+                 focal=False,
+                 d_pixels=1,
+                 mu=0,
+                 beta=0):
         self.alpha = alpha
         self.gamma = gamma
         self.sigma = sigma
@@ -51,17 +86,17 @@ class DotNetLosses(object):
         self.mu = mu
         self.beta = beta
 
-
     def regression_loss(self, y_true, y_pred):
         """
-        Calculates the regression loss of the shift from pixel center, only for pixels containing a dot (true regression
-        shifts smaller in absolute value than 0.5). Returns
+        Calculates the regression loss of the shift from pixel center, only for pixels containing a
+        dot (true regression shifts smaller in absolute value than 0.5). Returns
 
         Args:
             y_true, y_pred: tensors of shape (batch, Ly, Lx, 2)
             Ly * Lx - the dimensions of a single image, dimension 3 contains delta_y and delta_x
-            d_pixels (non-negative integer): the number of pixels on each side of a point containing pixels over which to calculate
-            the regression loss for the offset image (0 = calculate for point containing pixels only,
+            d_pixels (non-negative integer): the number of pixels on each side of a point
+            containing pixels over which to calculate the regression loss for the offset
+            image (0 = calculate for point containing pixels only,
             1 = calculate for 8-nearest neighbors, ...)
 
         Returns:
@@ -74,7 +109,7 @@ class DotNetLosses(object):
         # get class parameter
         d_pixels = self.d_pixels
 
-        # separate x and y offset 
+        # separate x and y offset
         y_offset_true = y_true[..., 0]
         x_offset_true = y_true[..., 1]
 
@@ -82,11 +117,18 @@ class DotNetLosses(object):
         x_offset_pred = y_pred[..., 1]
 
         # calculate the loss only over d_pixels around pixels that contain a point
-        d = 0.5 + d_pixels  # threshold delta_x & delta_y offset of pixel center from point for inclusion in regression loss
-        near_pt_y = tf.math.logical_and(K.less_equal(-d, y_offset_true), K.less(y_offset_true, d)) # true if y value is within range d from point containing pixel
-        near_pt_x = tf.math.logical_and(K.less_equal(-d, x_offset_true), K.less(x_offset_true, d)) # true if x value is within range d from point containing pixel
+        # threshold delta_x & delta_y offset of pixel center from point for inclusion in
+        # regression loss
+        d = 0.5 + d_pixels
+        # true if y value is within range d from point containing pixel
+        near_pt_y = tf.math.logical_and(
+            K.less_equal(-d, y_offset_true), K.less(y_offset_true, d))
+        # true if x value is within range d from point containing pixel
+        near_pt_x = tf.math.logical_and(
+            K.less_equal(-d, x_offset_true), K.less(x_offset_true, d))
         near_pt_indices = tf.where(tf.math.logical_and(near_pt_y, near_pt_x))
-        # Classification of half-integer coordinates is inconsistent with the generator. This is negligile for random positions
+        # Classification of half-integer coordinates is inconsistent with the generator. This is
+        # negligile for random positions
         # The generator uses python's round which is banker's rounding (to nearest even number)
 
         y_offset_true_cp = tf.gather_nd(y_offset_true, near_pt_indices)
@@ -96,8 +138,10 @@ class DotNetLosses(object):
         x_offset_pred_cp = tf.gather_nd(x_offset_pred, near_pt_indices)
 
         # use smooth l1 loss on the offsets
-        pixelwise_loss_y = smooth_l1(y_offset_true_cp, y_offset_pred_cp, sigma=self.sigma)
-        pixelwise_loss_x = smooth_l1(x_offset_true_cp, x_offset_pred_cp, sigma=self.sigma)
+        pixelwise_loss_y = smooth_l1(
+            y_offset_true_cp, y_offset_pred_cp, sigma=self.sigma)
+        pixelwise_loss_x = smooth_l1(
+            x_offset_true_cp, x_offset_pred_cp, sigma=self.sigma)
 
         # compute the normalizer: the number of positive pixels
         # can change line below to use the shape of near_pt_indices instead of re-calculating
@@ -128,7 +172,8 @@ class DotNetLosses(object):
             # normalizer = K.maximum(K.cast_to_floatx(1.0), normalizer)
             # loss = K.sum(loss) / normalizer
 
-            loss = losses.weighted_focal_loss(y_true, y_pred, gamma=self.gamma, n_classes=self.n_classes)
+            loss = losses.weighted_focal_loss(
+                y_true, y_pred, gamma=self.gamma, n_classes=self.n_classes)
 
         else:
             loss = losses.weighted_categorical_crossentropy(
@@ -150,7 +195,8 @@ class DotNetLosses(object):
         beta = self.beta
 
         if self.focal:
-            loss = losses.weighted_focal_loss(y_true, y_pred, gamma=self.gamma, n_classes=self.n_classes)
+            loss = losses.weighted_focal_loss(
+                y_true, y_pred, gamma=self.gamma, n_classes=self.n_classes)
 
         else:
             loss = losses.weighted_categorical_crossentropy(
@@ -158,9 +204,11 @@ class DotNetLosses(object):
             loss = K.mean(loss)
 
         # L2 penalize a difference in total number of spots in each image of the batch
-        #N_diff = K.sum(y_pred[..., 1], axis=[1, 2]) - K.sum(y_true[..., 1], axis=[1, 2])  # shape: batch
+        # N_diff = K.sum(y_pred[..., 1], axis=[1, 2]) - K.sum(y_true[..., 1], axis=[1, 2])
+        # # shape: batch
         # replace sum by mean to prevent divergence (mean = sum / (Ly*Lx))
-        N_diff = K.mean(y_pred[..., 1], axis=[1, 2]) - K.mean(y_true[..., 1], axis=[1, 2])
+        N_diff = K.mean(y_pred[..., 1], axis=[1, 2]) - \
+            K.mean(y_true[..., 1], axis=[1, 2])
         N_loss = K.mean(K.square(N_diff))
 
         # interaction term to reduce tendency to produce false positives near every
@@ -170,7 +218,8 @@ class DotNetLosses(object):
         inter_loss = K.sum(y_pred_padded[:, 1:, :, 1] * y_pred_padded[:, :-1, :, 1]) + \
             K.sum(y_pred_padded[:, :, 1:, 1] * y_pred_padded[:, :, :-1, 1])
 
-        normalizer = K.cast(K.shape(y_pred)[0]*K.shape(y_pred)[1]*K.shape(y_pred)[2], K.floatx())
+        normalizer = K.cast(
+            K.shape(y_pred)[0] * K.shape(y_pred)[1] * K.shape(y_pred)[2], K.floatx())
         inter_loss = inter_loss / normalizer
 
         return loss + mu * N_loss + beta * inter_loss
