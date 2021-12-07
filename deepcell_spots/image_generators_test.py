@@ -97,7 +97,46 @@ class TestImageFullyConvDotDataGenerator(test.TestCase):
             for x, _ in generator.flow(
                     train_dict,
                     batch_size=1,
-                    shuffle=True
-                    ):
+                    shuffle=True):
                 self.assertEqual(x.shape[1:], (20, 20, 1))
                 break
+
+    def test_sample_data_generator_invalid_data(self):
+        generator = image_generators.ImageFullyConvDotDataGenerator(
+                    rotation_range=0,
+                    shear_range=0,
+                    zoom_range=0,
+                    horizontal_flip=True,
+                    vertical_flip=True,
+                    fill_mode='nearest',
+                    cval=0.
+                )
+
+        # Test fit with invalid data
+        with self.assertRaises(ValueError):
+            x = np.random.random((3, 10, 10))
+            generator.fit(x)
+
+        # Test flow with invalid dimensions
+        with self.assertRaises(ValueError):
+            train_dict = {
+                'X': np.random.random((8, 10, 10)),
+                'y': np.random.random((8, 10, 10))
+            }
+            generator.flow(train_dict)
+
+        # Test flow with non-matching batches
+        with self.assertRaises(Exception):
+            train_dict = {
+                'X': np.random.random((8, 10, 10, 1)),
+                'y': np.random.random((7, 10, 10, 1))
+            }
+            generator.flow(train_dict)
+
+        with self.assertRaises(ValueError):
+            generator = image_generators.ImageFullyConvDotDataGenerator(
+                data_format='unknown')
+
+        with self.assertRaises(ValueError):
+            generator = image_generators.ImageFullyConvDotDataGenerator(
+                zoom_range=(2, 2, 2))
