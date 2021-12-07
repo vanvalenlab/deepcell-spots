@@ -31,7 +31,7 @@ import collections
 import os
 from skimage.feature import peak_local_max
 import pandas as pd
-# from postcode.decoding_functions import *
+from deepcell_spots.singleplex import match_spots_to_cells
 from tqdm import tqdm
 
 

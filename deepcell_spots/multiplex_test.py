@@ -34,13 +34,14 @@ from deepcell_spots.multiplex import multiplex_match_spots_to_cells
 
 class TestImageAlignment(test.TestCase):
     def test_multiplex_match_spots_to_cells(self):
-        coords_dict = {0: [[0, 0], [1, 1]]}
-        cytoplasm_pred = np.zeros((10, 10))
+        coords_dict = {0: [[[0, 0], [1, 1]]]}
+        cytoplasm_pred = np.zeros((1, 10, 10, 1))
 
         spots_dict = multiplex_match_spots_to_cells(coords_dict, cytoplasm_pred)
 
+        print(spots_dict)
         self.assertEqual(list(spots_dict.keys()), [0])
-        self.assertEqual(spots_dict[0], [[0, 0], [1, 1]])
+        self.assertEqual(spots_dict[0], {0.0: [[0, 0], [1, 1]]})
 
     # def test_cluster_points(self):
 
