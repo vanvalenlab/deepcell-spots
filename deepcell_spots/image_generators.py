@@ -50,8 +50,6 @@ except ImportError:
     scipy = None
 
 
-
-
 class ImageFullyConvDotIterator(Iterator):
     """Iterator yielding data from Numpy arrays (`X and `y`).
 
@@ -103,12 +101,7 @@ class ImageFullyConvDotIterator(Iterator):
                              'with shape', self.x.shape)
 
         self.y = y
-        # self.y = _transform_masks(y, transform, data_format=data_format, **transform_kwargs)
-        # keep this line even if transform=None because it performs to_categorical
         self.channel_axis = 3 if data_format == 'channels_last' else 1
-        # self.skip = skip
-        # copied from FullyConv pipeline but not needed here?
-        # since skip connections output kept internal
         self.image_data_generator = image_data_generator
         self.data_format = data_format
         self.save_to_dir = save_to_dir
@@ -193,7 +186,6 @@ class ImageFullyConvDotIterator(Iterator):
 
             batch_x[i] = x
 
-        # CHECK IF THIS WORKS: ARE THE INDICES RIGHT IN THE FIRST LINES THAT GET THE IMAGE?
         if self.save_to_dir:
             for i, j in enumerate(index_array):
                 if self.data_format == 'channels_first':
