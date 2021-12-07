@@ -24,9 +24,9 @@
 # limitations under the License.
 # ==============================================================================
 
+from deepcell_spots import applications
 from deepcell_spots._version import __version__
 
-from deepcell_spots import applications
 # from deepcell_spots import cluster_vis
 # from deepcell_spots import data_utils
 # from deepcell_spots import dotnet_losses

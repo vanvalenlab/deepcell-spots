@@ -26,29 +26,20 @@
 
 """ CNN architechture with classification and regression outputs for dot center detection"""
 
-from deepcell.layers import TensorProduct
-from deepcell.layers import ReflectionPadding2D, ReflectionPadding3D
-from deepcell.layers import Location2D, Location3D
-from deepcell.layers import ImageNormalization2D, ImageNormalization3D
-from deepcell.layers import DilatedMaxPool2D, DilatedMaxPool3D
-from deepcell.model_zoo import bn_feature_net_skip_2D
-import numpy as np
-
-from tensorflow.python.keras import backend as K
-from tensorflow.python.keras.models import Model
-from tensorflow.python.keras.layers import Input, Concatenate
-from tensorflow.python.keras.layers import Flatten
-from tensorflow.python.keras.layers import Conv2D
-from tensorflow.python.keras.layers import Permute, Reshape
-from tensorflow.python.keras.layers import Activation, Softmax, Lambda
-from tensorflow.python.keras.layers import BatchNormalization
-from tensorflow.python.keras.initializers import RandomNormal
-from tensorflow.python.keras.regularizers import l2
-
 # for running on my laptop:
 import sys
-sys.path.append(r'C:\Users\nitza\OneDrive\Documents\GitHub\deepcell-tf')
-# end for laptop deepcel import
+
+import numpy as np
+from deepcell.layers import ImageNormalization2D, ImageNormalization3D, TensorProduct
+from deepcell.model_zoo import bn_feature_net_skip_2D
+from tensorflow.python.keras import backend as K
+from tensorflow.python.keras.initializers import RandomNormal
+from tensorflow.python.keras.layers import (Activation, BatchNormalization,
+                                            Concatenate, Conv2D, Flatten,
+                                            Input, Lambda, Permute, Reshape,
+                                            Softmax)
+from tensorflow.python.keras.models import Model
+from tensorflow.python.keras.regularizers import l2
 
 
 def default_heads(input_shape, num_classes):

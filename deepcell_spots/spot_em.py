@@ -27,11 +27,12 @@
 """Expectation maximization functions for spot detection"""
 
 import random
-import numpy as np
-import networkx as nx
 from itertools import combinations
-from scipy.spatial import distance
+
+import networkx as nx
+import numpy as np
 from deepcell_spots.cluster_vis import *
+from scipy.spatial import distance
 
 
 def calc_tpr_fpr(gt, data):

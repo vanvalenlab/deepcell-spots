@@ -26,25 +26,20 @@
 
 """Functions for training convolutional neural networks"""
 
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import division
+from __future__ import absolute_import, division, print_function
 
 import datetime
 import os
 
 import numpy as np
-from tensorflow.python.keras import backend as K
-from tensorflow.python.keras import callbacks
-from tensorflow.keras.optimizers import SGD
-
 # import deepcell.losses
 from deepcell.utils import train_utils
 from deepcell.utils.train_utils import rate_scheduler
-
-from deepcell_spots import dotnet_losses
-from deepcell_spots import image_generators
+from deepcell_spots import dotnet_losses, image_generators
 from deepcell_spots.data_utils import get_data
+from tensorflow.keras.optimizers import SGD
+from tensorflow.python.keras import backend as K
+from tensorflow.python.keras import callbacks
 
 
 def train_model_dot(model,

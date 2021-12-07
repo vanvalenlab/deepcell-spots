@@ -27,13 +27,14 @@
 """Tests for simulate_data"""
 
 import random
+
 import numpy as np
-
+from deepcell_spots.simulate_data import (add_gaussian_noise,
+                                          gaussian_spot_image_generator,
+                                          is_in_image, is_overlapping,
+                                          percent_correct, sim_annotators,
+                                          sim_detections, sim_gt_clusters)
 from tensorflow.python.platform import test
-
-from deepcell_spots.simulate_data import (sim_gt_clusters, sim_detections, sim_annotators,
-                                          percent_correct, is_in_image, is_overlapping,
-                                          add_gaussian_noise, gaussian_spot_image_generator)
 
 
 class TestSimulateData(test.TestCase):

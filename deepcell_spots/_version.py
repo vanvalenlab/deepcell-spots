@@ -1,4 +1,4 @@
-# Copyright 2016-2021 The Van Valen Lab at the California Institute of
+# Copyright 2019-2021 The Van Valen Lab at the California Institute of
 # Technology (Caltech), with support from the Paul Allen Family Foundation,
 # Google, & National Institutes of Health (NIH) under Grant U24CA224309-01.
 # All rights reserved.
@@ -7,7 +7,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#     http://www.github.com/vanvalenlab/deepcell-tf/LICENSE
+#     http://www.github.com/vanvalenlab/deepcell-spots/LICENSE
 #
 # The Work provided may be used for non-commercial academic purposes only.
 # For any other use of the Work, including commercial use, please contact:

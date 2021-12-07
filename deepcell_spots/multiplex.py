@@ -24,14 +24,15 @@
 # limitations under the License.
 # ==============================================================================
 
-import numpy as np
-from skimage.feature import register_translation
-from scipy.spatial import distance
 import collections
 import os
-from skimage.feature import peak_local_max
+
+import numpy as np
 import pandas as pd
 from deepcell_spots.singleplex import match_spots_to_cells
+from postcode.decoding_functions import decoding_function
+from scipy.spatial import distance
+from skimage.feature import peak_local_max, register_translation
 from tqdm import tqdm
 
 

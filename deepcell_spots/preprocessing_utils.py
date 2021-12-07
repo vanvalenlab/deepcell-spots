@@ -26,8 +26,9 @@
 
 """Image normalization methods"""
 
-import numpy as np
 import logging
+
+import numpy as np
 
 
 def mean_std_normalize(image, epsilon=1e-07):

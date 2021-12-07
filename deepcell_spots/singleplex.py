@@ -27,6 +27,7 @@
 """Tools for analysis of singleplex FISH images"""
 
 from collections import defaultdict
+
 import numpy as np
 
 

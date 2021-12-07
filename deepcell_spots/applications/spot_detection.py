@@ -25,21 +25,17 @@
 # ==============================================================================
 """Spot detection application"""
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
+from __future__ import absolute_import, division, print_function
 
-import os
 import glob
+import os
 
 import tensorflow as tf
-
-from deepcell_spots.preprocessing_utils import min_max_normalize
-from deepcell_spots.postprocessing_utils import y_annotations_to_point_list_max
-
 from deepcell_spots.applications.spots_application import SpotsApplication
-from deepcell_spots.dotnet_losses import DotNetLosses
 from deepcell_spots.dotnet import *
+from deepcell_spots.dotnet_losses import DotNetLosses
+from deepcell_spots.postprocessing_utils import y_annotations_to_point_list_max
+from deepcell_spots.preprocessing_utils import min_max_normalize
 
 MODEL_PATH = ('https://deepcell-data.s3-us-west-1.amazonaws.com/'
               'saved-models/SpotDetection-3.tar.gz')

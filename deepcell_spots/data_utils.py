@@ -27,8 +27,8 @@
 """Functions for making training data sets"""
 
 import numpy as np
-from tensorflow.python.keras import backend as K
 from sklearn.model_selection import train_test_split
+from tensorflow.python.keras import backend as K
 
 
 def slice_image(X, reshape_size, overlap=0):

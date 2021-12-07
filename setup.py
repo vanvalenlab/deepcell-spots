@@ -61,12 +61,17 @@ setup(
         'scipy>=1.1.0,<2',
         'scikit-image>=0.14.1,<=0.16.2',
         'scikit-learn>=0.19.1,<1',
-        'tensorflow>=2.4.1',
+        'tensorflow~=2.5.1',
+        'tensorflow_addons~=0.13.0',
         'jupyter>=1.0.0,<2',
         'networkx>=2.1',
         'opencv-python>=3.4.2.17,<4',
-        'deepcell~=0.9.0',
-        'trackpy==0.4.2'
+        'deepcell~=0.11.0',
+        'trackpy==0.4.2',
+        'torch',
+        'torchvision',
+        'pyro-ppl',
+        'postcode @ git+ssh://git@github.com/gerstung-lab/postcode.git'
     ],
     extras_require={
         'tests': [

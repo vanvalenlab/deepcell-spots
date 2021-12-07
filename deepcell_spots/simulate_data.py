@@ -27,12 +27,13 @@
 """Data simulators for spot images for benchmarking deep learning model
      and annotator detections for benchmarking EM algorithm"""
 
-import numpy as np
 import random
+
 import matplotlib.pyplot as plt
+import numpy as np
+import skimage
 from scipy.stats import multivariate_normal
 from skimage import draw
-import skimage
 
 
 def sim_gt_clusters(num_clusters, tp_ratio):

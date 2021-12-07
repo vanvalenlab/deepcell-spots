@@ -27,9 +27,8 @@
 """Functions that convert deep learning model output to list of detected spots"""
 
 import numpy as np
-
-from skimage.feature import peak_local_max
 from skimage import measure
+from skimage.feature import peak_local_max
 
 # functions for processing the neural network output into a final list of predicted coordinates
 

@@ -27,13 +27,13 @@
 """Tests for spot_em"""
 
 import random
+
 import numpy as np
-
+from deepcell_spots.spot_em import (calc_tpr_fpr, cluster_coords,
+                                    consensus_coords, define_edges,
+                                    det_likelihood, em_spot,
+                                    norm_marg_likelihood, running_total_spots)
 from tensorflow.python.platform import test
-
-from deepcell_spots.spot_em import (calc_tpr_fpr, det_likelihood, norm_marg_likelihood, em_spot,
-                                    cluster_coords, running_total_spots, define_edges,
-                                    consensus_coords)
 
 
 class TestSpotEM(test.TestCase):

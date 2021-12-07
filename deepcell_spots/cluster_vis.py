@@ -26,9 +26,10 @@
 
 """Visualization tools for spot expectation maximization"""
 
+from itertools import combinations
+
 import numpy as np
 from scipy.spatial import distance
-from itertools import combinations
 
 
 def jitter(coords, size):

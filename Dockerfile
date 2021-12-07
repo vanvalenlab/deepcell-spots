@@ -1,7 +1,7 @@
 # Use tensorflow/tensorflow as the base image
 # Change the build arg to edit the tensorflow version.
 # Only supporting python3.
-ARG DEEPCELL_VERSION=0.9.0
+ARG DEEPCELL_VERSION=0.11.0
 
 FROM deepcell:${DEEPCELL_VERSION}
 

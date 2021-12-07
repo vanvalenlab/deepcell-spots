@@ -26,15 +26,19 @@
 
 """Spot detection image generators"""
 
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import division
+from __future__ import absolute_import, division, print_function
 
 import os
-import numpy as np
 
+import numpy as np
+from deepcell_spots.utils import (affine_transform_points,
+                                  subpixel_distance_transform)
 from skimage.segmentation import clear_border
+from tensorflow.keras.utils import to_categorical
 from tensorflow.python.keras import backend as K
+from tensorflow.python.keras.preprocessing.image import (ImageDataGenerator,
+                                                         Iterator,
+                                                         array_to_img)
 
 try:
     import scipy
@@ -45,13 +49,7 @@ try:
 except ImportError:
     scipy = None
 
-from tensorflow.python.keras.preprocessing.image import array_to_img
-from tensorflow.python.keras.preprocessing.image import Iterator
-from tensorflow.python.keras.preprocessing.image import ImageDataGenerator
-from tensorflow.keras.utils import to_categorical
 
-from deepcell_spots.utils import subpixel_distance_transform
-from deepcell_spots.utils import affine_transform_points
 
 
 class ImageFullyConvDotIterator(Iterator):

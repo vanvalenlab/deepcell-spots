@@ -32,13 +32,11 @@ taken into account (as opposed to the Jaccard distance for example)
 """
 
 import numpy as np
-
+import scipy.spatial  # cKDTree - neighbor finder (cython)
+from deepcell_spots.postprocessing_utils import y_annotations_to_point_list_max
 from scipy.optimize import linear_sum_assignment
 from scipy.spatial.distance import cdist
-import scipy.spatial  # cKDTree - neighbor finder (cython)
 from sklearn.metrics import *
-# from deepcell_spots.postprocessing_utils import *
-from deepcell_spots.postprocessing_utils import *
 
 
 def sum_of_min_distance(pts1, pts2, normalized=False):

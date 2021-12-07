@@ -27,10 +27,11 @@
 """Tests for preprocessing_utils"""
 
 import random
-import numpy as np
-from tensorflow.python.platform import test
 
-from deepcell_spots.preprocessing_utils import mean_std_normalize, min_max_normalize
+import numpy as np
+from deepcell_spots.preprocessing_utils import (mean_std_normalize,
+                                                min_max_normalize)
+from tensorflow.python.platform import test
 
 
 class TestPreProcUtils(test.TestCase):

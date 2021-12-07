@@ -27,18 +27,17 @@
 """Tests for point_metrics"""
 
 import numpy as np
-
+import scipy.spatial  # cKDTree - neighbor finder (cython)
+from deepcell_spots.point_metrics import (match_points_min_dist,
+                                          match_points_mutual_nearest_neighbor,
+                                          point_F1_score, point_precision,
+                                          point_recall, stats_points,
+                                          sum_of_min_distance)
 from scipy.optimize import linear_sum_assignment
 from scipy.spatial.distance import cdist
-import scipy.spatial  # cKDTree - neighbor finder (cython)
 from sklearn.metrics import *
-
 from tensorflow.python.keras import backend as K
 from tensorflow.python.platform import test
-
-from deepcell_spots.point_metrics import (sum_of_min_distance, match_points_min_dist,
-                                          match_points_mutual_nearest_neighbor, point_precision,
-                                          point_recall, point_F1_score, stats_points)
 
 
 class TestPointMetrics(test.TestCase):
