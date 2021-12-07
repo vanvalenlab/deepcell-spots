@@ -103,14 +103,13 @@ class TestImageFullyConvDotDataGenerator(test.TestCase):
 
     def test_sample_data_generator_invalid_data(self):
         generator = image_generators.ImageFullyConvDotDataGenerator(
-                    rotation_range=0,
-                    shear_range=0,
-                    zoom_range=0,
-                    horizontal_flip=True,
-                    vertical_flip=True,
-                    fill_mode='nearest',
-                    cval=0.
-                )
+            rotation_range=0,
+            shear_range=0,
+            zoom_range=0,
+            horizontal_flip=True,
+            vertical_flip=True,
+            fill_mode='nearest',
+            cval=0.)
 
         # Test fit with invalid data
         with self.assertRaises(ValueError):
