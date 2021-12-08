@@ -27,13 +27,9 @@
 """Functions for utils"""
 
 import numpy as np
-import scipy
-from deepcell_spots.utils import subpixel_distance_transform
-from keras_preprocessing.image.affine_transformations import \
-    transform_matrix_offset_center
-from scipy.ndimage.morphology import distance_transform_edt
-from tensorflow.python.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.python.platform import test
+
+from deepcell_spots.utils import subpixel_distance_transform
 
 
 class TestUtils(test.TestCase):

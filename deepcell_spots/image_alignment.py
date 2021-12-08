@@ -28,7 +28,6 @@ import os
 
 import cv2
 import numpy as np
-import pandas as pd
 
 
 def read_images(root_dir, dataorg, verbose=True):

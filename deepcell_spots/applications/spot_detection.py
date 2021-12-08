@@ -27,16 +27,17 @@
 
 from __future__ import absolute_import, division, print_function
 
-import glob
 import os
 import timeit
 
 import tensorflow as tf
 from deepcell.applications import Application
+
 from deepcell_spots.dotnet import *
 from deepcell_spots.dotnet_losses import DotNetLosses
 from deepcell_spots.postprocessing_utils import y_annotations_to_point_list_max
 from deepcell_spots.preprocessing_utils import min_max_normalize
+
 
 MODEL_PATH = ('https://deepcell-data.s3-us-west-1.amazonaws.com/'
               'saved-models/SpotDetection-3.tar.gz')
