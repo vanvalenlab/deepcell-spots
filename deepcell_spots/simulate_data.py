@@ -265,7 +265,7 @@ def add_gaussian_noise(image, m, s):
         m: mean of gaussian random noise to be added to each pixel of image.
         s: standard deviation of gaussian random noise to be added to each
             pixel of image.
-    
+
     Returns:
         numpy.array: The noisy image.
     """

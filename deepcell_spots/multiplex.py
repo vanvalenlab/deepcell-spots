@@ -143,7 +143,7 @@ def cluster_points(spots_to_cells_dict, cell_id, threshold=1.5, match_method='mi
 def gene_counts(spots_to_cells_dict, codebook, threshold=1.5,
                 match_method='min_dist', error_corr=True):
     """Assigns combinatorial barcodes corresponding to gene identities.
-    
+
     Matches spots between rounds with one of two methods:
     'min_dist' or 'mutual_nearest_neighbor'.
 
