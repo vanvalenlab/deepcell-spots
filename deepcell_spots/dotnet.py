@@ -73,18 +73,18 @@ def classification_head(input_shape,
                         init='he_normal',
                         name='classification_head'):
 
-    # """
-    # Creates a classification head
+    """Creates a classification head.
 
-    # Args:
-    #     n_features (int): Number of output features (number of possible classes for each pixel.
-    #     default is 2: contains point / does not contain point)
-    #     reg (int): regularization value
-    #     init (str): Method for initalizing weights.
+    Args:
+        n_features (int): Number of output features (number of possible classes
+            for each pixel).
+        default is 2: contains point / does not contain point)
+        reg (int): regularization value
+        init (str): Method for initalizing weights.
 
-    # Returns:
-    #     tensorflow.keras.Model for classification (softmax output)
-    # """
+    Returns:
+        tensorflow.keras.Model for classification (softmax output)
+    """
 
     channel_axis = 1 if K.image_data_format() == 'channels_first' else -1
 
