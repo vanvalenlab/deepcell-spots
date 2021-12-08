@@ -65,7 +65,7 @@ setup(
         'tensorflow_addons~=0.13.0',
         'jupyter>=1.0.0,<2',
         'networkx>=2.1',
-        'opencv-python>=3.4.2.17,<4',
+        'opencv-python-headless<5',
         'deepcell~=0.11.0',
         'trackpy==0.4.2',
         'torch',
