@@ -247,12 +247,18 @@ def is_overlapping(x_list, y_list, a_list, x, y, a):
 
 
 def add_gaussian_noise(image, m, s):
-    ''' Adds gaussian random noise with mean m and standard deviation s to the input image
+    """Adds gaussian random noise with mean m and standard deviation s
+    to the input image.
+
     Args:
-    image: 2D np.array
-    m: mean of gaussian random noise to be added to each pixel of image
-    s: standard deviation of gaussian random noise to be added to each pixel of image
-    '''
+        image (numpy.array): 2D image to add noise.
+        m: mean of gaussian random noise to be added to each pixel of image.
+        s: standard deviation of gaussian random noise to be added to each
+            pixel of image.
+    
+    Returns:
+        numpy.array: The noisy image.
+    """
     row, col = image.shape
     gauss = np.random.normal(m, s, (row, col))
     gauss = gauss.reshape(row, col)
@@ -271,30 +277,34 @@ def gaussian_spot_image_generator(L,
                                   noise_std=0,
                                   segmask=False,
                                   yield_pos=False):
-    ''' Generates random images of gaussian spots with random uniformly distributed center
-        positions in the image area, i.e. in [0,L-1]*[0,L-1]. The number of spots in an image is
-        uniformly distributed in [N_min, N_max]. Each spot is a gaussian with standard deviation
-        normally distributed with mean sigma0, std sigma1, and cutoff value of 0.5 (it is redrawn
-        if a smaller value is drawn). The intensity of each spot is normally distributed.
+    """Generates random images of gaussian spots with random uniformly
+    distributed center positions in the image area, i.e. in [0,L-1]*[0,L-1].
+    The number of spots in an image is uniformly distributed in [N_min, N_max].
+    Each spot is a gaussian with standard deviation normally distributed with
+    mean sigma0, std sigma1, and cutoff value of 0.5 (it is redrawn if a
+    smaller value is drawn). The intensity of each spot is normally distributed.
 
     Args:
         L : generated image side length - the generated images have shape (L,L)
-        N_min, N_max: the number of spots plotted in each image is uniformly distributed
-                      in [N_min, N_max]
-        sigma0, sigma1: the mean and standard deviation of the normally distributed spot width
-                        sigma (i.e. each spot is a gaussian with standard deviation sigma)
-        A_mean, A_std: the intensity of each spot is normally distributed in with mean A_mean, and
-                       standard deviation A_std
-        yield_pos: if True, will yield lists of x and y positions and bounding boxes in addition to
-                   image and label image
-        noise_mean, noise_std: mean and std of white noise to be added to every pixel of the image
+        N_min, N_max: the number of spots plotted in each image is uniformly
+            distributed in [N_min, N_max].
+        sigma0, sigma1: the mean and standard deviation of the normally
+            distributed spot width sigma (i.e. each spot is a gaussian with
+            standard deviation sigma).
+        A_mean, A_std: the intensity of each spot is normally distributed in
+            with mean A_mean, and standard deviation A_std.
+        yield_pos: if True, will yield lists of x and y positions and bounding
+            boxes in addition to image and label image.
+            noise_mean, noise_std: mean and std of white noise to be added to
+            every pixel of the image
 
     Yields:
-        img : (L,L) numpy array simulated image
-        label : (L,L) numpy array of - 0 background, 1 for pixel of (rounded) spot center if
-                segmask==False segmentation mask if segmask==True (pixel values are 0 in background,
-                1,...,N for pixels belonging to the N spots in the image)
-    '''
+        img: (L, L) numpy array simulated image
+        label: (L, L) numpy array of - 0 background, 1 for pixel of (rounded)
+            spot center if segmask is False segmentation mask if segmask is True
+            (pixel values are 0 in background, 1,...,N for pixels belonging to
+            the N spots in the image)
+    """
 
     while True:  # keep yielding images forever
         img = np.zeros((L, L))     # create the image

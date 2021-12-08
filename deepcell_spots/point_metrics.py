@@ -77,20 +77,22 @@ def sum_of_min_distance(pts1, pts2, normalized=False):
 
 
 def match_points_min_dist(pts1, pts2, threshold=None):
-    '''Find a pairing between two sets of points that minimizes the sum of Euclidean distances
-    between matched points from each set.
+    """Find a pairing between two sets of points that minimizes the sum of
+    the Euclidean distances between matched points from each set.
+
     Args:
         pts1 ((N1,d) numpy.array): a set of N1 points in d dimensions
         pts2 ((N2,d) numpy.array): a set of N2 points in d dimensions
             where N1/N2 is the number of points and d is the dimension
         threshold (float): a distance threshold for matching two points. Points that are more than
         the threshold distance apart, cannot be matched
+
     Returns:
         row_ind, col_ind (arrays):
         An array of row indices and one of corresponding column indices giving the optimal
         assignment, as described in:
         https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.linear_sum_assignment.html
-    '''
+    """
 
     d = cdist(pts1, pts2, 'euclidean')
 
@@ -127,20 +129,22 @@ def match_points_min_dist(pts1, pts2, threshold=None):
 
 
 def match_points_mutual_nearest_neighbor(pts1, pts2, threshold=None):
-    '''Find a pairing between two sets of points that ensures that each pair of points are mutual
-    nearest neighbors.
+    """Find a pairing between two sets of points that ensures that each pair
+    of points are mutual nearest neighbors.
+
     Args:
         pts1 ((N1,d) numpy.array): a set of N1 points in d dimensions
         pts2 ((N2,d) numpy.array): a set of N2 points in d dimensions
             where N1/N2 is the number of points and d is the dimension
         threshold (float): a distance threshold for matching two points. Points that are more than
         the threshold distance apart, cannot be matched
+
     Returns:
         row_ind, col_ind (arrays):
         An array of row indices and one of corresponding column indices giving the optimal
         assignment, as described in:
         https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.linear_sum_assignment.html
-    '''
+    """
     # calculate the distances between true points and their nearest predicted points
     # and the distances between predicted points and their nearest true points
     tree1 = scipy.spatial.cKDTree(pts1, leafsize=2)

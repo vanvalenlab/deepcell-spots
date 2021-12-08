@@ -32,8 +32,9 @@ from tensorflow.python.keras import backend as K
 
 
 def slice_image(X, reshape_size, overlap=0):
-    '''
-    Slice images in X into smaller parts. similar to deepcell.utils.data_utils reshape_matrix
+    """Slice images in X into smaller parts.
+
+    Similar to ``deepcell.utils.data_utils.reshape_matrix``.
 
     Args:
         X (np.array) containing images: has size (img_number, y, x, channel)
@@ -48,7 +49,7 @@ def slice_image(X, reshape_size, overlap=0):
         where n = number of images each image in X was sliced into
         if the original image lengths aren't divisible by y_size, x_size, the last image in each
         row / column overlaps with the one before
-    '''
+    """
     image_size_x = X.shape[1]
     image_size_y = X.shape[2]
 
@@ -90,8 +91,9 @@ def slice_image(X, reshape_size, overlap=0):
 
 
 def slice_annotated_image(X, y, reshape_size, overlap=0):
-    '''
-    Slice images in X into smaller parts. similar to deepcell.utils.data_utils reshape_matrix
+    """Slice images in X into smaller parts.
+
+    Similar to ``deepcell.utils.data_utils.reshape_matrix``
 
     Args:
         X (np.array) containing images: has shape (img_number, y, x, channel)
@@ -110,7 +112,7 @@ def slice_annotated_image(X, y, reshape_size, overlap=0):
         row / column overlaps with the one before
 
         new_y: list of length n*img_number
-    '''
+    """
     image_size_y = X.shape[1]
     image_size_x = X.shape[2]
 
