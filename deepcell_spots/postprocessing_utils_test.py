@@ -27,12 +27,11 @@
 """Tests for postprocessing_utils"""
 
 import numpy as np
+from tensorflow.python.platform import test
+
 from deepcell_spots.postprocessing_utils import (
     y_annotations_to_point_list, y_annotations_to_point_list_cc,
     y_annotations_to_point_list_max, y_annotations_to_point_list_restrictive)
-from skimage import measure
-from skimage.feature import peak_local_max
-from tensorflow.python.platform import test
 
 
 class TestPostProcUtils(test.TestCase):

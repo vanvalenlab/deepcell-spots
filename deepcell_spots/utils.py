@@ -27,11 +27,9 @@
 """Functions for image augmentation"""
 
 import numpy as np
-import scipy
 from keras_preprocessing.image.affine_transformations import \
     transform_matrix_offset_center
 from scipy.ndimage.morphology import distance_transform_edt
-from tensorflow.python.keras.preprocessing.image import ImageDataGenerator
 
 
 def subpixel_distance_transform(point_list, image_shape, dy=1, dx=1):

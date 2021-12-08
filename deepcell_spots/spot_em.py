@@ -26,13 +26,13 @@
 
 """Expectation maximization functions for spot detection"""
 
-import random
 from itertools import combinations
 
 import networkx as nx
 import numpy as np
-from deepcell_spots.cluster_vis import *
 from scipy.spatial import distance
+
+from deepcell_spots.cluster_vis import label_graph_ann
 
 
 def calc_tpr_fpr(gt, data):

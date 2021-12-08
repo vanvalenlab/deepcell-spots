@@ -29,11 +29,8 @@
 
 import random
 
-import matplotlib.pyplot as plt
 import numpy as np
 import skimage
-from scipy.stats import multivariate_normal
-from skimage import draw
 
 
 def sim_gt_clusters(num_clusters, tp_ratio):

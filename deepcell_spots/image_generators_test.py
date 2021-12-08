@@ -27,12 +27,11 @@
 """Tests for spot detection image generators"""
 
 import numpy as np
-
 from PIL import Image
+from tensorflow.keras.preprocessing.image import img_to_array
+from tensorflow.python.platform import test
 
 from deepcell_spots import image_generators
-from tensorflow.python.platform import test
-from tensorflow.keras.preprocessing.image import img_to_array
 
 
 def all_test_images():

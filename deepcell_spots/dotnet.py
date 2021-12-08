@@ -24,20 +24,15 @@
 # limitations under the License.
 # ==============================================================================
 
-""" CNN architechture with classification and regression outputs for dot center detection"""
+"""CNN architechture with classification and regression outputs for dot center detection"""
 
-# for running on my laptop:
-import sys
-
-import numpy as np
-from deepcell.layers import ImageNormalization2D, ImageNormalization3D, TensorProduct
+from deepcell.layers import TensorProduct
 from deepcell.model_zoo import bn_feature_net_skip_2D
 from tensorflow.python.keras import backend as K
 from tensorflow.python.keras.initializers import RandomNormal
 from tensorflow.python.keras.layers import (Activation, BatchNormalization,
-                                            Concatenate, Conv2D, Flatten,
-                                            Input, Lambda, Permute, Reshape,
-                                            Softmax)
+                                            Conv2D, Input, Lambda, Permute,
+                                            Reshape, Softmax)
 from tensorflow.python.keras.models import Model
 from tensorflow.python.keras.regularizers import l2
 

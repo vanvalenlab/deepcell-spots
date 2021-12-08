@@ -31,23 +31,15 @@ from __future__ import absolute_import, division, print_function
 import os
 
 import numpy as np
-from deepcell_spots.utils import (affine_transform_points,
-                                  subpixel_distance_transform)
-from skimage.segmentation import clear_border
 from tensorflow.keras.utils import to_categorical
 from tensorflow.python.keras import backend as K
 from tensorflow.python.keras.preprocessing.image import (ImageDataGenerator,
                                                          Iterator,
                                                          array_to_img)
 
-try:
-    import scipy
-    # scipy.linalg cannot be accessed until explicitly imported
-    from scipy import linalg
-    # scipy.ndimage cannot be accessed until explicitly imported
-    from scipy import ndimage
-except ImportError:
-    scipy = None
+from deepcell_spots.utils import (affine_transform_points,
+                                  subpixel_distance_transform)
+
 
 
 class ImageFullyConvDotIterator(Iterator):

@@ -28,9 +28,10 @@
 from __future__ import absolute_import, division, print_function
 
 import numpy as np
-from deepcell_spots.applications.spots_application import Application
 from tensorflow.keras.layers import Input
 from tensorflow.python.platform import test
+
+from deepcell_spots.applications.spots_application import Application
 
 
 class DummyModel():

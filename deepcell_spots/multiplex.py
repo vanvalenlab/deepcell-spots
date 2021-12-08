@@ -24,16 +24,15 @@
 # limitations under the License.
 # ==============================================================================
 
-import collections
-import os
-
 import numpy as np
 import pandas as pd
-from deepcell_spots.singleplex import match_spots_to_cells
-from postcode.decoding_functions import decoding_function, decoding_output_to_dataframe
+from postcode.decoding_functions import (decoding_function,
+                                         decoding_output_to_dataframe)
 from scipy.spatial import distance
 from skimage.feature import peak_local_max, register_translation
 from tqdm import tqdm
+
+from deepcell_spots.singleplex import match_spots_to_cells
 
 
 def multiplex_match_spots_to_cells(coords_dict, cytoplasm_pred):
