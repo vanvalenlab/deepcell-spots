@@ -34,18 +34,20 @@ import skimage
 
 
 def sim_gt_clusters(num_clusters, tp_ratio):
-    """Generate random simulated labels (true detection or false detection) for clusters, with a
-        specified rate of true detections and false detections, tp_ratio.
+    """Generate random simulated labels (true detection or false detection)
+    for clusters, with a specified rate of true detections and false detections,
+    ``tp_ratio``.
 
-    Returns a list of length num_clusters of cluster labels with value 1 for a true detection and 0
-    for a false detection.[summary]
+    Returns a list of length num_clusters of cluster labels with value 1 for a
+    true detection and 0 for a false detection.
 
     Args:
         num_clusters (int): The number of cluster labels to be generated
-        tp_ratio (float): The average percentage of the detections that are true detections
+        tp_ratio (float): The average percentage of the detections that are
+            true detections
 
     Returns:
-        gt (list): List of random simulated cluster labels 1 or 0
+        list: List of random simulated cluster labels 1 or 0
     """
 
     assert tp_ratio >= 0 and tp_ratio <= 1, "TP ratio must be between 0 and 1"
@@ -63,26 +65,29 @@ def sim_gt_clusters(num_clusters, tp_ratio):
 
 def sim_detections(gt, tpr, fpr):
 
-    """Simulates detection data for a set of ground truth cluster labels and an annotator with a
-    specified TPR and FPR.
+    """Simulates detection data for a set of ground truth cluster labels and an
+    annotator with a specified TPR and FPR.
 
-    Returns an array of with same length as input gt, where 1 indicates the simulated annotator
-    detected a cluster and 0 indicates an undetected cluster.
+    Returns an array of with same length as input gt, where 1 indicates the
+    simulated annotator detected a cluster and 0 indicates an undetected
+    cluster.
 
     Args:
-        gt (array): Array of ground truth cluster labels. 1 indicates a true detection and 0
-            indicates a false detection.
-        tpr (float): The true positive rate of the annotator. For a ground truth value of 1, it is
-            the probability that the function will output 1, indicating that the simulated annotator
-            detected the true cluster.
-        fpr (float): The false positive rate of the annotator. For a ground truth value of 0, it is
-            the probability that the funciton will output 1, indicating that the simulated annotator
-            falsely detected the cluster.
+        gt (array): Array of ground truth cluster labels. 1 indicates a true
+            detection and 0 indicates a false detection.
+        tpr (float): The true positive rate of the annotator. For a ground
+            truth value of 1, it is the probability that the function will
+            output 1, indicating that the simulated annotator detected the
+            true cluster.
+        fpr (float): The false positive rate of the annotator. For a ground
+            truth value of 0, it is the probability that the funciton will
+            output 1, indicating that the simulated annotator falsely detected
+            the cluster.
 
     Returns:
-        det_list (array): Array of detected cluster labels. A value of 1 indicates that a cluster
-        was detected by the annotator, and 0 indicates that the cluster was not detected by the
-        annotator.
+        array: Array of detected cluster labels. A value of 1 indicates that
+            a cluster was detected by the annotator, and 0 indicates that the
+            cluster was not detected by the annotator.
     """
 
     assert tpr >= 0 and tpr <= 1, "TPR must be between 0 and 1"
@@ -107,25 +112,28 @@ def sim_detections(gt, tpr, fpr):
 
 def sim_annotators(gt, tpr_list, fpr_list):
 
-    """Simulate the detections of multiple annotators with different TPRs and FPRs on the same
-    ground truth data.
+    """Simulate the detections of multiple annotators with different TPRs and
+    FPRs on the same ground truth data.
 
-    Returns a matrix of simulated detection data with dimensions clusters x annotators.
+    Returns a matrix of simulated detection data with dimensions clusters x
+    annotators.
 
     Args:
-        gt (array): Array of ground truth cluster labels. 1 indicates a true detection and 0
-            indicates a false detection.
-        tpr_list (array): Array of TPR values for each annotator. For a ground truth value of 1,
-            the TPR is the probability that the function will output 1, indicating that the
-            simulated annotator detected the true cluster.
-        fpr_list (array): Array of FPR values for each annotator. For a ground truth value of 0,
-            the FPR is the probability that the funciton will output 1, indicating that the
-            simulated annotator falsely detected the cluster.
+        gt (array): Array of ground truth cluster labels. 1 indicates a true
+            detection and 0 indicates a false detection.
+        tpr_list (array): Array of TPR values for each annotator. For a ground
+            truth value of 1, the TPR is the probability that the function
+            will output 1, indicating that the simulated annotator detected
+            the true cluster.
+        fpr_list (array): Array of FPR values for each annotator. For a ground
+            truth value of 0, the FPR is the probability that the funciton will
+            output 1, indicating that the simulated annotator falsely detected
+            the cluster.
 
     Returns:
-        data_matrix (matrix): Matrix of simulated detection data with dimensions clusters x
-        annotators. A value of 1 indicates a detected clsuter and a value of 0 indicates an
-        undetected cluster.
+        numpy.array: Matrix of simulated detection data with dimensions
+            clusters x annotators. A value of 1 indicates a detected cluster
+            and a value of 0 indicates an undetected cluster.
     """
 
     assert type(tpr_list) == list or type(
@@ -149,17 +157,19 @@ def percent_correct(gt, data_array):
 
     """Calculates the percent of detections correctly labeled.
 
-    Returns a value from 0 to 1 indicating the fraction of detections correctly labeled.
+    Returns a value from 0 to 1 indicating the fraction of detections correctly
+    labeled.
 
     Args:
-        gt (array): Array of ground truth cluster labels. 1 indicates a true detection and 0
-            indicates a false detection.
-        data_array (array): Array of simulated detections with length number of detections. A value
-            of 1 indicates a detected clsuter and a value of 0 indicates an undetected cluster.
+        gt (array): Array of ground truth cluster labels. 1 indicates a true
+            detection and 0 indicates a false detection.
+        data_array (array): Array of simulated detections with length number
+            of detections. A value of 1 indicates a detected clsuter and a
+            value of 0 indicates an undetected cluster.
 
     Returns:
-        percent_corr (float): Value for fraction of detections correctly labeled compared to ground
-            truth.
+        percent_corr (float): Value for fraction of detections correctly
+            labeled compared to ground truth.
     """
 
     assert len(gt) == np.shape(data_array)[
@@ -184,18 +194,19 @@ def percent_correct(gt, data_array):
 
 def is_in_image(x, y, a, L):
 
-    """Determines if a square with defined vertices is contained in an image with larger dimensions
-
-    Returns a boolean
+    """Determines if a square with defined vertices is contained in an image
+    with larger dimensions
 
     Args:
-        x (int): Value for the x coordinate of the top left corner of the square of interest
-        y (int): Value for the y coordinate of the top left corner of the square of interest
+        x (int): Value for the x coordinate of the top left corner of the
+            square of interest
+        y (int): Value for the y coordinate of the top left corner of the
+            square of interest
         a (int): Value for the side length of the square of interest
         L (int): Value for the dimensions of the larger image
 
     Returns:
-        boolean: True if square is contained in image dimensions, false if it is not
+        bool: Whether the square is contained in image dimensions
     """
 
     return (x + a <= (L - 1)) and (y + a <= (L - 1)) and (x >= 0) and (y >= 0)
@@ -214,22 +225,24 @@ def is_overlapping(x_list, y_list, a_list, x, y, a):
 
     """Determines if a square overlaps with a list of other squares.
 
-    Returns boolean, true if square overlaps with any of squares in list, false if it doesn't
-    overlap with any of squares in list
+    Returns boolean, true if square overlaps with any of squares in list,
+    false if it doesn't overlap with any of squares in list
 
     Args:
-        x_list (list): List of x coordinates for top left corners of squares to be compared with
+        x_list (list): List of x coordinates for top left corners of squares
+            to be compared with square of interest.
+        y_list (list): List of y coordinates for top left corners of squares
+            to be compared with square of interest.
+        a_list (list): List of side lengths of squares to be compared with
             square of interest.
-        y_list (list): List of y coordinates for top left corners of squares to be compared with
-            square of interest.
-        a_list (list): List of side lengths of squares to be compared with square of interest.
-        x (int): Value for the x coordinate of the top left corner of the square of interest
-        y (int): Value for the y coordinate of the top left corner of the square of interest
+        x (int): Value for the x coordinate of the top left corner of the
+            square of interest
+        y (int): Value for the y coordinate of the top left corner of the
+            square of interest
         a (int): Value for the side length of the square of interest
 
     Returns:
-        boolean: True if square overlaps with any of squares in list, False if it doesn't overlap
-        with any of squares in list
+        bool: Whether the square overlaps with any of squares in list.
     """
 
     assert len(x_list) == len(y_list) == len(

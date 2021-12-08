@@ -33,29 +33,34 @@ from scipy.ndimage.morphology import distance_transform_edt
 
 
 def subpixel_distance_transform(point_list, image_shape, dy=1, dx=1):
-    """
-    for each pixel in image, return the vectorial distance to a point in point_list that is in the
-    pixel nearest to it
+    """For each pixel in image, return the vectorial distance to a point in
+    ``point_list`` that is in the pixel nearest to it.
+
     Args:
-        point_list: (N,2) numpy array of point coordinates [y, x] (y before x as in image/matrix
-            indexing)
-        image_shape: (Ly,Lx) specifies the shape of an image that contains the coordinates - the
-            coordinates should be in dy*[-0.5, Ly-0.5] x dx*[-0.5, Lx-0.5]
+        point_list: (N,2) numpy array of point coordinates [y, x]
+            (y before x as in image/matrix indexing)
+        image_shape: (Ly,Lx) specifies the shape of an image that contains
+            the coordinates.
+            The coordinates should be in dy*[-0.5, Ly-0.5] x dx*[-0.5, Lx-0.5]
         dy: pixel width in y axis
         dx: pixel width in x axis
 
     Returns:
-        nearest_point: (Ly, Lx) numpy array, nearest_point[i,j] is the index in point_list of a
-            point in a point-containing pixel which is closest to pixel [i,j]. Note no uniqueness of
-            the point or the pixel, since there could be several point-containing pixels with
-            minimal distance to pixel [i,j] and there could be several points contained in the
-            pixel [i,j] but only one is chosen delta_x[i,j], delta_y[i,j] are elements of the
-            vectorial distance between the chosen point which nearest_point[i,j] refers to, and the
-            center of the pixel [i,j] - which is at x=j*dx, y=i*dy
-        delta_y: (Ly, Lx) numpy array of signed y distance between a point from point_list that is
-            near pixel [i,j] and the center of the pixel
-        delta_x: (Ly, Lx) numpy array of signed x distance between a point from point_list that is
-            near pixel [i,j] and the center of the pixel
+        numpy.array: (Ly, Lx), nearest_point[i,j] is the index in point_list of
+            a point in a point-containing pixel which is closest to pixel [i,j].
+            Note no uniqueness of the point or the pixel, since there could be
+            several point-containing pixels with minimal distance to pixel [i,j]
+            and there could be several points contained in the pixel [i,j] but
+            only one is chosen delta_x[i,j], delta_y[i,j] are elements of the
+            vectorial distance between the chosen point which nearest_point[i,j]
+            refers to, and the center of the pixel [i,j],
+            which is at x =j * dx, y = i * dy.
+        numpy.array: (Ly, Lx) numpy array of signed y distance between a point
+            from ``point_list`` that is near pixel [i,j] and the center of the
+            pixel.
+        numpy.array: (Ly, Lx) numpy array of signed x distance between a point
+            from ``point_list`` that is near pixel [i,j] and the center of the
+            pixel.
     """
     # create an image with 0 = pixel containing point from point_list, 1 = pixel not containing
     # point from point_list
