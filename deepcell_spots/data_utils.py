@@ -39,16 +39,16 @@ def slice_image(X, reshape_size, overlap=0):
     Args:
         X (np.array) containing images: has size (img_number, y, x, channel)
         reshape_size: list of 2 values: y_size, x_size
-        overlap (int): number of pixels overlapping in each row/column with the pixels from the
-                same row/column in the neighboring slice
+        overlap (int): number of pixels overlapping in each row/column with
+            the pixels from the same row/column in the neighboring slice
 
     Returns:
-        new_X: stack of reshaped images in order of small to large y, then small to large x
-                position in the original image
-        np.array of size (n*img_number, y_size, x_size, channel)
-        where n = number of images each image in X was sliced into
-        if the original image lengths aren't divisible by y_size, x_size, the last image in each
-        row / column overlaps with the one before
+        numpy.array: Stack of reshaped images in order of small to large y,
+            then small to large x position in the original image
+            np.array of size (n*img_number, y_size, x_size, channel)
+            where n = number of images each image in X was sliced into
+            if the original image lengths aren't divisible by y_size, x_size,
+            the last image in each row / column overlaps with the one before.
     """
     image_size_x = X.shape[1]
     image_size_y = X.shape[2]
@@ -98,20 +98,20 @@ def slice_annotated_image(X, y, reshape_size, overlap=0):
     Args:
         X (np.array) containing images: has shape (img_number, y, x, channel)
         reshape_size: list of 2 values: y_size, x_size
-        overlap (int): number of pixels overlapping in each row/column with the pixels from the
-        same row/column in the neighboring slice
-        y (list / np.array) containing coordinate annotations: has length (img_number),
-        each element of the list is a (N,2) np.array where N=the number of points in the image
+        overlap (int): number of pixels overlapping in each row/column with the
+            pixels from the same row/column in the neighboring slice
+        y (list / np.array): Contains coordinate annotations.
+            Has length (img_number), each element of the list is a (N, 2)
+            np.array where N=the number of points in the image.
 
     Returns:
-        new_X: stack of reshaped images in order of small to large y, then small to large x
-        position in the original image
-        np.array of size (n*img_number, y_size, x_size, channel)
-        where n = number of images each image in X was sliced into
-        if the original image lengths aren't divisible by y_size, x_size, the last image in each
-        row / column overlaps with the one before
-
-        new_y: list of length n*img_number
+        numpy.array: Stack of reshaped images in order of small to large y,
+            then small to large x position in the original image np.array
+            of size (n*img_number, y_size, x_size, channel) where n = number
+            of images each image in X was sliced into if the original image
+            lengths aren't divisible by y_size, x_size, the last image in
+            each row / column overlaps with the one before
+        list: list of length n*img_number
     """
     image_size_y = X.shape[1]
     image_size_x = X.shape[2]
@@ -165,14 +165,15 @@ def slice_annotated_image(X, y, reshape_size, overlap=0):
 
 def get_data(file_name, test_size=.2, seed=0, allow_pickle=False):
     """Load data from NPZ file and split into train and test sets
-    This is a copy of deepcell's utils.data_utils.get_data, with allow_pickle added and mode removed
+    This is a copy of ``deepcell.utils.data_utils.get_data``,
+    with allow_pickle added and mode removed.
 
     Args:
         file_name (str): path to NPZ file to load
         test_size (float): percent of data to leave as testing holdout
         seed (int): seed number for random train/test split repeatability
-        allow_pickle (bool): if True, allow loading pickled object arrays stored in npz files
-        (via numpy.load)
+        allow_pickle (bool): if True, allow loading pickled object arrays
+            stored in npz files (via numpy.load).
 
     Returns:
         (dict, dict): dict of training data, and a dict of testing data

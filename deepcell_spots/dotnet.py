@@ -39,17 +39,16 @@ from tensorflow.python.keras.regularizers import l2
 
 def default_heads(input_shape, num_classes):
     """
-    Create a list of the default heads for dot detection center pixel detection and
-    offset regression
+    Create a list of the default heads for dot detection center pixel detection
+    and offset regression
 
     Args:
         input_shape
         num_classes
 
     Returns:
-        A list of tuple, where the first element is the name of the submodel
-        and the second element is the submodel itself.
-
+        list(tuple): A list of tuple, where the first element is the name of
+            the submodel and the second element is the submodel itself.
     """
     # regress x and y coordinates (pixel center signed distance from  nearest object center)
     num_dimensions = 2

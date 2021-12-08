@@ -30,11 +30,9 @@ import numpy as np
 from skimage import measure
 from skimage.feature import peak_local_max
 
-# functions for processing the neural network output into a final list of predicted coordinates
-
 
 def y_annotations_to_point_list(y_pred, threshold):
-    """ Convert raw prediction to a predicted point list: classification of pixel as containing dot
+    """Convert raw prediction to a predicted point list: classification of pixel as containing dot
     > threshold
 
     Args:
