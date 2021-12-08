@@ -26,7 +26,6 @@
 
 """ CNN architechture with classification and regression outputs for dot center detection"""
 
-# for running on my laptop:
 import sys
 
 import numpy as np
@@ -100,54 +99,6 @@ def classification_head(input_shape,
     # x.append(Flatten()(x[-1]))
     outputs = Softmax(axis=channel_axis)(x[-1])
     # x.append(outputs)
-
-    return Model(inputs=inputs, outputs=outputs, name=name)
-
-
-def rn_classification_head(num_classes,
-                           input_size,
-                           input_feature_size=256,
-                           prior_probability=0.01,
-                           classification_feature_size=256,
-                           name='classification_submodel'):
-    # similar to the one used by retinanet, HASN'T BEEN TESTED, MAY NOT WORK!!!
-    options = {
-        'kernel_size': 3,
-        'strides': 1,
-        'padding': 'same',
-    }
-
-    if K.image_data_format() == 'channels_first':
-        inputs = Input(shape=(input_size, None, None))
-    else:
-        inputs = Input(shape=(None, None, input_size))
-    outputs = inputs
-    for i in range(4):
-        outputs = Conv2D(
-            filters=classification_feature_size,
-            activation='relu',
-            name='pyramid_classification_{}'.format(i),
-            kernel_initializer=RandomNormal(mean=0.0, stddev=0.01, seed=None),
-            bias_initializer='zeros',
-            **options
-        )(outputs)
-
-    outputs = Conv2D(
-        filters=num_classes * num_anchors,
-        kernel_initializer=RandomNormal(mean=0.0, stddev=0.01, seed=None),
-        bias_initializer=PriorProbability(probability=prior_probability),
-        name='pyramid_classification',
-        **options
-    )(outputs)
-
-    # reshape output and apply sigmoid
-    if K.image_data_format() == 'channels_first':
-        outputs = Permute(
-            (2, 3, 1), name='pyramid_classification_permute')(outputs)
-    outputs = Reshape((-1, num_classes),
-                      name='pyramid_classification_reshape')(outputs)
-    outputs = Activation(
-        'sigmoid', name='pyramid_classification_sigmoid')(outputs)
 
     return Model(inputs=inputs, outputs=outputs, name=name)
 
