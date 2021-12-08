@@ -24,36 +24,31 @@
 # limitations under the License.
 # ==============================================================================
 
-""" CNN architechture with classification and regression outputs for dot center detection"""
+"""CNN architechture with classification and regression outputs for dot center detection"""
 
-import sys
-
-import numpy as np
-from deepcell.layers import ImageNormalization2D, ImageNormalization3D, TensorProduct
+from deepcell.layers import TensorProduct
 from deepcell.model_zoo import bn_feature_net_skip_2D
 from tensorflow.python.keras import backend as K
 from tensorflow.python.keras.initializers import RandomNormal
 from tensorflow.python.keras.layers import (Activation, BatchNormalization,
-                                            Concatenate, Conv2D, Flatten,
-                                            Input, Lambda, Permute, Reshape,
-                                            Softmax)
+                                            Conv2D, Input, Lambda, Permute,
+                                            Reshape, Softmax)
 from tensorflow.python.keras.models import Model
 from tensorflow.python.keras.regularizers import l2
 
 
 def default_heads(input_shape, num_classes):
     """
-    Create a list of the default heads for dot detection center pixel detection and
-    offset regression
+    Create a list of the default heads for dot detection center pixel detection
+    and offset regression
 
     Args:
         input_shape
         num_classes
 
     Returns:
-        A list of tuple, where the first element is the name of the submodel
-        and the second element is the submodel itself.
-
+        list(tuple): A list of tuple, where the first element is the name of
+            the submodel and the second element is the submodel itself.
     """
     # regress x and y coordinates (pixel center signed distance from  nearest object center)
     num_dimensions = 2
@@ -72,18 +67,18 @@ def classification_head(input_shape,
                         init='he_normal',
                         name='classification_head'):
 
-    # """
-    # Creates a classification head
+    """Creates a classification head.
 
-    # Args:
-    #     n_features (int): Number of output features (number of possible classes for each pixel.
-    #     default is 2: contains point / does not contain point)
-    #     reg (int): regularization value
-    #     init (str): Method for initalizing weights.
+    Args:
+        n_features (int): Number of output features (number of possible classes
+            for each pixel).
+        default is 2: contains point / does not contain point)
+        reg (int): regularization value
+        init (str): Method for initalizing weights.
 
-    # Returns:
-    #     tensorflow.keras.Model for classification (softmax output)
-    # """
+    Returns:
+        tensorflow.keras.Model for classification (softmax output)
+    """
 
     channel_axis = 1 if K.image_data_format() == 'channels_first' else -1
 

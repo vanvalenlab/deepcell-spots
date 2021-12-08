@@ -31,23 +31,14 @@ from __future__ import absolute_import, division, print_function
 import os
 
 import numpy as np
-from deepcell_spots.utils import (affine_transform_points,
-                                  subpixel_distance_transform)
-from skimage.segmentation import clear_border
 from tensorflow.keras.utils import to_categorical
 from tensorflow.python.keras import backend as K
 from tensorflow.python.keras.preprocessing.image import (ImageDataGenerator,
                                                          Iterator,
                                                          array_to_img)
 
-try:
-    import scipy
-    # scipy.linalg cannot be accessed until explicitly imported
-    from scipy import linalg
-    # scipy.ndimage cannot be accessed until explicitly imported
-    from scipy import ndimage
-except ImportError:
-    scipy = None
+from deepcell_spots.utils import (affine_transform_points,
+                                  subpixel_distance_transform)
 
 
 class ImageFullyConvDotIterator(Iterator):
@@ -55,9 +46,9 @@ class ImageFullyConvDotIterator(Iterator):
 
     Args:
         train_dict: dictionary consisting of numpy arrays for `X` and `y`.
-        X - (batch, Ly, Lx, channel)
-        y - np.array of length batch containing np.arrays of shape (N, 2) N = # of points
-        in the image
+            X - (batch, Ly, Lx, channel)
+            y - np.array of length batch containing np.arrays of shape (N, 2)
+            N = # of points in the image
         image_data_generator: Instance of `ImageDataGenerator`
             to use for random transformations and normalization.
         batch_size: Integer, size of a batch.
@@ -131,12 +122,10 @@ class ImageFullyConvDotIterator(Iterator):
             detections:
             numpy array of shape (image_shape,2), with (i,j,:) being a one-hot encoding of the
             classification of each pixel as containing a point in points, or not containing one.
-
             offset: two stacked images with the shape of the input image
             delta_x:
                 numpy array of shape image_shape, each pixel is = the signed x distance between
                 a point from points that is near pixel [i,j] and the center of the pixel
-
             delta_y:
                 numpy array of shape image_shape, each pixel is = the signed y distance between
                 a point from points that is near pixel [i,j] and the center of the pixel

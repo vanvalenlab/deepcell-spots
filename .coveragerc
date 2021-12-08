@@ -15,3 +15,4 @@ show_missing = True
 omit =
     **/*_test.py
     data/*
+    deepcell_spots/training.py

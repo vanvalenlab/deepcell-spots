@@ -35,11 +35,12 @@ import numpy as np
 # import deepcell.losses
 from deepcell.utils import train_utils
 from deepcell.utils.train_utils import rate_scheduler
-from deepcell_spots import dotnet_losses, image_generators
-from deepcell_spots.data_utils import get_data
 from tensorflow.keras.optimizers import SGD
 from tensorflow.python.keras import backend as K
 from tensorflow.python.keras import callbacks
+
+from deepcell_spots import dotnet_losses, image_generators
+from deepcell_spots.data_utils import get_data
 
 
 def train_model_dot(model,

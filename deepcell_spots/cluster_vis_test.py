@@ -29,9 +29,10 @@
 from itertools import combinations
 
 import numpy as np
-from deepcell_spots.cluster_vis import ca_to_adjacency_matrix, jitter
 from scipy.spatial import distance
 from tensorflow.python.platform import test
+
+from deepcell_spots.cluster_vis import ca_to_adjacency_matrix, jitter
 
 
 class TestClusterVis(test.TestCase):
