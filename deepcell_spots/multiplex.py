@@ -24,32 +24,34 @@
 # limitations under the License.
 # ==============================================================================
 
-import collections
-import os
-
 import numpy as np
 import pandas as pd
-from deepcell_spots.singleplex import match_spots_to_cells
-from postcode.decoding_functions import decoding_function, decoding_output_to_dataframe
+from postcode.decoding_functions import (decoding_function,
+                                         decoding_output_to_dataframe)
 from scipy.spatial import distance
-from skimage.feature import peak_local_max, register_translation
+from skimage.feature import peak_local_max
+from sklearn.cluster import DBSCAN
 from tqdm import tqdm
+
+from deepcell_spots.singleplex import match_spots_to_cells
+from deepcell_spots.point_metrics import (match_points_min_dist,
+                                          match_points_mutual_nearest_neighbor)
 
 
 def multiplex_match_spots_to_cells(coords_dict, cytoplasm_pred):
-    """Matches detected spots to labeled cell cytoplasms
+    """Matches detected spots to labeled cell cytoplasms.
 
     Args:
         coords_dict (dict): Dictionary where keys are image IDs
             ('readoutName') and values are coordinates of detected spots
-        cytoplasm_pred (matrix): Image where pixel values are labels for segmented cell
-            cytoplasms
+        cytoplasm_pred (matrix): Image where pixel values are labels for
+            segmented cell cytoplasms.
 
     Returns:
-        spots_to_cells_dict (dict): Dictionary of dictionaries, keys are image IDs (readoutName),
-            values are dictionaries where keys are cell cytoplasm labels and values are detected
-            spots associated with that cell label, there is one item in list for each image in
-            coords_dict
+        dict: dict of dicts, keys are image IDs (readoutName),
+            values are dictionaries where keys are cell cytoplasm labels
+            and values are detected spots associated with that cell label,
+            there is one item in list for each image in coords_dict.
     """
     coords = [item[0] for item in coords_dict.values()]
     keys = list(coords_dict.keys())
@@ -68,15 +70,17 @@ def cluster_points(spots_to_cells_dict, cell_id, threshold=1.5, match_method='mi
     'mutual_nearest_neighbor'.
 
     Args:
-        spots_to_cells_dict ([type]): Dictionary of dictionaries, keys are image IDs (readoutName),
-            values are dictionaries where keys are cell cytoplasm labels and values are detected
-            spots associated with that cell label, there is one item in list for each image in
+        spots_to_cells_dict (dict): Dict of dicts, keys are image IDs
+            (readoutName), values are dictionaries where keys are cell
+            cytoplasm labels and values are detected spots associated with
+            that cell label, there is one item in list for each image in
             coords_dict
         cell_id (int): Integer key in spots_to_cells_dict
-        threshold (float, optional): Distance threshold in pixels for matching points between
-            rounds. Defaults to 1.5.
-        match_method (str, optional): Method for matching spots between rounds. Options are
-            'min_dist' and 'mutual_nearest_neighbor'. Defaults to 'min_dist'.
+        threshold (float, optional): Distance threshold in pixels for matching
+            points between rounds. Defaults to 1.5.
+        match_method (str, optional): Method for matching spots between rounds.
+            Options are 'min_dist' and 'mutual_nearest_neighbor'.
+            Defaults to 'min_dist'.
     """
     col_names = list(spots_to_cells_dict.keys())
 
@@ -139,25 +143,31 @@ def cluster_points(spots_to_cells_dict, cell_id, threshold=1.5, match_method='mi
 
 def gene_counts(spots_to_cells_dict, codebook, threshold=1.5,
                 match_method='min_dist', error_corr=True):
-    """Assigns combinatorial barcodes corresponding to gene identities. Matches spots between
-    rounds with one of two methods: 'min_dist' or 'mutual_nearest_neighbor'.
+    """Assigns combinatorial barcodes corresponding to gene identities.
+
+    Matches spots between rounds with one of two methods:
+    'min_dist' or 'mutual_nearest_neighbor'.
 
     Args:
-        spots_to_cells_dict (dict): Dictionary of dictionaries, keys are image IDs (readoutName),
-            values are dictionaries where keys are cell cytoplasm labels and values are detected
-            spots associated with that cell label, there is one item in list for each image in
+        spots_to_cells_dict (dict): Dict of dits, keys are image IDs
+            (readoutName), values are dictionaries where keys are cell
+            cytoplasm labels and values are detected spots associated with
+            that cell label, there is one item in list for each image in
             coords_dict
-        codebook (Pandas DataFrame): Data frame with columns for each imaging round, rows are
-            barcodes for genes values in data frame are 0 if that barcode includes that imaging
-            round and 1 if the barcode does not
-        threshold (float, optional): Distance threshold in pixels for matching points between rounds
-        match_method (str, optional): Method for matching spots between rounds. Options are
-            'min_dist' and 'mutual_nearest_neighbor'. Defaults to 'min_dist'.
-        error_corr (bool, optional): Boolean that determines whether error correction is performed
-            on barcodes that don't have an exact match. Defaults to True.
+        codebook (Pandas DataFrame): Data frame with columns for each imaging
+            round, rows are barcodes for genes values in data frame are 0 if
+            that barcode includes that imaging round and 1 if the barcode does not
+        threshold (float, optional): Distance threshold in pixels for matching
+            points between rounds
+        match_method (str, optional): Method for matching spots between rounds.
+            Options are 'min_dist' and 'mutual_nearest_neighbor'.
+            Defaults to 'min_dist'.
+        error_corr (bool, optional): Boolean that determines whether error
+            correction is performed on barcodes that don't have an exact match.
+            Defaults to True.
 
     Returns:
-        gene_counts_df (Pandas DateFrame): DataFrame containing gene counts for each cell.
+        pandas.DateFrame: DataFrame containing gene counts for each cell.
     """
     gene_count_per_cell = {}
     # codebook = codebook[['name']+col_names]
@@ -219,23 +229,27 @@ def gene_counts(spots_to_cells_dict, codebook, threshold=1.5,
 
 
 def gene_counts_DBSCAN(spots_to_cells_dict, codebook, threshold, error_corr=True):
-    """Assigns combinatorial barcodes corresponding to gene identities. Matches spots between
-    rounds with DBSCAN clustering.
+    """Assigns combinatorial barcodes corresponding to gene identities.
+    Matches spots between rounds with DBSCAN clustering.
 
     Args:
-        spots_to_cells_dict (dict): Dictionary of dictionaries, keys are image IDs (readoutName),
-            values are dictionaries where keys are cell cytoplasm labels and values are detected
-            spots associated with that cell label, there is one item in list for each image in
-            coords_dict
-        codebook (Pandas DataFrame): Data frame with columns for each imaging round, rows are
-            barcodes for genes values in data frame are 0 if that barcode includes that imaging
-            round and 1 if the barcode does not
-        threshold (float): Distance threshold in pixels for matching points between rounds
-        error_corr (bool, optional): Boolean that determines whether error correction is performed
-            on barcodes that don't have an exact match. Defaults to True.
+        spots_to_cells_dict (dict): Dictionary of dictionaries, keys are image
+            IDs (readoutName), values are dictionaries where keys are cell
+            cytoplasm labels and values are detected spots associated with
+            that cell label, there is one item in list for each image in
+            coords_dict.
+        codebook (pandas.DataFrame): DataFrame with columns for each imaging
+            round, rows are barcodes for genes values in data frame are 0 if
+            that barcode includes that imaging round and 1 if the barcode
+            does not.
+        threshold (float): Distance threshold in pixels for matching points
+            between rounds.
+        error_corr (bool, optional): Boolean that determines whether error
+            correction is performed on barcodes that don't have an exact match.
+            Defaults to True.
 
     Returns:
-        gene_counts_df (Pandas DateFrame): DataFrame containing gene counts for each cell.
+        pandas.DateFrame: DataFrame containing gene counts for each cell.
     """
     # Codebook data frame to dictionary
     codebook_dict = {}
@@ -261,6 +275,7 @@ def gene_counts_DBSCAN(spots_to_cells_dict, codebook, threshold, error_corr=True
         cell_coords_flat = np.vstack(cell_coords)
 
         # Cluster spots
+        # TODO: DBSCAN is not imported anywhere??
         clustering = DBSCAN(eps=threshold, min_samples=2).fit(cell_coords_flat)
         labels = clustering.labels_
 
@@ -316,50 +331,51 @@ def gene_counts_DBSCAN(spots_to_cells_dict, codebook, threshold, error_corr=True
 
         gene_counts_df = pd.concat([gene_counts_df, temp_gene_counts_df])
 
-    return(gene_counts_df)
+    return gene_counts_df
 
 
 def error_correction(barcode, codebook_dict):
-    """Corrects barcodes that have no match in codebook. To be assigned, a barcode may have a
-    maximum of one bit flipped (Hamming distance of one) from input barcode.
+    """Corrects barcodes that have no match in codebook.
+    To be assigned, a barcode may have a maximum of one bit flipped
+    (Hamming distance of one) from input barcode.
 
     Args:
-        barcode (str): String of binary barcode list, where values are 1 or 0 depending on whether
-            transcripts with that barcode are labeled in a particular round.
-        codebook_dict (dict): Codebook converted into a dictionary where the keys are the binary
-            barcode and the values are the gene names.
+        barcode (str): String of binary barcode list, where values are 1 or 0
+            depending on whether transcripts with that barcode are labeled in
+            a particular round.
+        codebook_dict (dict): Codebook converted into a dictionary where the
+            keys are the binary barcode and the values are the gene names.
     """
-    dist_list = []
     for key in codebook_dict.keys():
         codebook_barcode = np.array(key.strip('][').split(', ')).astype(int)
 
         dist = distance.euclidean(codebook_barcode, barcode)
         if dist == 1:
             gene = codebook_dict[key]
-            return(gene)
+            return gene
 
-    return('No match')
-
-# -----------------------------------------------------------------------------------------------
+    return 'No match'
 
 
 def assign_gene_identities(cp_dict, dataorg, threshold, codebook):
     """Assigns gene identity to barcoded spots.
 
     Args:
-        cp_dict (dict): Dictionary where keys are image IDs ('readoutName') and values are
-            classification prediction output from spot detection model
-        dataorg (Pandas DataFrame): Data frame containing information about organization of image
-            files
-        threshold (float): value for the probability threshold a spot must exceed to be considered
-            a spot
-        codebook (Pandas DataFrame): Data frame with columns for each imaging round, rows are
-            barcodes for genes values in data frame are 0 if that barcode includes that imaging
-            round and 1 if the barcode does not
+        cp_dict (dict): Dictionary where keys are image IDs ('readoutName')
+            and values are classification prediction output from the spot
+            detection model.
+        dataorg (pandas.DataFrame): Data frame containing information about
+            organization of image files.
+        threshold (float): value for the probability threshold a spot must
+            exceed to be considered a spot.
+        codebook (pandas.DataFrame): Data frame with columns for each imaging
+            round, rows are barcodes for genes values in data frame are 0 if
+            that barcode includes that imaging round and 1 if the barcode
+            does not.
 
     Returns:
-        decoded_spots_df (Pandas DataFrame): Data frame with the spot locations, gene identity, and
-            probability of assignment
+        pandas.DataFrame: Data frame with the spot locations, gene identity,
+            and probability of assignment.
     """
     # Create array from classification prediction dictionary
     cp_array = np.array(list(cp_dict.values()))[:, 1, 0, :, :, 1]
@@ -411,21 +427,21 @@ def assign_gene_identities(cp_dict, dataorg, threshold, codebook):
     decoded_spots_df['X'] = coords_array[:, 0]
     decoded_spots_df['Y'] = coords_array[:, 1]
 
-    return(decoded_spots_df)
+    return decoded_spots_df
 
 
 def assign_spots_to_cells(decoded_spots_df, cytoplasm_pred):
     """Adds column to spots DataFrame with identity of cell for each spot
 
     Args:
-        decoded_spots_df (Pandas DataFrame): Data frame with the spot locations, gene identity, and
-            probability of assignment
-        cytoplasm_pred (array): Image where pixel values are labels for segmented cell
-            cytoplasms
+        decoded_spots_df (pandas.DataFrame): Data frame with the spot
+            locations, gene identity, and probability of assignment
+        cytoplasm_pred (array): Image where pixel values are labels for
+            segmented cell cytoplasms.
 
     Returns:
-        decoded_spots_df (Pandas DataFrame): Data frame with the spot locations, gene identity,
-            probability of assignment, and cell identity
+        pandas.DataFrame: Data frame with the spot locations, gene identity,
+            probability of assignment, and cell identity.
     """
 
     cell_list = []
@@ -435,4 +451,4 @@ def assign_spots_to_cells(decoded_spots_df, cytoplasm_pred):
 
     decoded_spots_df['Cell'] = cell_list
 
-    return(decoded_spots_df)
+    return decoded_spots_df

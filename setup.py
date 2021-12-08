@@ -56,7 +56,7 @@ setup(
     long_description=readme,
     long_description_content_type='text/markdown',
     install_requires=[
-        'pandas>=0.23.3,<1',
+        'pandas>=1,<2',
         'numpy>=1.16.4,<2',
         'scipy>=1.1.0,<2',
         'scikit-image>=0.14.1,<=0.16.2',
@@ -65,7 +65,7 @@ setup(
         'tensorflow_addons~=0.13.0',
         'jupyter>=1.0.0,<2',
         'networkx>=2.1',
-        'opencv-python>=3.4.2.17,<4',
+        'opencv-python-headless<5',
         'deepcell~=0.11.0',
         'trackpy==0.4.2',
         'torch',
