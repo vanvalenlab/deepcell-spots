@@ -25,4 +25,3 @@
 # ==============================================================================
 
 from deepcell_spots.applications.spot_detection import SpotDetection
-from deepcell_spots.applications.spots_application import Application

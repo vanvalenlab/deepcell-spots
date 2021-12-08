@@ -28,10 +28,12 @@
 from __future__ import absolute_import, division, print_function
 
 import os
+import timeit
 
 import tensorflow as tf
+from deepcell.applications import Application
 
-from deepcell_spots.applications.spots_application import SpotsApplication
+from deepcell_spots.dotnet import *
 from deepcell_spots.dotnet_losses import DotNetLosses
 from deepcell_spots.postprocessing_utils import y_annotations_to_point_list_max
 from deepcell_spots.preprocessing_utils import min_max_normalize
@@ -40,7 +42,7 @@ MODEL_PATH = ('https://deepcell-data.s3-us-west-1.amazonaws.com/'
               'saved-models/SpotDetection-3.tar.gz')
 
 
-class SpotDetection(SpotsApplication):
+class SpotDetection(Application):
     """Loads a :mod:`deepcell.model_zoo.panopticnet.PanopticNet` model
     for nuclear segmentation with pretrained weights.
     The ``predict`` method handles prep and post processing steps
@@ -105,6 +107,92 @@ class SpotDetection(SpotsApplication):
             postprocessing_fn=y_annotations_to_point_list_max,
             dataset_metadata=self.dataset_metadata,
             model_metadata=self.model_metadata)
+
+    def _postprocess(self, image, **kwargs):
+        """Applies postprocessing function to image if one has been defined.
+        Differs from parent class in that it returns a set of coordinate spot
+        locations, so handling of dimensions differs.
+
+        Otherwise returns unmodified image.
+        Args:
+            image (numpy.array or list): Input to postprocessing function
+                either an ``numpy.array`` or list of ``numpy.arrays``.
+        Returns:
+            numpy.array: labeled image
+        """
+        if self.postprocessing_fn is not None:
+            t = timeit.default_timer()
+            self.logger.debug('Post-processing results with %s and kwargs: %s',
+                              self.postprocessing_fn.__name__, kwargs)
+
+            image = self.postprocessing_fn(image, **kwargs)
+
+            self.logger.debug('Post-processed results with %s in %s s',
+                              self.postprocessing_fn.__name__,
+                              timeit.default_timer() - t)
+
+        elif isinstance(image, list) and len(image) == 1:
+            image = image[0]
+
+        return image
+
+    def _predict_segmentation(self,
+                              image,
+                              batch_size=4,
+                              image_mpp=None,
+                              pad_mode='constant',
+                              preprocess_kwargs={},
+                              postprocess_kwargs={}):
+        """Generates a list of coordinate spot locations of the input running
+        prediction with appropriate pre and post processing functions.
+        This differs from parent Application class which returns a labeled image.
+        Input images are required to have 4 dimensions
+        ``[batch, x, y, channel]``. Additional empty dimensions can be added
+        using ``np.expand_dims``.
+        Args:
+            image (numpy.array): Input image with shape
+                ``[batch, x, y, channel]``.
+            batch_size (int): Number of images to predict on per batch.
+            image_mpp (float): Microns per pixel for ``image``.
+            pad_mode (str): The padding mode, one of "constant" or "reflect".
+            preprocess_kwargs (dict): Keyword arguments to pass to the
+                pre-processing function.
+            postprocess_kwargs (dict): Keyword arguments to pass to the
+                post-processing function.
+        Raises:
+            ValueError: Input data must match required rank, calculated as one
+                dimension more (batch dimension) than expected by the model.
+            ValueError: Input data must match required number of channels.
+        Returns:
+            numpy.array: Coordinate spot locations
+        """
+        # Check input size of image
+        if len(image.shape) != self.required_rank:
+            raise ValueError('Input data must have {} dimensions. '
+                             'Input data only has {} dimensions'.format(
+                                 self.required_rank, len(image.shape)))
+
+        if image.shape[-1] != self.required_channels:
+            raise ValueError('Input data must have {} channels. '
+                             'Input data only has {} channels'.format(
+                                 self.required_channels, image.shape[-1]))
+
+        # Resize image, returns unmodified if appropriate
+        resized_image = self._resize_input(image, image_mpp)
+
+        # Generate model outputs
+        output_images = self._run_model(
+            image=resized_image, batch_size=batch_size,
+            pad_mode=pad_mode, preprocess_kwargs=preprocess_kwargs
+        )
+
+        # Resize output_images back to original resolution if necessary
+        label_image = self._resize_output(output_images, image.shape)
+
+        # Postprocess predictions to create label image
+        predicted_spots = self._postprocess(label_image, **postprocess_kwargs)
+
+        return predicted_spots
 
     def predict(self,
                 image,
