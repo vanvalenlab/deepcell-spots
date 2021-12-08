@@ -56,7 +56,7 @@ setup(
     long_description=readme,
     long_description_content_type='text/markdown',
     install_requires=[
-        'pandas>=0.23.3,<1',
+        'pandas>=1,<2',
         'numpy>=1.16.4,<2',
         'scipy>=1.1.0,<2',
         'scikit-image>=0.14.1,<=0.16.2',
