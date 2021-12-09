@@ -10,12 +10,12 @@
 
 Build and run a local docker container, similarly to the instructions for deepcell-tf. The relevant parts are copied here with modifications to work for deepcell-spots. For more elaborate instructions, see the [deepcell-tf README](https://github.com/vanvalenlab/deepcell-tf/blob/master/README.md).
 
-### Build a local docker container, specifying the tensorflow version with TF_VERSION
+### Build a local docker container, specifying the deepcell version with DEEPCELL_VERSION
 
 ```bash
 git clone https://github.com/vanvalenlab/deepcell-spots.git
 cd deepcell-spots
-docker build --build-arg TF_VERSION=2.5.1-gpu -t $USER/deepcell-spots . 
+docker build --build-arg DEEPCELL_VERSION=0.11.0-gpu -t $USER/deepcell-spots . 
 ```
 
 ### Run the new docker image
