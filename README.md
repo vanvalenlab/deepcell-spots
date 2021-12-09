@@ -41,9 +41,9 @@ docker run --gpus '"device=0"' -it \
 
 ## DeepCell Spots Application
 
-`deepcell-spots` contains an application that greatly simplifies the implementation of deep learning models for spot detection. `deepcell-spots.applications` contains a pre-trained model for fluorescent spot detection on images derived from assays such as RNA FISH and in-situ sequencing. This model returns a list of coordinate locations for fluorescent spots detected in the input image. 
+`deepcell-spots` contains an application that greatly simplifies the implementation of deep learning models for spot detection. `deepcell-spots.applications` contains a pre-trained model for fluorescent spot detection on images derived from assays such as RNA FISH and in-situ sequencing. This model returns a list of coordinate locations for fluorescent spots detected in the input image.
 
-## How to Use
+### How to Use
 
 ```python
 from deepcell_spots.applications.spot_detection import SpotDetection
