@@ -43,22 +43,22 @@ MODEL_PATH = ('https://deepcell-data.s3-us-west-1.amazonaws.com/'
               'saved-models/SpotDetection-3.tar.gz')
 
 
-class SpotDetection(Application):
-    """Loads a :mod:`deepcell.model_zoo.panopticnet.PanopticNet` model
-    for nuclear segmentation with pretrained weights.
+class Polaris(Application):
+    """Loads a :mod:`deepcell.model_zoo.panopticnet.FeatureNets` model
+    for fluorescent spot detection with pretrained weights.
     The ``predict`` method handles prep and post processing steps
     to return a labeled image.
     Example:
     .. code-block:: python
         from skimage.io import imread
-        from deepcell_spots.applications import SpotDetection
+        from deepcell_spots.applications import Polaris
         # Load the image
-        im = imread('HeLa_nuclear.png')
+        im = imread('spots_image.png')
         # Expand image dimensions to rank 4
         im = np.expand_dims(im, axis=-1)
         im = np.expand_dims(im, axis=0)
         # Create the application
-        app = SpotDetection()
+        app = Polaris()
         # create the lab
         labeled_image = app.predict(im)
     Args:
@@ -86,7 +86,6 @@ class SpotDetection(Application):
     def __init__(self, model=None):
 
         if model is None:
-            # model_path = '/data/20210331-training_data/models/em_model'
             archive_path = tf.keras.utils.get_file(
                 'SpotDetection.tgz', MODEL_PATH,
                 file_hash='2b9a46087b25e9aab20a2c9f67f4f559',
@@ -100,7 +99,7 @@ class SpotDetection(Application):
                 }
             )
 
-        super(SpotDetection, self).__init__(
+        super(Polaris, self).__init__(
             model,
             model_image_shape=model.input_shape[1:],
             model_mpp=0.65,
@@ -203,8 +202,9 @@ class SpotDetection(Application):
                 preprocess_kwargs=None,
                 postprocess_kwargs=None,
                 threshold=0.9):
-        """Generates a labeled image of the input running prediction with
-        appropriate pre and post processing functions.
+        """Generates a list of coordinate spot locations of the input
+        running prediction with appropriate pre and post processing
+        functions.
         Input images are required to have 4 dimensions
         ``[batch, x, y, channel]``.
         Additional empty dimensions can be added using ``np.expand_dims``.
