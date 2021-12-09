@@ -1,26 +1,27 @@
 # DeepCell Spots
 
-[![Build Status](https://github.com/vanvalenlab/deepcell-tf/workflows/build/badge.svg)](https://github.com/vanvalenlab/deepcell-spots/actions)
-[![Coverage Status](https://coveralls.io/repos/github/vanvalenlab/deepcell-spots/badge.svg?branch=master)](https://coveralls.io/github/vanvalenlab/deepcell-spots?branch=master)
+[![Build Status](https://github.com/vanvalenlab/deepcell-spots/workflows/build/badge.svg)](https://github.com/vanvalenlab/deepcell-spots/actions)
+[![Coverage Status](https://coveralls.io/repos/github/vanvalenlab/deepcell-spots/badge.svg)](https://coveralls.io/github/vanvalenlab/deepcell-spots)
+[![Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/vanvalenlab/deepcell-spots/blob/master/LICENSE)
 
 `deepcell-spots` is a deep learning library for fluorescent spot detection image analysis. It allows you to apply pre-existing models and train new deep learning models for spot detection. It is written in Python and built using [TensorFlow](https://github.com/tensorflow/tensorflow), [Keras](https://www.tensorflow.org/guide/keras) and [DeepCell](https://github.com/vanvalenlab/deepcell-tf).
 
-## DeepCell-spots for Developers
+## DeepCell-Spots for Developers
 
 Build and run a local docker container, similarly to the instructions for deepcell-tf. The relevant parts are copied here with modifications to work for deepcell-spots. For more elaborate instructions, see the [deepcell-tf README](https://github.com/vanvalenlab/deepcell-tf/blob/master/README.md).
 
-### Build a local docker container, specifying the tensorflow version with TF_VERSION
+### Build a local docker container, specifying the deepcell version with DEEPCELL_VERSION
 
 ```bash
 git clone https://github.com/vanvalenlab/deepcell-spots.git
 cd deepcell-spots
-docker build --build-arg TF_VERSION=2.5.1-gpu -t $USER/deepcell-spots . 
+docker build --build-arg DEEPCELL_VERSION=0.11.0-gpu -t $USER/deepcell-spots . 
 ```
 
 ### Run the new docker image
 
 ```bash
-# '"device=0"' refers to the specific GPU(s) to run DeepCell-tf on, and is not required
+# '"device=0"' refers to the specific GPU(s) to run DeepCell-Spots on, and is not required
 docker run --gpus '"device=0"' -it \
 -p 8888:8888 \
 $USER/deepcell-spots
@@ -40,9 +41,9 @@ docker run --gpus '"device=0"' -it \
 
 ## DeepCell Spots Application
 
-`deepcell-spots` contains an application that greatly simplifies the implementation of deep learning models for spot detection. `deepcell-spots.applications` contains a pre-trained model for fluorescent spot detection on images derived from assays such as RNA FISH and in-situ sequencing. This model returns a list of coordinate locations for fluorescent spots detected in the input image. 
+`deepcell-spots` contains an application that greatly simplifies the implementation of deep learning models for spot detection. `deepcell-spots.applications` contains a pre-trained model for fluorescent spot detection on images derived from assays such as RNA FISH and in-situ sequencing. This model returns a list of coordinate locations for fluorescent spots detected in the input image.
 
-## How to Use
+### How to Use
 
 ```python
 from deepcell_spots.applications.spot_detection import SpotDetection
