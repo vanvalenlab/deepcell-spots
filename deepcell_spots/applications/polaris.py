@@ -33,7 +33,6 @@ import timeit
 import tensorflow as tf
 from deepcell.applications import Application
 
-from deepcell_spots.dotnet import *
 from deepcell_spots.dotnet_losses import DotNetLosses
 from deepcell_spots.postprocessing_utils import y_annotations_to_point_list_max
 from deepcell_spots.preprocessing_utils import min_max_normalize
@@ -44,7 +43,7 @@ MODEL_PATH = ('https://deepcell-data.s3-us-west-1.amazonaws.com/'
 
 
 class Polaris(Application):
-    """Loads a :mod:`deepcell.model_zoo.panopticnet.FeatureNets` model
+    """Loads a :mod:`deepcell.model_zoo.featurenet.FeatureNet` model
     for fluorescent spot detection with pretrained weights.
     The ``predict`` method handles prep and post processing steps
     to return a labeled image.

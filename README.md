@@ -46,7 +46,7 @@ docker run --gpus '"device=0"' -it \
 ### How to Use
 
 ```python
-from deepcell_spots.applications.polaris import Polaris
+from deepcell_spots.applications import Polaris
 
 app = Polaris()
 # image is an np array with dimensions (batch,x,y,channel)
