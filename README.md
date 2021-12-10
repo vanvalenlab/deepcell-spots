@@ -46,9 +46,9 @@ docker run --gpus '"device=0"' -it \
 ### How to Use
 
 ```python
-from deepcell_spots.applications.spot_detection import SpotDetection
+from deepcell_spots.applications import Polaris
 
-app = SpotDetection()
+app = Polaris()
 # image is an np array with dimensions (batch,x,y,channel)
 # threshold is the probability threshold that a pixel must exceed to be considered a spot
 coords = app.predict(image,threshold=0.9)
