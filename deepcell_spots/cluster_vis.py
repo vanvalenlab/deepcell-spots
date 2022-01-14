@@ -29,7 +29,6 @@
 from itertools import combinations
 
 import numpy as np
-from scipy.spatial import distance
 
 
 def jitter(coords, size):
@@ -79,16 +78,15 @@ def label_graph_ann(G, coords, exclude_last=False):
     """Labels the annotator associated with each node in the graph
 
     Args:
-        G (networkx graph): Graph with edges indicating clusters of points assumed to be derived
-        from the same ground truth detection
-    coords : matrix
-        2d-array of detected point locations for each classical algorithm used
-    exclude_last : boolean
-        Only set as True to exclude a point that has been included for the purpose of normalization
+        G (networkx.Graph): Graph with edges indicating clusters of points
+        assumed to be derived from the same ground truth detection
+    coords (numpy.array): 2d-array of detected point locations for each
+        classical algorithm used
+    exclude_last (bool): Only set as True to exclude a point that has been
+        included for the purpose of normalization
 
     Returns:
-        G_new (networkx graph): Labeled graph
-
+        networkx.Graph: Labeled graph
     """
 
     G_new = G.copy()
@@ -114,20 +112,21 @@ def label_graph_ann(G, coords, exclude_last=False):
 
 def label_graph_gt(G, detection_data, gt):
 
-    """Labels the ground truth identity of each node in the graph -- intended for simulated data
+    """Labels the ground truth identity of each node in the graph.
+
+    Intended for simulated data.
 
     Args:
-        G (networkx graph): Graph with edges indicating clusters of points assumed to be derived
-            from the same ground truth detection
-        detection_data (matrix): Matrix with dimensions (number of clusters) x (number of
-            algorithms) with value of 1 if an algorithm detected
-            the cluster and 0 if it did not
-        gt (array): Array with length (number of cluster) with value of 1 if cluster is a true
-            positive detection and 0 if it is a false positive
-
+        G (networkx graph): Graph with edges indicating clusters of points
+            assumed to be derived from the same ground truth detection
+        detection_data (numpy.array): Matrix with dimensions (number of clusters) x
+            (number of algorithms) with value of 1 if an algorithm detected
+            the cluster and 0 if it did not.
+        gt (numpy.array): Array with length (number of cluster) with value of 1 if
+            cluster is a true positive detection and 0 if it is a false positive.
 
     Returns:
-        G_new (networkx graph): Labeled graph
+        networkx.Graph: Labeled graph
     """
 
     G_new = G.copy()
@@ -155,22 +154,22 @@ def label_graph_gt(G, detection_data, gt):
 
 def label_graph_prob(G, detection_data, p_matrix):
 
-    """Labels the EM output probability of being a ground truth true detection for each cluster in
-    the graph
+    """Labels the EM output probability of being a ground truth true detection
+    for each cluster in the graph.
 
     Args:
-        G (networkx graph): Graph with edges indicating clusters of points assumed to be derived
-            from the same ground truth detection
-        detection_data (matrix): Matrix with dimensions (number of clusters) x (number of
-            algorithms) with value of 1 if an algorithm detected
-            the cluster and 0 if it did not
-        p_matrix (matrix): Matrix with dimensions (number of clusters) x 2 where first column is
-        the probability that a cluster is a true positive and second column is the probability that
-        it is a false positive
-
+        G (networkx.Graph): Graph with edges indicating clusters of points
+            assumed to be derived from the same ground truth detection
+        detection_data (numpy.array): Matrix with dimensions (number of
+            clusters) x (number of algorithms) with value of 1 if an algorithm
+            detected the cluster and 0 if it did not.
+        p_matrix (matrix): Matrix with dimensions (number of clusters) x 2
+            where first column is the probability that a cluster is a true
+            positive and second column is the probability that it is a
+            false positive.
 
     Returns:
-        G_new (networkx graph): Labeled graph
+        networkx.Graph: Labeled graph
     """
     G_new = G.copy()
 

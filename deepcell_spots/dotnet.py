@@ -24,37 +24,31 @@
 # limitations under the License.
 # ==============================================================================
 
-""" CNN architechture with classification and regression outputs for dot center detection"""
+"""CNN architechture with classification and regression outputs for dot center detection"""
 
-# for running on my laptop:
-import sys
-
-import numpy as np
-from deepcell.layers import ImageNormalization2D, ImageNormalization3D, TensorProduct
+from deepcell.layers import TensorProduct
 from deepcell.model_zoo import bn_feature_net_skip_2D
 from tensorflow.python.keras import backend as K
 from tensorflow.python.keras.initializers import RandomNormal
 from tensorflow.python.keras.layers import (Activation, BatchNormalization,
-                                            Concatenate, Conv2D, Flatten,
-                                            Input, Lambda, Permute, Reshape,
-                                            Softmax)
+                                            Conv2D, Input, Lambda, Permute,
+                                            Reshape, Softmax)
 from tensorflow.python.keras.models import Model
 from tensorflow.python.keras.regularizers import l2
 
 
 def default_heads(input_shape, num_classes):
     """
-    Create a list of the default heads for dot detection center pixel detection and
-    offset regression
+    Create a list of the default heads for dot detection center pixel detection
+    and offset regression
 
     Args:
         input_shape
         num_classes
 
     Returns:
-        A list of tuple, where the first element is the name of the submodel
-        and the second element is the submodel itself.
-
+        list(tuple): A list of tuple, where the first element is the name of
+            the submodel and the second element is the submodel itself.
     """
     # regress x and y coordinates (pixel center signed distance from  nearest object center)
     num_dimensions = 2
@@ -73,18 +67,18 @@ def classification_head(input_shape,
                         init='he_normal',
                         name='classification_head'):
 
-    # """
-    # Creates a classification head
+    """Creates a classification head.
 
-    # Args:
-    #     n_features (int): Number of output features (number of possible classes for each pixel.
-    #     default is 2: contains point / does not contain point)
-    #     reg (int): regularization value
-    #     init (str): Method for initalizing weights.
+    Args:
+        n_features (int): Number of output features (number of possible classes
+            for each pixel).
+        default is 2: contains point / does not contain point)
+        reg (int): regularization value
+        init (str): Method for initalizing weights.
 
-    # Returns:
-    #     tensorflow.keras.Model for classification (softmax output)
-    # """
+    Returns:
+        tensorflow.keras.Model for classification (softmax output)
+    """
 
     channel_axis = 1 if K.image_data_format() == 'channels_first' else -1
 
@@ -100,54 +94,6 @@ def classification_head(input_shape,
     # x.append(Flatten()(x[-1]))
     outputs = Softmax(axis=channel_axis)(x[-1])
     # x.append(outputs)
-
-    return Model(inputs=inputs, outputs=outputs, name=name)
-
-
-def rn_classification_head(num_classes,
-                           input_size,
-                           input_feature_size=256,
-                           prior_probability=0.01,
-                           classification_feature_size=256,
-                           name='classification_submodel'):
-    # similar to the one used by retinanet, HASN'T BEEN TESTED, MAY NOT WORK!!!
-    options = {
-        'kernel_size': 3,
-        'strides': 1,
-        'padding': 'same',
-    }
-
-    if K.image_data_format() == 'channels_first':
-        inputs = Input(shape=(input_size, None, None))
-    else:
-        inputs = Input(shape=(None, None, input_size))
-    outputs = inputs
-    for i in range(4):
-        outputs = Conv2D(
-            filters=classification_feature_size,
-            activation='relu',
-            name='pyramid_classification_{}'.format(i),
-            kernel_initializer=RandomNormal(mean=0.0, stddev=0.01, seed=None),
-            bias_initializer='zeros',
-            **options
-        )(outputs)
-
-    outputs = Conv2D(
-        filters=num_classes * num_anchors,
-        kernel_initializer=RandomNormal(mean=0.0, stddev=0.01, seed=None),
-        bias_initializer=PriorProbability(probability=prior_probability),
-        name='pyramid_classification',
-        **options
-    )(outputs)
-
-    # reshape output and apply sigmoid
-    if K.image_data_format() == 'channels_first':
-        outputs = Permute(
-            (2, 3, 1), name='pyramid_classification_permute')(outputs)
-    outputs = Reshape((-1, num_classes),
-                      name='pyramid_classification_reshape')(outputs)
-    outputs = Activation(
-        'sigmoid', name='pyramid_classification_sigmoid')(outputs)
 
     return Model(inputs=inputs, outputs=outputs, name=name)
 

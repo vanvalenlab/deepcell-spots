@@ -26,31 +26,33 @@
 
 """Expectation maximization functions for spot detection"""
 
-import random
 from itertools import combinations
 
 import networkx as nx
 import numpy as np
-from deepcell_spots.cluster_vis import *
 from scipy.spatial import distance
+
+from deepcell_spots.cluster_vis import label_graph_ann
 
 
 def calc_tpr_fpr(gt, data):
-
-    """Calculate the true postivie rate and false positive rate for a pair of ground truth labels
-    and detection data.
+    """Calculate the true postivie rate and false positive rate for a pair of
+    ground truth labels and detection data.
 
     Args:
-        gt (array): Array of ground truth cluster labels. A value of 1 indicates a true detection
-        and a value of 0 indicates a false detection.
-    data (array): Array of detection data with same length . A value of 1 indicates a detected
-        cluster and a value of 0 indicates an undetected cluster.
+        gt (array): Array of ground truth cluster labels. A value of 1 indicates
+            a true detection and a value of 0 indicates a false detection.
+    data (array): Array of detection data with same length.
+        A value of 1 indicates a detected cluster and a value of 0 indicates
+        an undetected cluster.
 
     Returns:
-        tpr (float): Value for the true positive rate of an annotator. This is the probability that
-            an annotator will detect a spot that is labeled as a ground truth true detection.
-        fpr (float): Value for the false positive rate of an annotator. This is the probability
-            that an annotator will detect a spot that is labeled as a ground truth false detection.
+        float: Value for the true positive rate of an annotator.
+            This is the probability that an annotator will detect a spot that
+            is labeled as a ground truth true detection.
+        float: Value for the false positive rate of an annotator.
+            This is the probability that an annotator will detect a spot that
+            is labeled as a ground truth false detection.
     """
     tp = 0
     fn = 0
@@ -77,26 +79,28 @@ def calc_tpr_fpr(gt, data):
 
 
 def det_likelihood(cluster_data, pr_list):
+    """Calculate the likelihood that a cluster is a true positive or false
+    positive. To calculate the likelihood of a true positive, pr_list should
+    be a list of TPRs for all annotators. To calculate the likelihood of a
+    cluster being a false positive, pr_list should be a list of FPRs for all
+    annotators.
 
-    """Calculate the likelihood that a cluster is a true positive or false positive. To calculate
-    the likelihood of a true positive, pr_list should be a list of TPRs for all annotators. To
-    calculate the likelihood of a cluster being a false positive, pr_list should be a list of FPRs
-    for all annotators.
-
-    Returns a value for the likelihood that a cluster is either a true positive or a false positive
+    Returns a value for the likelihood that a cluster is either a true
+    positive or a false positive.
 
     Args:
-        cluster_data (array): Array of detection labels for each annotator. Entry has value 1 if
-            annotator detected the cluster, and entry has value 0 if annotator did not detect the
-            cluster.
-        pr_list (array): Array of true postive rates for each annotator if one wants to calculate
-            the likelihood that the cluster is a true positive, or array of false positive rates
-            for each annotator if one wants to calculate the likelihood that the cluster is a false
+        cluster_data (array): Array of detection labels for each annotator.
+            Entry has value 1 if annotator detected the cluster, and entry has
+            value 0 if annotator did not detect the cluster.
+        pr_list (array): Array of true postive rates for each annotator if one
+            wants to calculate the likelihood that the cluster is a true
+            positive, or array of false positive rates for each annotator if
+            one wants to calculate the likelihood that the cluster is a false
             positive.
 
     Returns:
-        likelihood (float): Value for the likelihood that a cluster is either a true positive or a
-        false positive detection
+        float: Value for the likelihood that a cluster is either a true positive
+            or a false positive detection.
     """
     likelihood = 1  # init likelihood
 
@@ -110,21 +114,21 @@ def det_likelihood(cluster_data, pr_list):
 
 def norm_marg_likelihood(cluster_data, tp_list, fp_list, prior):
 
-    """Calculates the normalized marginal likelihood that each cluster is a true positive or a
-    false positive.
+    """Calculates the normalized marginal likelihood that each cluster is a
+    true positive or a false positive.
 
     Args:
-        cluster_data (array): Array of detection labels for each annotator. Entry has value 1 if
-            annotator detected the cluster, and entry has value 0 if annotator did not detect the
-            cluster.
+        cluster_data (array): Array of detection labels for each annotator.
+            Entry has value 1 if annotator detected the cluster, and entry has
+            value 0 if annotator did not detect the cluster.
         tp_list (array): Array of true postive rates for each annotator.
         fp_list (array): Array of false postive rates for each annotator.
 
     Returns:
-        norm_tp_likelihood (float): Value for the normalized marginal likelihood that a cluster is
-        either a true positive detection
-    norm_fp_likelihood (float): Value for the normalized marginal likelihood that a cluster is
-        either a false positive detection
+        float: Value for the normalized marginal likelihood that a cluster is
+            either a true positive detection
+        float: Value for the normalized marginal likelihood that a cluster is
+            either a false positive detection
     """
     tp_likelihood = det_likelihood(cluster_data, tp_list)
     fp_likelihood = det_likelihood(cluster_data, fp_list)
@@ -139,28 +143,36 @@ def norm_marg_likelihood(cluster_data, tp_list, fp_list, prior):
 
 def em_spot(cluster_matrix, tp_list, fp_list, prior=0.9, max_iter=10):
 
-    """Estimate the TPR/FPR and probability of true detection for various spot annotators using
-    expectation maximization.
+    """Estimate the TPR/FPR and probability of true detection for various spot
+    annotators using expectation maximization.
 
-    Returns the true positive rate and false positive rate for each annotator, and returns the
-    probability that each spot is a true detection or false detection.
+    Returns the true positive rate and false positive rate for each annotator,
+    and returns the probability that each spot is a true detection or false
+    detection.
 
     Args:
-        cluster_matrix (matrix): Matrix of detection labels for each spot for each annotator.
-            Dimensions spots x annotators. A value of 1 indicates that the spot was detected by
-            that annotator and a value of 0 indicates that the spot was not detected by that
-            annotator.
-        tp_list (array): Array of initial guesses for the true positive rates for each annotator.
-        fp_list (array): Array of initial guesses for the false positive rates for each annotator.
-        prior (float): Value for the prior probability that a spot is a true positive.
-        max_iter (int): Value for the number of times the expectation maximization algorithm will
-            iteratively calculate the MLE for the TPR and FPR of the annotators.
+        cluster_matrix (matrix): Matrix of detection labels for each spot for
+            each annotator. Dimensions spots x annotators. A value of 1
+            indicates that the spot was detected by that annotator and a value
+            of 0 indicates that the spot was not detected by that annotator.
+        tp_list (array): Array of initial guesses for the true positive rates
+            for each annotator.
+        fp_list (array): Array of initial guesses for the false positive rates
+            for each annotator.
+        prior (float): Value for the prior probability that a spot is a true
+            positive.
+        max_iter (int): Value for the number of times the expectation
+            maximization algorithm will iteratively calculate the MLE for the
+            TPR and FPR of the annotators.
 
     Returns:
-        tp_list (array): Array of final estimates for the true positive rates for each annotator.
-        fp_list (array): Array of final estimates for the false postitive rates for each annotator.
-        likelihood_matrix (matrix): Matrix of probabilities that each cluster is a true detection
-            (column 0) or false detection (column 1). Dimensions spots x 2.
+        tp_list (array): Array of final estimates for the true positive rates
+            for each annotator.
+        fp_list (array): Array of final estimates for the false postitive rates
+            for each annotator.
+        likelihood_matrix (matrix): Matrix of probabilities that each cluster
+            is a true detection (column 0) or false detection (column 1).
+            Dimensions spots x 2.
     """
 
     likelihood_matrix = np.zeros((len(cluster_matrix), 2))
@@ -214,28 +226,30 @@ def em_spot(cluster_matrix, tp_list, fp_list, prior=0.9, max_iter=10):
 
 def cluster_coords(all_coords, image_stack, threshold):
 
-    """Cluster coords from different clasical annotators
+    """Cluster coords from different clasical annotators.
 
     Args:
-        all_coords (matrix): List with length (number of classical algorithms), where each entry
-            has length (number of images), where each of those entries has dimensions (number of
-            detections) x 2 and is filled by the locations of the detected points for each image
-            for each classical annotator
-        image_stack (matrix): Image matrix with the dimensions (batch, image_dim_x, image_dim_y,
-            channel)
-        threshold (float): Value for the distance in pixels below which detections will be
-            considered clustered
+        all_coords (matrix): List with length (number of classical algorithms),
+            where each entry has length (number of images), where each of those
+            entries has dimensions (number of detections) x 2 and is filled by
+            the locations of the detected points for each image for each
+            classical annotator
+        image_stack (matrix): Image matrix with the dimensions:
+            ``(batch, image_dim_x, image_dim_y, channel)``
+        threshold (float): Value for the distance in pixels below which
+            detections will be considered clustered.
 
     Returns:
-        cluster_matrix (matrix): Matrix with dimensions (number of detections) x (number of
-            algorithms), filled with value 1 if the algorithm detected that cluster, and 0 if it
-            did not
-        centroid_list (matrix): List with length (number of images), where each entry has dimensions
-            (number of detections) x 2, filled with the centroids of all clusters of detections
-        all_coords_updated (matrix): Same values as input all_coords, with entries removed from
-            images with no detections
-        image_stack_updated (matrix): Same values as input image_stack, with entries removed from
-            images with no detections
+        numpy.array: Matrix with dimensions (number of detections) x (number of
+            algorithms), filled with value 1 if the algorithm detected that
+            cluster, and 0 if it did not
+        centroid_list (matrix): List with length (number of images), where each
+            entry has dimensions (number of detections) x 2, filled with the
+            centroids of all clusters of detections.
+        all_coords_updated (matrix): Same values as input all_coords, with
+            entries removed from images with no detections.
+        image_stack_updated (matrix): Same values as input image_stack, with
+            entries removed from images with no detections.
     """
 
     # create one annotator data matrix from all images
@@ -298,11 +312,12 @@ def running_total_spots(centroid_list):
     """Returns a running total of the number of detections in each image
 
     Args:
-        centroid_list (matrix): List with length (number of images), where each entry has dimensions
-        (number of detections) x 2, filled with the centroids of all clusters of detections
+        centroid_list (matrix): List with length (number of images), where
+            each entry has dimensions (number of detections) x 2, filled
+            with the centroids of all clusters of detections.
 
     Returns:
-        running_total (array): Array of running total number of detections from each image
+        numpy.array: Array of running total number of detections from each image
     """
     num_spots_list = [len(item) for item in centroid_list]
     running_total = np.zeros(len(num_spots_list) + 1)
@@ -321,13 +336,14 @@ def cluster_to_adjacency_matrix(cluster_matrix):
 
     Args:
         cluster_matrix (matrix): Output of cluster_coords.
-            Matrix with dimensions (number of detections) x (number of algorithms), filled with
-            value 1 if the algorithm detected that cluster, and 0 if it did not
+            Matrix with dimensions (number of detections) x (number of
+            algorithms), filled with value 1 if the algorithm detected that
+            cluster, and 0 if it did not.
 
     Returns:
         A (matrix): Adjacency matrix with dimensions (number of detections) x
-        (number of detections), filled with value 1 if two detections (nodes) are connected because
-        they are closer than some threshold distance
+        (number of detections), filled with value 1 if two detections (nodes)
+        are connected because they are closer than some threshold distance.
     """
     num_clusters = np.shape(cluster_matrix)[0]
     num_annnotators = np.shape(cluster_matrix)[1]
@@ -354,8 +370,10 @@ def cluster_to_adjacency_matrix(cluster_matrix):
 
 
 def check_spot_ann_num(G, coords):
-    """ Check that each annotator only has one spot per cluster, break up clusters that have
-    multiple spots per annotator"""
+    """
+    Check that each annotator only has one spot per cluster,
+    break up clusters that have multiple spots per annotator
+    """
     # Get all node labels
     node_labels = list(nx.get_node_attributes(G, 'name').values())
     # Get all connected nodes = clusters
@@ -404,9 +422,11 @@ def check_spot_ann_num(G, coords):
 
 
 def ca_matrix(G):
-    """Convert graph into cluster x annotators matrix (cluster_matrix) where 0 means annotator did
-    not find a point in that cluster and 1 means that the annotator did find a point in that
-    cluster"""
+    """
+    Convert graph into cluster x annotators matrix (cluster_matrix) where 0
+    means annotator did not find a point in that cluster and 1 means that
+    the annotator did find a point in that cluster
+    """
     clusters = list(nx.connected_components(G))
     node_labels = list(nx.get_node_attributes(G, 'name').values())
     num_ann = len(np.unique(node_labels))
@@ -423,23 +443,25 @@ def ca_matrix(G):
 
 def define_edges(coords, threshold):
 
-    """Defines that adjacency matrix for the multiple annotators, connecting points that are
-    sufficiently close to one another. It is assumed that these spots are derived from the same
-    ground truth spot in the original image
+    """Defines that adjacency matrix for the multiple annotators, connecting
+    points that are sufficiently close to one another. It is assumed that these
+    spots are derived from the same ground truth spot in the original image.
 
     Args:
-        coords (array): Array of coordinates from each annotator, length is equal to the number of
-            annotators. Each item in the array is a matrix of detection locations with dimensions
-            (number of detections)x2.
-        threshold (float): The distance in pixels. Detections closer than the threshold distance
-            will be grouped into a "cluster" of detections, assumed to be derived from the same
-            ground truth detection.
+        coords (array): Array of coordinates from each annotator, length is
+            equal to the number of annotators. Each item in the array is a
+            matrix of detection locations with dimensions:
+            ``(number of detections)x2``.
+        threshold (float): The distance in pixels. Detections closer than the
+            threshold distance will be grouped into a "cluster" of detections,
+            assumed to be derived from the same ground truth detection.
 
     Returns:
-        A (matrix): Matrix of dimensions (number of detections) x (number of detections) defining
-        edges of a graph clustering detections by detections from different annotators derived from
-        the same ground truth detection. A value of 1 denotes two connected nodes in the eventual
-        graph and a value of 0 denotes disconnected nodes.
+        numpy.array: Matrix of dimensions (number of detections) x (number of
+            detections) defining edges of a graph clustering detections by
+            detections from different annotators derived from the same ground
+            truth detection. A value of 1 denotes two connected nodes in the
+            eventual graph and a value of 0 denotes disconnected nodes.
     """
     # flatten detection coordinates into single 1d array
     all_coords = np.vstack(coords)
@@ -463,18 +485,21 @@ def cluster_centroids(G, coords):
 
     """Calculate the location of the centroid of a cluster of detections.
 
-    Returns a list of coordinates for the centroid of each cluster in an input graph.
+    Returns a list of coordinates for the centroid of each cluster in an
+    input graph.
 
     Args:
-        G (networkx graph): Graph with edges connecting nodes representing detections derived from
-            the same ground truth detection
-        coords (matrix): Array of coordinates from each annotator, length is equal to the number of
-            annotators. Each item in the array is a matrix of detection locations with dimensions
-            (number of detections)x2.
+        G (networkx.Graph): Graph with edges connecting nodes representing
+            detections derived from the same ground truth detection
+        coords (matrix): Array of coordinates from each annotator, length
+            is equal to the number of annotators. Each item in the array is a
+            matrix of detection locations with dimensions:
+            ``(number of detections)x2``.
 
     Returns:
-        centroid_list (matrix): Matrix with dimensions (number of detections) x 2, filled with the
-        centroids of all clusters of detections
+        centroid_list (matrix): Matrix with dimensions:
+            ``(number of detections) x 2``, filled with the
+            centroids of all clusters of detections
     """
     clusters = list(nx.connected_components(G))
     flat_coords = np.vstack(coords)
@@ -494,15 +519,19 @@ def consensus_coords(p_matrix, centroid_list, running_total, threshold=0.5):
     """Converts EM output to a list of consensus spot coordinate locations.
 
     Args:
-        p_matrix: matrix with the dimensions (number of cluster)x2, each entry is the probability
-            that the detection is a true detection or false detection
-        centroid_list: list of coordinate locations of the centroids of each of the clusters
-        running_total: list with running total for the number of clusters in each image
-        threshold: value for probability threshold for a cluster to be considered a true detection
+        p_matrix: matrix with the dimensions (number of cluster)x2, each entry
+            is the probability that the detection is a true detection or
+            false detection.
+        centroid_list: list of coordinate locations of the centroids of each
+            of the clusters.
+        running_total: list with running total for the number of clusters in
+            each image.
+        threshold: value for probability threshold for a cluster to be
+            considered a true detection.
 
     Returns:
-        y: nested list with length (number of images) with the coordinate locations of spots in each
-        image
+        list: nested list with length (number of images) with the coordinate
+            locations of spots in each image.
     """
     y = []
     for i in range(len(running_total) - 1):

@@ -24,7 +24,7 @@
 # limitations under the License.
 # ==============================================================================
 
-__title__ = 'DeepCell Spots'
+__title__ = 'DeepCell-Spots'
 __description__ = 'Deep learning for fluorescent spot detection'
 __url__ = 'https://github.com/vanvalenlab/deepcell-spots'
 __version__ = '0.1.0'

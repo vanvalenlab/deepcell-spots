@@ -107,6 +107,7 @@ venv.bak/
 
 # IDE files and folders
 .vscode/
+.idea/
 
 # OS generated files
 .DS_Store
