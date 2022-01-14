@@ -71,7 +71,7 @@ setup(
         'torch',
         'torchvision',
         'pyro-ppl',
-        'postcode @ git+ssh://git@github.com/gerstung-lab/postcode.git'
+        'postcode @ git+https://github.com/gerstung-lab/postcode.git'
     ],
     extras_require={
         'tests': [
