@@ -1,4 +1,4 @@
-# Copyright 2019-2021 The Van Valen Lab at the California Institute of
+# Copyright 2019-2022 The Van Valen Lab at the California Institute of
 # Technology (Caltech), with support from the Paul Allen Family Foundation,
 # Google, & National Institutes of Health (NIH) under Grant U24CA224309-01.
 # All rights reserved.
@@ -71,7 +71,7 @@ setup(
         'torch',
         'torchvision',
         'pyro-ppl',
-        'postcode @ git+ssh://git@github.com/gerstung-lab/postcode.git'
+        'postcode @ git+https://github.com/gerstung-lab/postcode.git'
     ],
     extras_require={
         'tests': [
