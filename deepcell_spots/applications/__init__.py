@@ -24,4 +24,5 @@
 # limitations under the License.
 # ==============================================================================
 
+from deepcell_spots.applications.spot_detection import SpotDetection
 from deepcell_spots.applications.polaris import Polaris
