@@ -52,12 +52,13 @@ def mean_std_normalize(image, epsilon=1e-07):
     return image
 
 
-def min_max_normalize(image):
+def min_max_normalize(image, clip=False):
     """Normalize image data by subtracting minimum pixel value and
      dividing by the maximum pixel value
     Args:
         image (numpy.array): numpy array of image data
-        epsilon (float): fuzz factor used in numeric expressions.
+        clip (boolean): Defaults to false. Determines if pixel 
+        values are clipped by percentile.
     Returns:
         numpy.array: normalized image data
     """
@@ -69,7 +70,8 @@ def min_max_normalize(image):
         for channel in range(image.shape[-1]):
             img = image[batch, ..., channel]
 
-            img = np.clip(img, a_min=np.percentile(img, 0.01), a_max=np.percentile(img, 99.9))
+            if clip:
+                img = np.clip(img, a_min=np.percentile(img, 0.01), a_max=np.percentile(img, 99.9))
 
             min_val = np.min(img)
             max_val = np.max(img)
