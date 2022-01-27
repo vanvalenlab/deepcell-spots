@@ -143,7 +143,7 @@ class Polaris(object):
 
         result = []
         for i in range(len(spots_result)):
-            spots_dict = match_spots_to_cells(segmentation_result[i:i + 1, :, :, :],
+            spots_dict = match_spots_to_cells(segmentation_result[i:i + 1],
                                               spots_result[i])
 
             result.append({'spots_assignment': spots_dict,
