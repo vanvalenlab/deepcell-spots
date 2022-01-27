@@ -117,23 +117,23 @@ class SpotDetection(Application):
             image (numpy.array or list): Input to postprocessing function
                 either an ``numpy.array`` or list of ``numpy.arrays``.
         Returns:
-            numpy.array: labeled image
+            list: coordinate spot locations
         """
         if self.postprocessing_fn is not None:
             t = timeit.default_timer()
             self.logger.debug('Post-processing results with %s and kwargs: %s',
                               self.postprocessing_fn.__name__, kwargs)
 
-            image = self.postprocessing_fn(image, **kwargs)
+            output = self.postprocessing_fn(image, **kwargs)
 
             self.logger.debug('Post-processed results with %s in %s s',
                               self.postprocessing_fn.__name__,
                               timeit.default_timer() - t)
 
         elif isinstance(image, list) and len(image) == 1:
-            image = image[0]
+            output = image[0]
 
-        return image
+        return output
 
     def _predict_segmentation(self,
                               image,
