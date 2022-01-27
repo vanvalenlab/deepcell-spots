@@ -58,8 +58,8 @@ class SpotDetection(Application):
         im = np.expand_dims(im, axis=0)
         # Create the application
         app = SpotDetection()
-        # create the lab
-        labeled_image = app.predict(im)
+        # Find spot locations
+        coords = app.predict(im)
     Args:
         model (tf.keras.Model): The model to load. If ``None``,
             a pre-trained model will be downloaded.
