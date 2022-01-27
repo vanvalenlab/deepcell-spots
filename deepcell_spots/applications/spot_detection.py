@@ -220,18 +220,19 @@ class SpotDetection(Application):
                 post-processing function.
             threshold (float): Probability threshold for a pixel to be
                                 considered as a spot.
+            clip (bool): Determines if pixel values will be clipped by percentile.
         Raises:
             ValueError: Input data must match required rank of the application,
                 calculated as one dimension more (batch dimension) than
                 expected by the model.
             ValueError: Input data must match required number of channels.
+            ValueError: Threshold value must be between 0 and 1.
         Returns:
             numpy.array: Coordinate locations of detected spots.
         """
 
         if threshold < 0 or threshold > 1:
-            raise ValueError("""Enter a probability threshold value between
-                                0 and 1.""")
+            raise ValueError("""Threshold value must be between 0 and 1.""")
 
         if preprocess_kwargs is None:
             preprocess_kwargs = {
