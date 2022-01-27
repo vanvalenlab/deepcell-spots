@@ -67,9 +67,9 @@ class SpotDetection(Application):
 
     #: Metadata for the dataset used to train the model
     dataset_metadata = {
-        'name': 'general_train', 
+        'name': 'general_train',
         'other': """Pooled FISH data including MERFISH data
-                    and SunTag viral RNA data"""  
+                    and SunTag viral RNA data"""
     }
 
     #: Metadata for the model and training process

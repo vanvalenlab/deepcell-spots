@@ -39,8 +39,9 @@ from deepcell_spots.singleplex import match_spots_to_cells
 from deepcell_toolbox.processing import histogram_normalization
 from deepcell_toolbox.deep_watershed import deep_watershed
 
+
 class Polaris(object):
-    #TODO fill out example
+    # TODO fill out example
     """Loads a :mod:`deepcell.model_zoo.featurenet.FeatureNet` model
     for fluorescent spot detection with pretrained weights and a
     :mod:`deepcell.model_zoo.panopticnet.PanopticNet` model for
@@ -113,18 +114,18 @@ class Polaris(object):
         spots_image = np.expand_dims(spots_image, axis=-1)
 
         segmentation_result = self.segmentation_app.predict(cytoplasm_image,
-                                                       image_mpp=image_mpp)
+                                                            image_mpp=image_mpp)
         spots_result = self.spots_app.predict(spots_image,
-                                         threshold=threshold,
-                                         clip=clip)
+                                              threshold=threshold,
+                                              clip=clip)
 
         result = []
         for i in range(len(spots_result)):
-            spots_dict = match_spots_to_cells(segmentation_result[i:i+1, :, :, :],
+            spots_dict = match_spots_to_cells(segmentation_result[i:i + 1, :, :, :],
                                               spots_result[i])
 
             result.append({'spots_assignment': spots_dict,
-                           'cell_segmentation': segmentation_result[i:i+1, :, :, :],
+                           'cell_segmentation': segmentation_result[i:i + 1, :, :, :],
                            'spot_locations': spots_result[i]})
 
         return result

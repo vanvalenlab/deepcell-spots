@@ -57,7 +57,7 @@ def min_max_normalize(image, clip=False):
      dividing by the maximum pixel value
     Args:
         image (numpy.array): numpy array of image data
-        clip (boolean): Defaults to false. Determines if pixel 
+        clip (boolean): Defaults to false. Determines if pixel
         values are clipped by percentile.
     Returns:
         numpy.array: normalized image data
