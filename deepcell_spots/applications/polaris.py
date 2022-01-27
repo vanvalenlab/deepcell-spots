@@ -89,7 +89,6 @@ class Polaris(object):
                 image,
                 image_mpp=None,
                 cytoplasm_channel=0,
-                # spots
                 spots_channel=1,
                 threshold=0.95,
                 clip=False):
