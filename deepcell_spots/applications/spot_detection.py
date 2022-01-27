@@ -135,13 +135,13 @@ class SpotDetection(Application):
 
         return output
 
-    def _predict_segmentation(self,
-                              image,
-                              batch_size=4,
-                              image_mpp=None,
-                              pad_mode='constant',
-                              preprocess_kwargs={},
-                              postprocess_kwargs={}):
+    def _predict(self,
+                 image,
+                 batch_size=4,
+                 image_mpp=None,
+                 pad_mode='constant',
+                 preprocess_kwargs={},
+                 postprocess_kwargs={}):
         """Generates a list of coordinate spot locations of the input running
         prediction with appropriate pre and post processing functions.
         This differs from parent Application class which returns a labeled image.
@@ -243,7 +243,7 @@ class SpotDetection(Application):
                 'threshold': threshold,
                 'min_distance': 1}
 
-        return self._predict_segmentation(
+        return self._predict(
             image,
             batch_size=batch_size,
             image_mpp=image_mpp,
