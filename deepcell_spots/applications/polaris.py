@@ -41,25 +41,44 @@ from deepcell_toolbox.deep_watershed import deep_watershed
 
 
 class Polaris(object):
-    # TODO fill out example
-    """Loads a :mod:`deepcell.model_zoo.featurenet.FeatureNet` model
-    for fluorescent spot detection with pretrained weights and a
-    :mod:`deepcell.model_zoo.panopticnet.PanopticNet` model for
-    cytoplasm segmentation with pretrained weights.
-    The ``predict`` method handles prep and post processing steps
-    to return a labeled image.
+    """Loads spot detection and cell segmentation applications
+    from deepcell_spots and deepcell_tf, respectively.
+    The ``predict`` method calls the predict method of each
+    application.
     Example:
+    .. code-block:: python
+        from skimage.io import imread
+        from deepcell_spots.applications import Polaris
+        # Load the images
+        spots_im = imread('spots_image.png')
+        cyto_im = imread('cyto_image.png')
+        # Expand image dimensions to rank 4
+        spots_im = np.expand_dims(spots_im, axis=[0,-1])
+        cyto_im = np.expand_dims(cyto_im, axis=[0,-1])
+        # Concatenate images
+        im = np.concatenate((cyto_im, spots_im), axis=-1)
+        # Create the application
+        app = Polaris()
+        # Find the spot locations
+        result = app.predict(im)
+        spots_dict = result[0]['spots_assignment']
+        labeled_im = result[0]['cell_segmentation']
+        coords = result[0]['spot_locations']
     Args:
-        model (tf.keras.Model): The model to load. If ``None``,
-            a pre-trained model will be downloaded.
+        segmentation_model (tf.keras.Model): The model to load.
+            If ``None``, a pre-trained model will be downloaded.
+        spots_model (tf.keras.Model): The model to load.
+            If ``None``, a pre-trained model will be downloaded.
     """
 
-    def __init__(self):
+    def __init__(self,
+                 segmentation_model=None,
+                 spots_model=None):
+        if segmentation_model == None:
+            segmentation_model = tf.keras.models.load_model('../notebooks/models/CytoplasmSegmentation')
 
-        model = tf.keras.models.load_model('../notebooks/models/CytoplasmSegmentation')
-
-        self.spots_app = SpotDetection()
-        self.segmentation_app = CytoplasmSegmentation(model=model)
+        self.spots_app = SpotDetection(model=spots_model)
+        self.segmentation_app = CytoplasmSegmentation(model=segmentation_model)
 
         self.segmentation_app.preprocessing_fn = histogram_normalization
         self.segmentation_app.postprocessing_fn = deep_watershed
@@ -73,34 +92,37 @@ class Polaris(object):
                 spots_channel=1,
                 threshold=0.95,
                 clip=False):
-        """Generates a labeled image of the input running prediction with
-        appropriate pre and post processing functions.
+        """Generates prediction output consisting of a labeled cell segmentation image,
+        detected spot locations, and a dictionary of spot locations assigned to labeled
+        cells of the input.
 
         Input images are required to have 4 dimensions
-        ``[batch, x, y, channel]``.
+        ``[batch, x, y, channel]``. Channel dimension should be 2.
 
         Additional empty dimensions can be added using ``np.expand_dims``.
 
         Args:
             image (numpy.array): Input image with shape
                 ``[batch, x, y, channel]``.
-            batch_size (int): Number of images to predict on per batch.
             image_mpp (float): Microns per pixel for ``image``.
-            pad_mode (str): The padding mode, one of "constant" or "reflect".
-            preprocess_kwargs (dict): Keyword arguments to pass to the
-                pre-processing function.
-            postprocess_kwargs (dict): Keyword arguments to pass to the
-                post-processing function.
-
+            cytoplasm_channel (int): Value should be 0 or 1 depending on the channel
+                containing the images for cell segmentation. Defaults to 0.
+            spots_channel (int): Value should be 0 or 1 depending on the channel
+                containing the images for spot detection. Defaults to 1.
+            threshold (float): Probability threshold for a pixel to be
+                considered as a spot.
+            clip (bool): Determines if pixel values will be clipped by percentile.
+                Defaults to false.
         Raises:
             ValueError: Input data must match required rank of the application,
                 calculated as one dimension more (batch dimension) than expected
                 by the model.
 
             ValueError: Input data must match required number of channels.
+            ValueError: Threshold value must be between 0 and 1.
 
         Returns:
-            numpy.array: Labeled image
+            list: List of dictionaries, length equal to batch dimension.
         """
 
         if threshold < 0 or threshold > 1:
