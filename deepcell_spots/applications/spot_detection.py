@@ -232,7 +232,7 @@ class SpotDetection(Application):
         """
 
         if threshold < 0 or threshold > 1:
-            raise ValueError("""Threshold value must be between 0 and 1.""")
+            raise ValueError('Threshold value must be between 0 and 1.')
 
         if preprocess_kwargs is None:
             preprocess_kwargs = {
