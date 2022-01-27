@@ -34,6 +34,7 @@ import numpy as np
 import tensorflow as tf
 
 from deepcell.applications import CytoplasmSegmentation
+
 from deepcell_spots.applications import SpotDetection
 from deepcell_spots.singleplex import match_spots_to_cells
 from deepcell_toolbox.processing import histogram_normalization
@@ -87,9 +88,7 @@ class Polaris(object):
     def predict(self,
                 image,
                 image_mpp=None,
-                # segmentation
                 cytoplasm_channel=0,
-                # spots
                 spots_channel=1,
                 threshold=0.95,
                 clip=False):
@@ -144,11 +143,11 @@ class Polaris(object):
 
         result = []
         for i in range(len(spots_result)):
-            spots_dict = match_spots_to_cells(segmentation_result[i:i + 1, :, :, :],
+            spots_dict = match_spots_to_cells(segmentation_result[i:i + 1],
                                               spots_result[i])
 
             result.append({'spots_assignment': spots_dict,
-                           'cell_segmentation': segmentation_result[i:i + 1, :, :, :],
+                           'cell_segmentation': segmentation_result[i:i + 1],
                            'spot_locations': spots_result[i]})
 
         return result
