@@ -88,7 +88,6 @@ class Polaris(object):
     def predict(self,
                 image,
                 image_mpp=None,
-                # segmentation
                 cytoplasm_channel=0,
                 # spots
                 spots_channel=1,
