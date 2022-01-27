@@ -34,6 +34,7 @@ import numpy as np
 import tensorflow as tf
 
 from deepcell.applications import CytoplasmSegmentation
+
 from deepcell_spots.applications import SpotDetection
 from deepcell_spots.singleplex import match_spots_to_cells
 from deepcell_toolbox.processing import histogram_normalization
