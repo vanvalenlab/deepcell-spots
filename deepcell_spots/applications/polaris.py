@@ -147,7 +147,7 @@ class Polaris(object):
                                               spots_result[i])
 
             result.append({'spots_assignment': spots_dict,
-                           'cell_segmentation': segmentation_result[i:i + 1, :, :, :],
+                           'cell_segmentation': segmentation_result[i:i + 1],
                            'spot_locations': spots_result[i]})
 
         return result
