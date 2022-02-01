@@ -138,24 +138,27 @@ class Polaris(object):
             raise ValueError('Threshold of %s was input. Threshold value must be '
                              'between 0 and 1.'.format())
 
-        if segmentation_image:
+        spots_result = self.spots_app.predict(spots_image,
+                                              threshold=spots_threshold,
+                                              clip=spots_clip)
+
+        if segmentation_image is not None:
             if not self.segmentation_app:
                 raise ValueError('Segmentation application must be instantiated if '
                                  'segmentation image is defined.')
             else:
                 segmentation_result = self.segmentation_app.predict(segmentation_image,
                                                                     image_mpp=image_mpp)
-        spots_result = self.spots_app.predict(spots_image,
-                                              threshold=spots_threshold,
-                                              clip=spots_clip)
+                result = []
+                for i in range(len(spots_result)):
+                    spots_dict = match_spots_to_cells(segmentation_result[i:i + 1],
+                                                      spots_result[i])
 
-        result = []
-        for i in range(len(spots_result)):
-            spots_dict = match_spots_to_cells(segmentation_result[i:i + 1],
-                                              spots_result[i])
+                    result.append({'spots_assignment': spots_dict,
+                                   'cell_segmentation': segmentation_result[i:i + 1],
+                                   'spot_locations': spots_result[i]})
 
-            result.append({'spots_assignment': spots_dict,
-                           'cell_segmentation': segmentation_result[i:i + 1],
-                           'spot_locations': spots_result[i]})
+        else:
+            result = spots_result
 
         return result
