@@ -58,7 +58,7 @@ def min_max_normalize(image, clip=False):
     Args:
         image (numpy.array): numpy array of image data
         clip (boolean): Defaults to false. Determines if pixel
-        values are clipped by percentile.
+            values are clipped by percentile.
     Returns:
         numpy.array: normalized image data
     """
