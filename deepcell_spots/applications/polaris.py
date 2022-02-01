@@ -90,8 +90,8 @@ class Polaris(object):
                 image_mpp=None,
                 cytoplasm_channel=0,
                 spots_channel=1,
-                threshold=0.95,
-                clip=False):
+                spots_threshold=0.95,
+                spots_clip=False):
         """Generates prediction output consisting of a labeled cell segmentation image,
         detected spot locations, and a dictionary of spot locations assigned to labeled
         cells of the input.
@@ -125,9 +125,9 @@ class Polaris(object):
             list: List of dictionaries, length equal to batch dimension.
         """
 
-        if threshold < 0 or threshold > 1:
-            raise ValueError("""Enter a probability threshold value between
-                                0 and 1.""")
+        if spots_threshold < 0 or spots_threshold > 1:
+            raise ValueError("""Threshold of %s was input. Threshold value must be
+                between 0 and 1.""".format())
 
         cytoplasm_image = image[:, :, :, cytoplasm_channel]
         cytoplasm_image = np.expand_dims(cytoplasm_image, axis=-1)
@@ -138,8 +138,8 @@ class Polaris(object):
         segmentation_result = self.segmentation_app.predict(cytoplasm_image,
                                                             image_mpp=image_mpp)
         spots_result = self.spots_app.predict(spots_image,
-                                              threshold=threshold,
-                                              clip=clip)
+                                              threshold=spots_threshold,
+                                              clip=spots_clip)
 
         result = []
         for i in range(len(spots_result)):
