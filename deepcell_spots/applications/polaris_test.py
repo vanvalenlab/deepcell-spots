@@ -86,7 +86,7 @@ class TestPolaris(test.TestCase):
                 _ = app.predict(spots_image=spots_image, spots_threshold=-1.1)
 
             # test segmentation app error
-            app = Polaris(segmentation_compartment='None')
+            app = Polaris(segmentation_compartment='no segmentation')
             spots_image = np.random.rand(1, 128, 128, 1)
             segmentation_image = np.random.rand(1, 128, 128, 1)
             with self.assertRaises(ValueError):
