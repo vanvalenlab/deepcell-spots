@@ -75,9 +75,6 @@ class Polaris(object):
     def __init__(self,
                  segmentation_model=None,
                  spots_model=None):
-        if segmentation_model is None:
-            model_path = '../notebooks/models/CytoplasmSegmentation'
-            segmentation_model = tf.keras.models.load_model(model_path)
 
         self.spots_app = SpotDetection(model=spots_model)
         self.segmentation_app = CytoplasmSegmentation(model=segmentation_model)
