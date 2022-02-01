@@ -29,6 +29,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import numpy as np
 from tensorflow.python.platform import test
 
 from deepcell_spots.dotnet import dot_net_2D
@@ -54,3 +55,11 @@ class TestSpotDetection(test.TestCase):
             self.assertEqual(len(shape), 2)  # 2 prediction heads
             self.assertEqual(len(shape[0]), 4)
             self.assertEqual(len(shape[1]), 4)
+
+            # test threshold error
+            app = SpotDetection()
+            spots_image = np.random.rand(1, 128, 128, 1)
+            with self.assertRaises(ValueError):
+                _ = app.predict(image=spots_image, threshold=1.1)
+            with self.assertRaises(ValueError):
+                _ = app.predict(image=spots_image, threshold=-1.1)

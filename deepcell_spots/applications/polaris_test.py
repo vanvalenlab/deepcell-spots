@@ -29,6 +29,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import numpy as np
 from tensorflow.python.platform import test
 
 from deepcell.model_zoo import PanopticNet
@@ -71,3 +72,23 @@ class TestPolaris(test.TestCase):
             self.assertEqual(len(shape), 2)
             self.assertEqual(len(shape[0]), 4)
             self.assertEqual(len(shape[1]), 4)
+
+            # test compartment error
+            with self.assertRaises(ValueError):
+                _ = Polaris(segmentation_compartment='x')
+
+            # test threshold error
+            app = Polaris()
+            spots_image = np.random.rand(1, 128, 128, 1)
+            with self.assertRaises(ValueError):
+                _ = app.predict(spots_image=spots_image, spots_threshold=1.1)
+            with self.assertRaises(ValueError):
+                _ = app.predict(spots_image=spots_image, spots_threshold=-1.1)
+
+            # test segmentation app error
+            app = Polaris(segmentation_compartment='None')
+            spots_image = np.random.rand(1, 128, 128, 1)
+            segmentation_image = np.random.rand(1, 128, 128, 1)
+            with self.assertRaises(ValueError):
+                _ = app.predict(spots_image=spots_image,
+                                segmentation_image=segmentation_image)
