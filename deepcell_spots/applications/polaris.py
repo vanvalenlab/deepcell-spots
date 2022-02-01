@@ -29,6 +29,7 @@ from __future__ import absolute_import, division, print_function
 
 import os
 import timeit
+import warnings
 
 import numpy as np
 import tensorflow as tf
@@ -39,6 +40,7 @@ from deepcell_spots.applications import SpotDetection
 from deepcell_spots.singleplex import match_spots_to_cells
 from deepcell_toolbox.processing import histogram_normalization
 from deepcell_toolbox.deep_watershed import deep_watershed
+from tensorflow.python.platform.tf_logging import warning
 
 
 class Polaris(object):
@@ -56,18 +58,21 @@ class Polaris(object):
         # Expand image dimensions to rank 4
         spots_im = np.expand_dims(spots_im, axis=[0,-1])
         cyto_im = np.expand_dims(cyto_im, axis=[0,-1])
-        # Concatenate images
-        im = np.concatenate((cyto_im, spots_im), axis=-1)
         # Create the application
         app = Polaris()
         # Find the spot locations
-        result = app.predict(im)
+        result = app.predict(spots_image=spots_im,
+                             segmentation_image=cyto_im)
         spots_dict = result[0]['spots_assignment']
         labeled_im = result[0]['cell_segmentation']
         coords = result[0]['spot_locations']
     Args:
         segmentation_model (tf.keras.Model): The model to load.
             If ``None``, a pre-trained model will be downloaded.
+        segmentation_compartment (str): The cellular compartment
+            for generating segmentation predictions. Valid values
+            are 'cytoplasm', 'nucleus', 'no segmentation'. Defaults
+            to 'cytoplasm'.
         spots_model (tf.keras.Model): The model to load.
             If ``None``, a pre-trained model will be downloaded.
     """
@@ -79,7 +84,7 @@ class Polaris(object):
 
         self.spots_app = SpotDetection(model=spots_model)
 
-        valid_compartments = ['cytoplasm', 'nucleus', 'None']
+        valid_compartments = ['cytoplasm', 'nucleus', 'no segmentation']
         if segmentation_compartment not in valid_compartments:
             raise ValueError('Invalid compartment supplied: {}. '
                              'Must be one of {}'.format(segmentation_compartment,
@@ -93,6 +98,7 @@ class Polaris(object):
             self.segmentation_app = NuclearSegmentation(model=segmentation_model)
         else:
             self.segmentation_app = None
+            warnings.warn('No segmentation application instantiated.')
 
     def predict(self,
                 spots_image,
@@ -110,22 +116,16 @@ class Polaris(object):
         Additional empty dimensions can be added using ``np.expand_dims``.
 
         Args:
-            image (numpy.array): Input image with shape
+            spots_image (numpy.array): Input image for spot detection with shape
                 ``[batch, x, y, channel]``.
+            segmentation_image (numpy.array): Input image for cell segmentation with shape
+                ``[batch, x, y, channel]``. Defaults to None.
             image_mpp (float): Microns per pixel for ``image``.
-            cytoplasm_channel (int): Value should be 0 or 1 depending on the channel
-                containing the images for cell segmentation. Defaults to 0.
-            spots_channel (int): Value should be 0 or 1 depending on the channel
-                containing the images for spot detection. Defaults to 1.
-            threshold (float): Probability threshold for a pixel to be
+            spots_threshold (float): Probability threshold for a pixel to be
                 considered as a spot.
-            clip (bool): Determines if pixel values will be clipped by percentile.
+            spots_clip (bool): Determines if pixel values will be clipped by percentile.
                 Defaults to false.
         Raises:
-            ValueError: Input data must match required rank of the application,
-                calculated as one dimension more (batch dimension) than expected
-                by the model.
-            ValueError: Input data must match required number of channels.
             ValueError: Threshold value must be between 0 and 1.
             ValueError: Segmentation application must be instantiated if segmentation
                 image is defined.
