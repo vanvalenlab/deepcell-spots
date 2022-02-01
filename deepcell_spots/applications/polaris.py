@@ -34,7 +34,7 @@ import numpy as np
 import tensorflow as tf
 
 from deepcell.applications import CytoplasmSegmentation
-
+from deepcell.applications import NuclearSegmentation
 from deepcell_spots.applications import SpotDetection
 from deepcell_spots.singleplex import match_spots_to_cells
 from deepcell_toolbox.processing import histogram_normalization
@@ -74,19 +74,30 @@ class Polaris(object):
 
     def __init__(self,
                  segmentation_model=None,
+                 segmentation_compartment='cytoplasm',
                  spots_model=None):
 
         self.spots_app = SpotDetection(model=spots_model)
-        self.segmentation_app = CytoplasmSegmentation(model=segmentation_model)
 
-        self.segmentation_app.preprocessing_fn = histogram_normalization
-        self.segmentation_app.postprocessing_fn = deep_watershed
+        valid_compartments = ['cytoplasm', 'nucleus', 'None']
+        if segmentation_compartment not in valid_compartments:
+            raise ValueError('Invalid compartment supplied: {}. '
+                             'Must be one of {}'.format(segmentation_compartment,
+                                                        valid_compartments))
+
+        if segmentation_compartment == 'cytoplasm':
+            self.segmentation_app = CytoplasmSegmentation(model=segmentation_model)
+            self.segmentation_app.preprocessing_fn = histogram_normalization
+            self.segmentation_app.postprocessing_fn = deep_watershed
+        elif segmentation_compartment == 'nucleus':
+            self.segmentation_app = NuclearSegmentation(model=segmentation_model)
+        else:
+            self.segmentation_app = None
 
     def predict(self,
-                image,
+                spots_image,
+                segmentation_image=None,
                 image_mpp=None,
-                cytoplasm_channel=0,
-                spots_channel=1,
                 spots_threshold=0.95,
                 spots_clip=False):
         """Generates prediction output consisting of a labeled cell segmentation image,
@@ -114,26 +125,26 @@ class Polaris(object):
             ValueError: Input data must match required rank of the application,
                 calculated as one dimension more (batch dimension) than expected
                 by the model.
-
             ValueError: Input data must match required number of channels.
             ValueError: Threshold value must be between 0 and 1.
+            ValueError: Segmentation application must be instantiated if segmentation
+                image is defined.
 
         Returns:
             list: List of dictionaries, length equal to batch dimension.
         """
 
         if spots_threshold < 0 or spots_threshold > 1:
-            raise ValueError("""Threshold of %s was input. Threshold value must be
-                between 0 and 1.""".format())
+            raise ValueError('Threshold of %s was input. Threshold value must be '
+                             'between 0 and 1.'.format())
 
-        cytoplasm_image = image[:, :, :, cytoplasm_channel]
-        cytoplasm_image = np.expand_dims(cytoplasm_image, axis=-1)
-
-        spots_image = image[:, :, :, spots_channel]
-        spots_image = np.expand_dims(spots_image, axis=-1)
-
-        segmentation_result = self.segmentation_app.predict(cytoplasm_image,
-                                                            image_mpp=image_mpp)
+        if segmentation_image:
+            if not self.segmentation_app:
+                raise ValueError('Segmentation application must be instantiated if '
+                                 'segmentation image is defined.')
+            else:
+                segmentation_result = self.segmentation_app.predict(segmentation_image,
+                                                                    image_mpp=image_mpp)
         spots_result = self.spots_app.predict(spots_image,
                                               threshold=spots_threshold,
                                               clip=spots_clip)
