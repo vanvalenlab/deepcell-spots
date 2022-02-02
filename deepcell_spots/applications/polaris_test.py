@@ -73,9 +73,9 @@ class TestPolaris(test.TestCase):
             self.assertEqual(len(shape[0]), 4)
             self.assertEqual(len(shape[1]), 4)
 
-            # test compartment error
+            # test segmentation type error
             with self.assertRaises(ValueError):
-                _ = Polaris(segmentation_compartment='x')
+                _ = Polaris(segmentation_type='x')
 
             # test threshold error
             app = Polaris()
@@ -86,7 +86,7 @@ class TestPolaris(test.TestCase):
                 _ = app.predict(spots_image=spots_image, spots_threshold=-1.1)
 
             # test segmentation app error
-            app = Polaris(segmentation_compartment='no segmentation')
+            app = Polaris(segmentation_type='no segmentation')
             spots_image = np.random.rand(1, 128, 128, 1)
             segmentation_image = np.random.rand(1, 128, 128, 1)
             with self.assertRaises(ValueError):
