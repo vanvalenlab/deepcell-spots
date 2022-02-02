@@ -27,20 +27,14 @@
 
 from __future__ import absolute_import, division, print_function
 
-import os
-import timeit
 import warnings
 
-import numpy as np
-import tensorflow as tf
-
-from deepcell.applications import CytoplasmSegmentation
-from deepcell.applications import NuclearSegmentation
+from deepcell.applications import CytoplasmSegmentation, NuclearSegmentation
+from deepcell.applications import Mesmer
 from deepcell_spots.applications import SpotDetection
 from deepcell_spots.singleplex import match_spots_to_cells
 from deepcell_toolbox.processing import histogram_normalization
 from deepcell_toolbox.deep_watershed import deep_watershed
-from tensorflow.python.platform.tf_logging import warning
 
 
 class Polaris(object):
@@ -79,23 +73,25 @@ class Polaris(object):
 
     def __init__(self,
                  segmentation_model=None,
-                 segmentation_compartment='cytoplasm',
+                 segmentation_type='cytoplasm',
                  spots_model=None):
 
         self.spots_app = SpotDetection(model=spots_model)
 
-        valid_compartments = ['cytoplasm', 'nucleus', 'no segmentation']
-        if segmentation_compartment not in valid_compartments:
+        valid_compartments = ['cytoplasm', 'nucleus', 'mesmer', 'no segmentation']
+        if segmentation_type not in valid_compartments:
             raise ValueError('Invalid compartment supplied: {}. '
-                             'Must be one of {}'.format(segmentation_compartment,
+                             'Must be one of {}'.format(segmentation_type,
                                                         valid_compartments))
 
-        if segmentation_compartment == 'cytoplasm':
+        if segmentation_type == 'cytoplasm':
             self.segmentation_app = CytoplasmSegmentation(model=segmentation_model)
             self.segmentation_app.preprocessing_fn = histogram_normalization
             self.segmentation_app.postprocessing_fn = deep_watershed
-        elif segmentation_compartment == 'nucleus':
+        elif segmentation_type == 'nucleus':
             self.segmentation_app = NuclearSegmentation(model=segmentation_model)
+        elif segmentation_type == 'mesmer':
+            self.segmentation_app = Mesmer()
         else:
             self.segmentation_app = None
             warnings.warn('No segmentation application instantiated.')
