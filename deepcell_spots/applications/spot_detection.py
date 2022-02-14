@@ -132,6 +132,8 @@ class SpotDetection(Application):
 
         elif isinstance(image, list) and len(image) == 1:
             output = image[0]
+        else:
+            output = image
 
         return output
 
