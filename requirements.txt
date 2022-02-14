@@ -12,5 +12,5 @@ trackpy~=0.4.2
 # for postcode
 torch 
 torchvision
+tqdm
 pyro-ppl
-git+git://github.com/gerstung-lab/postcode@master
