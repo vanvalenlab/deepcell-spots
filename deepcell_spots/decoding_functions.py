@@ -312,8 +312,8 @@ def decoding_output_to_dataframe(out, df_class_names, df_class_codes):
     decoded[np.isin(ind, out['class_ind']['bkg'])] = K + 2  # bkg class
     decoded[np.isin(ind, out['class_ind']['nan'])] = K + 3  # NaN class
     decoded_spots_df = pd.DataFrame(columns=['Name', 'Code', 'Probability'])
-    decoded_spots_df['Name'] = df_class_names[decoded-1]
-    decoded_spots_df['Code'] = df_class_codes[decoded-1]
+    decoded_spots_df['Name'] = df_class_names[decoded - 1]
+    decoded_spots_df['Code'] = df_class_codes[decoded - 1]
     decoded_spots_df['Probability'] = val
     return decoded_spots_df
 
@@ -329,9 +329,9 @@ def heatmap_pattern(decoded_df, name, grid=150, thr=0.7, plot_probs=True):
             x_coord = np.floor(decoded_df.X[(decoded_df.Name == name) & (decoded_df.Score > thr)].to_numpy(dtype=np.double) / grid).astype(np.int32)  # noqa: E501
             y_coord = np.floor(decoded_df.Y[(decoded_df.Name == name) & (decoded_df.Score > thr)].to_numpy(dtype=np.double) / grid).astype(np.int32)  # noqa: E501
     else:
-        x_coord = np.floor(decoded_df.X[(decoded_df.Name == name) & (decoded_df.Probability > thr)].to_numpy(dtype=np.double)/grid).astype(np.int32)  # noqa: E501
-        y_coord = np.floor(decoded_df.Y[(decoded_df.Name == name) & (decoded_df.Probability > thr)].to_numpy(dtype=np.double)/grid).astype(np.int32)  # noqa: E501
-    H = np.zeros((int(np.ceil(decoded_df.Y.to_numpy(dtype=np.double).max()/grid)), int(np.ceil(decoded_df.X.to_numpy(dtype=np.double).max()/grid))))  # noqa: E501
+        x_coord = np.floor(decoded_df.X[(decoded_df.Name == name) & (decoded_df.Probability > thr)].to_numpy(dtype=np.double) / grid).astype(np.int32)  # noqa: E501
+        y_coord = np.floor(decoded_df.Y[(decoded_df.Name == name) & (decoded_df.Probability > thr)].to_numpy(dtype=np.double) / grid).astype(np.int32)  # noqa: E501
+    H = np.zeros((int(np.ceil(decoded_df.Y.to_numpy(dtype=np.double).max() / grid)), int(np.ceil(decoded_df.X.to_numpy(dtype=np.double).max() / grid))))  # noqa: E501
     if plot_probs:
         if 'Probability' in decoded_df.columns:
             prob = decoded_df.Probability[decoded_df.Name == name].to_numpy(dtype=np.double)
