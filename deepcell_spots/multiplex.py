@@ -26,7 +26,7 @@
 
 import numpy as np
 import pandas as pd
-from postcode.decoding_functions import (decoding_function,
+from deepcell_spots.decoding_functions import (decoding_function,
                                          decoding_output_to_dataframe)
 from scipy.spatial import distance
 from skimage.feature import peak_local_max
