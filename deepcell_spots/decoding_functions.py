@@ -1,3 +1,9 @@
+# Code from PoSTcode repository from the Gerstung lab
+# https://github.com/gerstung-lab/postcode/commit/0f2a4f7f1e463c06984e7eeee4df901f0dc636c9
+# License available at:
+# https://github.com/gerstung-lab/postcode/blob/master/LICENSE
+# ==============================================================================
+
 import numpy as np
 import torch
 import itertools
