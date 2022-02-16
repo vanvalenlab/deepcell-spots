@@ -67,6 +67,7 @@ setup(
         'networkx>=2.1',
         'opencv-python-headless<5',
         'deepcell~=0.11.0',
+        'tqdm',
         'trackpy==0.4.2',
         'torch',
         'torchvision',
