@@ -71,8 +71,7 @@ setup(
         'trackpy==0.4.2',
         'torch',
         'torchvision',
-        'pyro-ppl',
-        'postcode @ git+https://github.com/gerstung-lab/postcode.git'
+        'pyro-ppl'
     ],
     extras_require={
         'tests': [
