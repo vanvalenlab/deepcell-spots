@@ -50,7 +50,7 @@ def default_heads(input_shape, num_classes):
         list(tuple): A list of tuple, where the first element is the name of
             the submodel and the second element is the submodel itself.
     """
-    # regress x and y coordinates (pixel center signed distance from  nearest object center)
+    # regress x and y coordinates (pixel center signed distance from nearest object center)
     num_dimensions = 2
     return [
         ('offset_regression', offset_regression_head(
@@ -91,9 +91,7 @@ def classification_head(input_shape,
     x.append(Activation('relu')(x[-1]))
     x.append(TensorProduct(n_features, kernel_initializer=init,
                            kernel_regularizer=l2(reg))(x[-1]))
-    # x.append(Flatten()(x[-1]))
     outputs = Softmax(axis=channel_axis)(x[-1])
-    # x.append(outputs)
 
     return Model(inputs=inputs, outputs=outputs, name=name)
 
@@ -125,8 +123,6 @@ def offset_regression_head(num_values,
 
     return Model(inputs=inputs, outputs=outputs, name=name)
 
-# TO BE DELETED - only needed when there are multiple features but here have only 1 backbone_output
-
 
 def __build_model_heads(name, model, backbone_output):
     identity = Lambda(lambda x: x, name=name)
@@ -146,9 +142,6 @@ def dot_net_2D(receptive_field=13,
 
     inputs = Input(shape=input_shape)
 
-    # models  = []
-    # model_outputs = [] # AAA outputs all the intermediate outputs used for skips in featurenet
-
     featurenet_model = bn_feature_net_skip_2D(
         receptive_field=receptive_field,
         input_shape=inputs.get_shape().as_list()[1:],
@@ -165,9 +158,6 @@ def dot_net_2D(receptive_field=13,
 
     featurenet_output = featurenet_model(inputs)
 
-    # model_outputs.append(featurenet_output)
-    # models.append(featurenet_model)
-
     # add 2 heads: 1 for center pixel classification
     # (should be 1 for pixel which has center, 0 otherwise),
     # and 1 for center location regression
@@ -183,6 +173,5 @@ def dot_net_2D(receptive_field=13,
                 for n, m in head_submodels]
     outputs = dot_head
 
-    # model = Model(inputs=inputs, outputs=outputs, name=name)
     model = Model(inputs=inputs, outputs=outputs)
     return model
