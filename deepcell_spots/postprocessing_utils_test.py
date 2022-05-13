@@ -59,7 +59,7 @@ class TestPostProcUtils(test.TestCase):
         y_pred = {key: np.zeros((num_images, image_dim, image_dim, 2)) for key in keys}
         y_pred[keys[1]][:, 1, 1, 1] = np.ones(num_images)
         y_pred[keys[0]] = np.ones(
-            (1, num_images, image_dim, image_dim, 2))
+            (num_images, image_dim, image_dim, 2))
         threshold = 0.9
         coords = y_annotations_to_point_list(y_pred, threshold)
 
@@ -91,7 +91,7 @@ class TestPostProcUtils(test.TestCase):
         y_pred = {key: np.zeros((num_images, image_dim, image_dim, 2)) for key in keys}
         y_pred[keys[1]][:, 1, 1, 1] = np.ones(num_images)
         y_pred[keys[0]] = np.ones(
-            (1, num_images, image_dim, image_dim, 2))
+            (num_images, image_dim, image_dim, 2))
         threshold = 0.9
 
         coords = y_annotations_to_point_list_restrictive(y_pred, threshold)
@@ -106,7 +106,7 @@ class TestPostProcUtils(test.TestCase):
         y_pred = {key: np.zeros((num_images, image_dim, image_dim, 2)) for key in keys}
         y_pred[keys[1]][:, 1, 1, 1] = np.ones(num_images)
         y_pred[keys[0]] = np.ones(
-            (1, num_images, image_dim, image_dim, 2)) * 0.4
+            (num_images, image_dim, image_dim, 2)) * 0.4
         threshold = 0.9
         coords = y_annotations_to_point_list(y_pred, threshold)
 
@@ -140,7 +140,7 @@ class TestPostProcUtils(test.TestCase):
         y_pred = {key: np.zeros((num_images, image_dim, image_dim, 2)) for key in keys}
         y_pred[keys[1]][:, 1, 1, 1] = np.ones(num_images)
         y_pred[keys[0]] = np.ones(
-            (1, num_images, image_dim, image_dim, 2))
+            (num_images, image_dim, image_dim, 2))
         threshold = 0.9
         coords = y_annotations_to_point_list_max(y_pred, threshold)
 
@@ -173,7 +173,7 @@ class TestPostProcUtils(test.TestCase):
         y_pred = {key: np.zeros((num_images, image_dim, image_dim, 2)) for key in keys}
         y_pred[keys[1]][:, 1, 1, 1] = np.ones(num_images)
         y_pred[keys[0]] = np.ones(
-            (1, num_images, image_dim, image_dim, 2))
+            (num_images, image_dim, image_dim, 2))
         threshold = 0.9
         coords = y_annotations_to_point_list_cc(y_pred, threshold)
 

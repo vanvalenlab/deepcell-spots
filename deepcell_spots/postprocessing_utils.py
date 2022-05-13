@@ -76,7 +76,7 @@ def y_annotations_to_point_list_restrictive(y_pred, threshold=0.95):
         ind: the index of the image in the batch for which to convert the
             annotations
         threshold: a number in [0, 1]. Pixels with classification
-            score > threshold are considered containing a spot center 
+            score > threshold are considered containing a spot center
 
     Returns:
         list: spot center coordinates of the format [[y0, x0], [y1, x1],...]
@@ -117,8 +117,9 @@ def y_annotations_to_point_list_max(y_pred, threshold=0.95, min_distance=2):
     """
     dot_centers = []
     for ind in range(np.shape(y_pred['classification'])[0]):
-        dot_pixel_inds = peak_local_max(
-            y_pred['classification'][ind, ..., 1], min_distance=min_distance, threshold_abs=threshold)
+        dot_pixel_inds = peak_local_max(y_pred['classification'][ind, ..., 1],
+                                        min_distance=min_distance,
+                                        threshold_abs=threshold)
 
         delta_y = y_pred['offset_regression'][ind, ..., 0]
         delta_x = y_pred['offset_regression'][ind, ..., 1]
