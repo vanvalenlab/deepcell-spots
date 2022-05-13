@@ -190,8 +190,10 @@ class SpotDetection(Application):
         # Resize output_images back to original resolution if necessary
         label_image = self._resize_output(output_images, image.shape)
 
+        label_image_dict = {name: pred for name, pred in zip(self.model.output_names, label_image)}
+
         # Postprocess predictions to create label image
-        predicted_spots = self._postprocess(label_image, **postprocess_kwargs)
+        predicted_spots = self._postprocess(label_image_dict, **postprocess_kwargs)
 
         return predicted_spots
 
