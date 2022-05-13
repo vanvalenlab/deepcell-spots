@@ -50,7 +50,7 @@ def y_annotations_to_point_list(y_pred, threshold=0.95):
         list: spot center coordinates of the format [[y0, x0], [y1, x1],...]
     """
     dot_centers = []
-    for ind in range(np.shape(y_pred)['classification']):
+    for ind in range(np.shape(y_pred['classification'])[0]):
         contains_dot = y_pred['classification'][ind, ..., 1] > threshold
         delta_y = y_pred['offset_regression'][ind, ..., 0]
         delta_x = y_pred['offset_regression'][ind, ..., 1]
@@ -82,7 +82,7 @@ def y_annotations_to_point_list_restrictive(y_pred, threshold=0.95):
         list: spot center coordinates of the format [[y0, x0], [y1, x1],...]
     """
     dot_centers = []
-    for ind in range(np.shape(y_pred)['classification']):
+    for ind in range(np.shape(y_pred['classification'])[0]):
         contains_dot = y_pred['classification'][ind, ..., 1] > threshold
         delta_y = y_pred['offset_regression'][ind, ..., 0]
         delta_x = y_pred['offset_regression'][ind, ..., 1]
@@ -116,7 +116,7 @@ def y_annotations_to_point_list_max(y_pred, threshold=0.95, min_distance=2):
         list: spot center coordinates of the format [[y0, x0], [y1, x1],...]
     """
     dot_centers = []
-    for ind in range(np.shape(y_pred)['classification']):
+    for ind in range(np.shape(y_pred['classification'])[0]):
         dot_pixel_inds = peak_local_max(
             y_pred['classification'][ind, ..., 1], min_distance=min_distance, threshold_abs=threshold)
 
@@ -135,7 +135,7 @@ def y_annotations_to_point_list_cc(y_pred, threshold=0.95):
     # detection threshold pixels
 
     dot_centers = []
-    for ind in range(np.shape(y_pred)['classification']):
+    for ind in range(np.shape(y_pred['classification'])[0]):
 
         delta_y = y_pred['offset_regression'][ind, ..., 0]
         delta_x = y_pred['offset_regression'][ind, ..., 1]
