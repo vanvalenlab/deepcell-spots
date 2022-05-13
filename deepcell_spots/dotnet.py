@@ -50,11 +50,9 @@ def default_heads(input_shape, num_classes):
         list(tuple): A list of tuple, where the first element is the name of
             the submodel and the second element is the submodel itself.
     """
-    # regress x and y coordinates (pixel center signed distance from nearest object center)
-    num_dimensions = 2
     return [
         ('offset_regression', offset_regression_head(
-            num_values=num_dimensions, input_shape=input_shape)),
+            input_shape=input_shape)),
         ('classification', classification_head(
             input_shape, n_features=num_classes))
     ]
@@ -96,8 +94,7 @@ def classification_head(input_shape,
     return Model(inputs=inputs, outputs=outputs, name=name)
 
 
-def offset_regression_head(num_values,
-                           input_shape,
+def offset_regression_head(input_shape,
                            regression_feature_size=256,
                            name='offset_regression_head'):
 
@@ -127,9 +124,6 @@ def offset_regression_head(num_values,
 def __build_model_heads(name, model, backbone_output):
     identity = Lambda(lambda x: x, name=name)
     return identity(model(backbone_output))
-    # for name, model in head_submodels: # DELETE?
-    # concat = Concatenate(axis=1, name=name)
-    # return concat([model(backbone_output)])
 
 
 def dot_net_2D(receptive_field=13,
@@ -171,7 +165,6 @@ def dot_net_2D(receptive_field=13,
     head_submodels = default_heads(input_shape=input_shape, num_classes=2)
     dot_head = [__build_model_heads(n, m, featurenet_output)
                 for n, m in head_submodels]
-    outputs = dot_head
 
-    model = Model(inputs=inputs, outputs=outputs)
+    model = Model(inputs=inputs, outputs=dot_head)
     return model
