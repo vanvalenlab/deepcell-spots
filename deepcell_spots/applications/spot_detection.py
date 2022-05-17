@@ -140,7 +140,8 @@ class SpotDetection(Application):
         output_images = self._untile_output(output_tiles, tiles_info)
 
         # restructure outputs into a dict if function provided
-        formatted_images = {name: pred for name, pred in zip(self.model.output_names, output_images)}
+        formatted_images = {name: pred for name, pred in zip(self.model.output_names,
+                                                             output_images)}
 
         return formatted_images
 
