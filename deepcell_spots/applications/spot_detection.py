@@ -41,9 +41,11 @@ from deepcell_spots.preprocessing_utils import min_max_normalize
 MODEL_PATH = ('https://deepcell-data.s3-us-west-1.amazonaws.com/'
               'saved-models/SpotDetection-3.tar.gz')
 
+
 def output_to_dictionary(output_images, output_names):
     return {name: pred for name, pred in zip(output_names,
                                              output_images)}
+
 
 class SpotDetection(Application):
     """Loads a :mod:`deepcell.model_zoo.featurenet.FeatureNet` model
