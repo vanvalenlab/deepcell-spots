@@ -49,6 +49,11 @@ def y_annotations_to_point_list(y_pred, threshold=0.95):
     Returns:
         list: spot center coordinates of the format [[y0, x0], [y1, x1],...]
     """
+    if type(y_pred) is not dict:
+        raise TypeError('Input predictions must be a dictionary.')
+    if 'classification' not in y_pred.keys() or 'offset_regression' not in y_pred.keys():
+        raise NameError('Input must have keys \'classification\' and \'offset_regression\'')
+
     dot_centers = []
     for ind in range(np.shape(y_pred['classification'])[0]):
         contains_dot = y_pred['classification'][ind, ..., 1] > threshold
@@ -81,6 +86,11 @@ def y_annotations_to_point_list_restrictive(y_pred, threshold=0.95):
     Returns:
         list: spot center coordinates of the format [[y0, x0], [y1, x1],...]
     """
+    if type(y_pred) is not dict:
+        raise TypeError('Input predictions must be a dictionary.')
+    if 'classification' not in y_pred.keys() or 'offset_regression' not in y_pred.keys():
+        raise NameError('Input must have keys \'classification\' and \'offset_regression\'')
+
     dot_centers = []
     for ind in range(np.shape(y_pred['classification'])[0]):
         contains_dot = y_pred['classification'][ind, ..., 1] > threshold
@@ -115,6 +125,11 @@ def y_annotations_to_point_list_max(y_pred, threshold=0.95, min_distance=2):
     Returns:
         list: spot center coordinates of the format [[y0, x0], [y1, x1],...]
     """
+    if type(y_pred) is not dict:
+        raise TypeError('Input predictions must be a dictionary.')
+    if 'classification' not in y_pred.keys() or 'offset_regression' not in y_pred.keys():
+        raise NameError('Input must have keys \'classification\' and \'offset_regression\'')
+
     dot_centers = []
     for ind in range(np.shape(y_pred['classification'])[0]):
         dot_pixel_inds = peak_local_max(y_pred['classification'][ind, ..., 1],
@@ -134,6 +149,10 @@ def y_annotations_to_point_list_max(y_pred, threshold=0.95, min_distance=2):
 def y_annotations_to_point_list_cc(y_pred, threshold=0.95):
     # make final decision to be: average regression over each connected component of above
     # detection threshold pixels
+    if type(y_pred) is not dict:
+        raise TypeError('Input predictions must be a dictionary.')
+    if 'classification' not in y_pred.keys() or 'offset_regression' not in y_pred.keys():
+        raise NameError('Input must have keys \'classification\' and \'offset_regression\'')
 
     dot_centers = []
     for ind in range(np.shape(y_pred['classification'])[0]):
