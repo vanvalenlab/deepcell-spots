@@ -107,6 +107,43 @@ class SpotDetection(Application):
             dataset_metadata=self.dataset_metadata,
             model_metadata=self.model_metadata)
 
+    def _run_model(self,
+                   image,
+                   batch_size=4,
+                   pad_mode='constant',
+                   preprocess_kwargs={}):
+        """Run the model to generate output probabilities on the data.
+
+        Args:
+            image (numpy.array): Image with shape ``[batch, x, y, channel]``
+            batch_size (int): Number of images to predict on per batch.
+            pad_mode (str): The padding mode, one of "constant" or "reflect".
+            preprocess_kwargs (dict): Keyword arguments to pass to
+                the preprocessing function.
+
+        Returns:
+            numpy.array: Model outputs
+        """
+        # Preprocess image if function is defined
+        image = self._preprocess(image, **preprocess_kwargs)
+
+        # Tile images, raises error if the image is not 4d
+        tiles, tiles_info = self._tile_input(image, pad_mode=pad_mode)
+
+        # Run images through model
+        t = timeit.default_timer()
+        output_tiles = self.model.predict(tiles, batch_size=batch_size)
+        self.logger.debug('Model inference finished in %s s',
+                          timeit.default_timer() - t)
+
+        # Untile images
+        output_images = self._untile_output(output_tiles, tiles_info)
+
+        # restructure outputs into a dict if function provided
+        formatted_images = {name: pred for name, pred in zip(self.model.output_names, output_images)}
+
+        return formatted_images
+
     def _postprocess(self, image, **kwargs):
         """Applies postprocessing function to image if one has been defined.
         Differs from parent class in that it returns a set of coordinate spot
@@ -140,7 +177,6 @@ class SpotDetection(Application):
     def _predict(self,
                  image,
                  batch_size=4,
-                 image_mpp=None,
                  pad_mode='constant',
                  preprocess_kwargs={},
                  postprocess_kwargs={}):
@@ -154,7 +190,6 @@ class SpotDetection(Application):
             image (numpy.array): Input image with shape
                 ``[batch, x, y, channel]``.
             batch_size (int): Number of images to predict on per batch.
-            image_mpp (float): Microns per pixel for ``image``.
             pad_mode (str): The padding mode, one of "constant" or "reflect".
             preprocess_kwargs (dict): Keyword arguments to pass to the
                 pre-processing function.
@@ -178,29 +213,20 @@ class SpotDetection(Application):
                              'Input data only has {} channels'.format(
                                  self.required_channels, image.shape[-1]))
 
-        # Resize image, returns unmodified if appropriate
-        resized_image = self._resize_input(image, image_mpp)
-
         # Generate model outputs
         output_images = self._run_model(
-            image=resized_image, batch_size=batch_size,
+            image=image, batch_size=batch_size,
             pad_mode=pad_mode, preprocess_kwargs=preprocess_kwargs
         )
 
-        # Resize output_images back to original resolution if necessary
-        label_image = self._resize_output(output_images, image.shape)
-
-        label_image_dict = {name: pred for name, pred in zip(self.model.output_names, label_image)}
-
         # Postprocess predictions to create label image
-        predicted_spots = self._postprocess(label_image_dict, **postprocess_kwargs)
+        predicted_spots = self._postprocess(output_images, **postprocess_kwargs)
 
         return predicted_spots
 
     def predict(self,
                 image,
                 batch_size=4,
-                image_mpp=None,
                 pad_mode='reflect',
                 preprocess_kwargs=None,
                 postprocess_kwargs=None,
@@ -216,7 +242,6 @@ class SpotDetection(Application):
             image (numpy.array): Input image with shape
                 ``[batch, x, y, channel]``.
             batch_size (int): Number of images to predict on per batch.
-            image_mpp (float): Microns per pixel for ``image``.
             pad_mode (str): The padding mode, one of "constant" or "reflect".
             preprocess_kwargs (dict): Keyword arguments to pass to the
                 pre-processing function.
@@ -250,7 +275,6 @@ class SpotDetection(Application):
         return self._predict(
             image,
             batch_size=batch_size,
-            image_mpp=image_mpp,
             pad_mode=pad_mode,
             preprocess_kwargs=preprocess_kwargs,
             postprocess_kwargs=postprocess_kwargs)
