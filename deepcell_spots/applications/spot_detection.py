@@ -41,6 +41,9 @@ from deepcell_spots.preprocessing_utils import min_max_normalize
 MODEL_PATH = ('https://deepcell-data.s3-us-west-1.amazonaws.com/'
               'saved-models/SpotDetection-3.tar.gz')
 
+def output_to_dictionary(output_images, output_names):
+    return {name: pred for name, pred in zip(output_names,
+                                             output_images)}
 
 class SpotDetection(Application):
     """Loads a :mod:`deepcell.model_zoo.featurenet.FeatureNet` model
@@ -104,46 +107,26 @@ class SpotDetection(Application):
             model_mpp=0.1,
             preprocessing_fn=min_max_normalize,
             postprocessing_fn=y_annotations_to_point_list_max,
+            format_model_output_fn=output_to_dictionary,
             dataset_metadata=self.dataset_metadata,
             model_metadata=self.model_metadata)
 
-    def _run_model(self,
-                   image,
-                   batch_size=4,
-                   pad_mode='constant',
-                   preprocess_kwargs={}):
-        """Run the model to generate output probabilities on the data.
+    def _format_model_output(self, output_images):
+        """Applies formatting function the output from the model if one was
+        provided. Otherwise, returns the unmodified model output.
 
         Args:
-            image (numpy.array): Image with shape ``[batch, x, y, channel]``
-            batch_size (int): Number of images to predict on per batch.
-            pad_mode (str): The padding mode, one of "constant" or "reflect".
-            preprocess_kwargs (dict): Keyword arguments to pass to
-                the preprocessing function.
+            output_images: stack of untiled images to be reformatted
 
         Returns:
-            numpy.array: Model outputs
+            dict or list: reformatted images stored as a dict, or input
+            images stored as list if no formatting function is specified.
         """
-        # Preprocess image if function is defined
-        image = self._preprocess(image, **preprocess_kwargs)
-
-        # Tile images, raises error if the image is not 4d
-        tiles, tiles_info = self._tile_input(image, pad_mode=pad_mode)
-
-        # Run images through model
-        t = timeit.default_timer()
-        output_tiles = self.model.predict(tiles, batch_size=batch_size)
-        self.logger.debug('Model inference finished in %s s',
-                          timeit.default_timer() - t)
-
-        # Untile images
-        output_images = self._untile_output(output_tiles, tiles_info)
-
-        # restructure outputs into a dict if function provided
-        formatted_images = {name: pred for name, pred in zip(self.model.output_names,
-                                                             output_images)}
-
-        return formatted_images
+        if self.format_model_output_fn is not None:
+            formatted_images = self.format_model_output_fn(output_images, self.model.output_names)
+            return formatted_images
+        else:
+            return output_images
 
     def _postprocess(self, image, **kwargs):
         """Applies postprocessing function to image if one has been defined.
