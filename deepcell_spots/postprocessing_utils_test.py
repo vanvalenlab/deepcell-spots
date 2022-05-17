@@ -39,8 +39,9 @@ class TestPostProcUtils(test.TestCase):
         # Easy example with one spot
         num_images = 1
         image_dim = 10
-        y_pred = np.zeros((2, num_images, image_dim, image_dim, 2))
-        y_pred[1, 0, 1, 1, 1] = 1
+        keys = ['offset_regression', 'classification']
+        y_pred = {key: np.zeros((num_images, image_dim, image_dim, 2)) for key in keys}
+        y_pred[keys[1]][0, 1, 1, 1] = 1
         threshold = 0.9
 
         coords = y_annotations_to_point_list(y_pred, threshold)
@@ -54,10 +55,11 @@ class TestPostProcUtils(test.TestCase):
         # adds to coords
         num_images = 10
         image_dim = 10
-        y_pred = np.zeros((2, num_images, image_dim, image_dim, 2))
-        y_pred[1, :, 1, 1, 1] = np.ones(num_images)
-        y_pred[0, :, :, :, :] = np.ones(
-            (1, num_images, image_dim, image_dim, 2))
+        keys = ['offset_regression', 'classification']
+        y_pred = {key: np.zeros((num_images, image_dim, image_dim, 2)) for key in keys}
+        y_pred[keys[1]][:, 1, 1, 1] = np.ones(num_images)
+        y_pred[keys[0]] = np.ones(
+            (num_images, image_dim, image_dim, 2))
         threshold = 0.9
         coords = y_annotations_to_point_list(y_pred, threshold)
 
@@ -70,8 +72,9 @@ class TestPostProcUtils(test.TestCase):
         # Easy example with one spot
         num_images = 1
         image_dim = 10
-        y_pred = np.zeros((2, num_images, image_dim, image_dim, 2))
-        y_pred[1, 0, 1, 1, 1] = 1
+        keys = ['offset_regression', 'classification']
+        y_pred = {key: np.zeros((num_images, image_dim, image_dim, 2)) for key in keys}
+        y_pred[keys[1]][0, 1, 1, 1] = 1
         threshold = 0.9
 
         coords = y_annotations_to_point_list_restrictive(y_pred, threshold)
@@ -84,10 +87,11 @@ class TestPostProcUtils(test.TestCase):
         # Regression output needs to be below some threshold value (0.5)
         num_images = 1
         image_dim = 10
-        y_pred = np.zeros((2, num_images, image_dim, image_dim, 2))
-        y_pred[1, 0, 1, 1, 1] = 1
-        y_pred[0, :, :, :, :] = np.ones(
-            (1, num_images, image_dim, image_dim, 2))
+        keys = ['offset_regression', 'classification']
+        y_pred = {key: np.zeros((num_images, image_dim, image_dim, 2)) for key in keys}
+        y_pred[keys[1]][:, 1, 1, 1] = np.ones(num_images)
+        y_pred[keys[0]] = np.ones(
+            (num_images, image_dim, image_dim, 2))
         threshold = 0.9
 
         coords = y_annotations_to_point_list_restrictive(y_pred, threshold)
@@ -98,10 +102,11 @@ class TestPostProcUtils(test.TestCase):
         # Regression output needs to be below some threshold value (0.5), regression adds to coords
         num_images = 10
         image_dim = 10
-        y_pred = np.zeros((2, num_images, image_dim, image_dim, 2))
-        y_pred[1, :, 1, 1, 1] = np.ones(num_images)
-        y_pred[0, :, :, :, :] = np.ones(
-            (1, num_images, image_dim, image_dim, 2)) * 0.4
+        keys = ['offset_regression', 'classification']
+        y_pred = {key: np.zeros((num_images, image_dim, image_dim, 2)) for key in keys}
+        y_pred[keys[1]][:, 1, 1, 1] = np.ones(num_images)
+        y_pred[keys[0]] = np.ones(
+            (num_images, image_dim, image_dim, 2)) * 0.4
         threshold = 0.9
         coords = y_annotations_to_point_list(y_pred, threshold)
 
@@ -115,8 +120,9 @@ class TestPostProcUtils(test.TestCase):
         # Easy example with one spot
         num_images = 1
         image_dim = 10
-        y_pred = np.zeros((2, num_images, image_dim, image_dim, 2))
-        y_pred[1, 0, 1, 1, 1] = 1
+        keys = ['offset_regression', 'classification']
+        y_pred = {key: np.zeros((num_images, image_dim, image_dim, 2)) for key in keys}
+        y_pred[keys[1]][0, 1, 1, 1] = 1
         threshold = 0.9
 
         coords = y_annotations_to_point_list_max(y_pred, threshold)
@@ -130,10 +136,11 @@ class TestPostProcUtils(test.TestCase):
         # regression adds to coords
         num_images = 10
         image_dim = 10
-        y_pred = np.zeros((2, num_images, image_dim, image_dim, 2))
-        y_pred[1, :, 1, 1, 1] = np.ones(num_images)
-        y_pred[0, :, :, :, :] = np.ones(
-            (1, num_images, image_dim, image_dim, 2))
+        keys = ['offset_regression', 'classification']
+        y_pred = {key: np.zeros((num_images, image_dim, image_dim, 2)) for key in keys}
+        y_pred[keys[1]][:, 1, 1, 1] = np.ones(num_images)
+        y_pred[keys[0]] = np.ones(
+            (num_images, image_dim, image_dim, 2))
         threshold = 0.9
         coords = y_annotations_to_point_list_max(y_pred, threshold)
 
@@ -146,8 +153,9 @@ class TestPostProcUtils(test.TestCase):
         # Easy example with one spot
         num_images = 1
         image_dim = 10
-        y_pred = np.zeros((2, num_images, image_dim, image_dim, 2))
-        y_pred[1, 0, 1, 1, 1] = 1
+        keys = ['offset_regression', 'classification']
+        y_pred = {key: np.zeros((num_images, image_dim, image_dim, 2)) for key in keys}
+        y_pred[keys[1]][0, 1, 1, 1] = 1
         threshold = 0.9
 
         coords = y_annotations_to_point_list_cc(y_pred, threshold)
@@ -161,10 +169,11 @@ class TestPostProcUtils(test.TestCase):
         # regression adds to coords
         num_images = 10
         image_dim = 10
-        y_pred = np.zeros((2, num_images, image_dim, image_dim, 2))
-        y_pred[1, :, 1, 1, 1] = np.ones(num_images)
-        y_pred[0, :, :, :, :] = np.ones(
-            (1, num_images, image_dim, image_dim, 2))
+        keys = ['offset_regression', 'classification']
+        y_pred = {key: np.zeros((num_images, image_dim, image_dim, 2)) for key in keys}
+        y_pred[keys[1]][:, 1, 1, 1] = np.ones(num_images)
+        y_pred[keys[0]] = np.ones(
+            (num_images, image_dim, image_dim, 2))
         threshold = 0.9
         coords = y_annotations_to_point_list_cc(y_pred, threshold)
 

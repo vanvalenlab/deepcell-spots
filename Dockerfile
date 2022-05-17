@@ -5,6 +5,9 @@ ARG DEEPCELL_VERSION=0.11.0-gpu
 
 FROM vanvalenlab/deepcell-tf:${DEEPCELL_VERSION}
 
+# https://forums.developer.nvidia.com/t/notice-cuda-linux-repository-key-rotation/212771
+RUN apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/3bf863cc.pub
+
 # Install git for postcode installation
 RUN apt-get update && apt-get install -y \
     git && \

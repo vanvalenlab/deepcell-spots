@@ -31,30 +31,34 @@ from skimage import measure
 from skimage.feature import peak_local_max
 
 
-def y_annotations_to_point_list(y_pred, threshold):
+def y_annotations_to_point_list(y_pred, threshold=0.95):
     """Convert raw prediction to a predicted point list: classification of
-    pixel as containing dot > threshold
+    pixel as containing dot > threshold, , and their corresponding regression
+    values will be used to create a final spot position prediction which will
+    be added to the output spot center coordinates list.
 
     Args:
-        y_pred: a batch of predictions, of the format: y_pred[annot_type][ind]
-            is an annotation for image #ind in the batch where annot_type = 0
-            or 1: 0 - contains_dot, 1 - offset matrices
+        y_pred: a dictionary of predictions with keys 'classification' and
+            'offset_regression' corresponding to the named outputs of the
+            dot_net_2D model
         ind: the index of the image in the batch for which to convert the
             annotations
         threshold: a number in [0, 1]. Pixels with classification
-            score > threshold are considered containing a spot center, and
-            their corresponding regression values will be used to create a
-            final spot position prediction which will be added to the output
-            spot center coordinates list.
+            score > threshold are considered containing a spot center
 
     Returns:
         list: spot center coordinates of the format [[y0, x0], [y1, x1],...]
     """
+    if type(y_pred) is not dict:
+        raise TypeError('Input predictions must be a dictionary.')
+    if 'classification' not in y_pred.keys() or 'offset_regression' not in y_pred.keys():
+        raise NameError('Input must have keys \'classification\' and \'offset_regression\'')
+
     dot_centers = []
-    for ind in range(np.shape(y_pred)[1]):
-        contains_dot = y_pred[1][ind, ..., 1] > threshold
-        delta_y = y_pred[0][ind, ..., 0]
-        delta_x = y_pred[0][ind, ..., 1]
+    for ind in range(np.shape(y_pred['classification'])[0]):
+        contains_dot = y_pred['classification'][ind, ..., 1] > threshold
+        delta_y = y_pred['offset_regression'][ind, ..., 0]
+        delta_x = y_pred['offset_regression'][ind, ..., 1]
 
         dot_pixel_inds = np.argwhere(contains_dot)
         dot_centers.append([[y_ind + delta_y[y_ind, x_ind], x_ind +
@@ -63,32 +67,35 @@ def y_annotations_to_point_list(y_pred, threshold):
     return np.array(dot_centers)
 
 
-def y_annotations_to_point_list_restrictive(y_pred, threshold):
+def y_annotations_to_point_list_restrictive(y_pred, threshold=0.95):
     """Convert raw prediction to a predicted point list: classification of
     pixel as containing dot > threshold AND center regression is contained
-    in the pixel
+    in the pixel. The corresponding regression values will be used to create
+    a final spot position prediction which will be added to the output spot
+    center coordinates list.
 
     Args:
-        y_pred: a batch of predictions, of the format:
-            y_pred[annot_type][ind] is an annotation for image #ind in the
-            batch where annot_type = 0 or 1: 0 - contains_dot,
-            1 - offset matrices
+        y_pred: a dictionary of predictions with keys 'classification' and
+            'offset_regression' corresponding to the named outputs of the
+            dot_net_2D model
         ind: the index of the image in the batch for which to convert the
             annotations
         threshold: a number in [0, 1]. Pixels with classification
-            score > threshold are considered
-        containing a spot center, and their corresponding regression values
-            will be used to create a final spot position prediction which
-            will be added to the output spot center coordinates list.
+            score > threshold are considered containing a spot center
 
     Returns:
         list: spot center coordinates of the format [[y0, x0], [y1, x1],...]
     """
+    if type(y_pred) is not dict:
+        raise TypeError('Input predictions must be a dictionary.')
+    if 'classification' not in y_pred.keys() or 'offset_regression' not in y_pred.keys():
+        raise NameError('Input must have keys \'classification\' and \'offset_regression\'')
+
     dot_centers = []
-    for ind in range(np.shape(y_pred)[1]):
-        contains_dot = y_pred[1][ind, ..., 1] > threshold
-        delta_y = y_pred[0][ind, ..., 0]
-        delta_x = y_pred[0][ind, ..., 1]
+    for ind in range(np.shape(y_pred['classification'])[0]):
+        contains_dot = y_pred['classification'][ind, ..., 1] > threshold
+        delta_y = y_pred['offset_regression'][ind, ..., 0]
+        delta_x = y_pred['offset_regression'][ind, ..., 1]
         contains_its_regression = (abs(delta_x) <= 0.5) & (abs(delta_y) <= 0.5)
 
         final_dot_detection = contains_dot & contains_its_regression
@@ -103,33 +110,34 @@ def y_annotations_to_point_list_restrictive(y_pred, threshold):
 
 def y_annotations_to_point_list_max(y_pred, threshold=0.95, min_distance=2):
     """Convert raw prediction to a predicted point list using PLM to determine
-    local maxima in classification prediction image
+    local maxima in classification prediction image, and their corresponding
+    regression values will be used to create a final spot position prediction
+    which will be added to the output spot center coordinates list.
 
     Args:
-        y_pred: a batch of predictions, of the format: y_pred[annot_type][ind]
-            is an annotation for image #ind in the batch where annot_type = 0
-            or 1: 0 - contains_dot (from classification head),
-            1 - offset matrices (from regression head)
-        ind: the index of the image in the batch for which to convert the
-            annotations
+        y_pred: a dictionary of predictions with keys 'classification' and
+            'offset_regression' corresponding to the named outputs of the
+            dot_net_2D model
         threshold: a number in [0, 1]. Pixels with classification
-            score > threshold are considered
-        containing a spot center,and their corresponding regression values
-            will be used to create a
-        final spot position prediction which will be added to the output spot
-            center coordinates list.
+            score > threshold are considered as containing a spot center
         min_distance: the minimum distance between detected spots in pixels
 
     Returns:
         list: spot center coordinates of the format [[y0, x0], [y1, x1],...]
     """
-    dot_centers = []
-    for ind in range(np.shape(y_pred)[1]):
-        dot_pixel_inds = peak_local_max(
-            y_pred[1][ind, ..., 1], min_distance=min_distance, threshold_abs=threshold)
+    if type(y_pred) is not dict:
+        raise TypeError('Input predictions must be a dictionary.')
+    if 'classification' not in y_pred.keys() or 'offset_regression' not in y_pred.keys():
+        raise NameError('Input must have keys \'classification\' and \'offset_regression\'')
 
-        delta_y = y_pred[0][ind, ..., 0]
-        delta_x = y_pred[0][ind, ..., 1]
+    dot_centers = []
+    for ind in range(np.shape(y_pred['classification'])[0]):
+        dot_pixel_inds = peak_local_max(y_pred['classification'][ind, ..., 1],
+                                        min_distance=min_distance,
+                                        threshold_abs=threshold)
+
+        delta_y = y_pred['offset_regression'][ind, ..., 0]
+        delta_x = y_pred['offset_regression'][ind, ..., 1]
 
         dot_centers.append(np.array(
             [[y_ind + delta_y[y_ind, x_ind],
@@ -138,17 +146,21 @@ def y_annotations_to_point_list_max(y_pred, threshold=0.95, min_distance=2):
     return np.array(dot_centers)
 
 
-def y_annotations_to_point_list_cc(y_pred, threshold=0.8):
+def y_annotations_to_point_list_cc(y_pred, threshold=0.95):
     # make final decision to be: average regression over each connected component of above
     # detection threshold pixels
+    if type(y_pred) is not dict:
+        raise TypeError('Input predictions must be a dictionary.')
+    if 'classification' not in y_pred.keys() or 'offset_regression' not in y_pred.keys():
+        raise NameError('Input must have keys \'classification\' and \'offset_regression\'')
 
     dot_centers = []
-    for ind in range(np.shape(y_pred)[1]):
+    for ind in range(np.shape(y_pred['classification'])[0]):
 
-        delta_y = y_pred[0][ind, ..., 0]
-        delta_x = y_pred[0][ind, ..., 1]
+        delta_y = y_pred['offset_regression'][ind, ..., 0]
+        delta_x = y_pred['offset_regression'][ind, ..., 1]
 
-        blobs = y_pred[1][ind, ..., 1] > threshold
+        blobs = y_pred['classification'][ind, ..., 1] > threshold
         label_image = measure.label(blobs, background=0)
         rp = measure.regionprops(label_image)
 
