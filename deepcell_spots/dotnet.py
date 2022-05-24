@@ -31,8 +31,8 @@ from deepcell.model_zoo import bn_feature_net_skip_2D
 from tensorflow.keras import backend as K
 from tensorflow.keras.initializers import RandomNormal
 from tensorflow.keras.layers import (Activation, BatchNormalization,
-                                            Conv2D, Input, Lambda, Permute,
-                                            Reshape, Softmax)
+                                     Conv2D, Input, Lambda, Permute,
+                                     Reshape, Softmax)
 from tensorflow.keras.models import Model
 from tensorflow.keras.regularizers import l2
 
