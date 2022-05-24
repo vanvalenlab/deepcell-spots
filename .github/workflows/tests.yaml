@@ -22,13 +22,13 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Cache pip
-      uses: actions/cache@v2
-      with:
-        path: ${{ env.pythonLocation }}
-        key: ${{ env.pythonLocation }}-${{ hashFiles('setup.py') }}
-        restore-keys: |
-          ${{ env.pythonLocation }}-
+    # - name: Cache pip
+    #   uses: actions/cache@v2
+    #   with:
+    #     path: ${{ env.pythonLocation }}
+    #     key: ${{ env.pythonLocation }}-${{ hashFiles('setup.py') }}
+    #     restore-keys: |
+    #       ${{ env.pythonLocation }}-
 
     - name: Install Dependencies
       run: |
