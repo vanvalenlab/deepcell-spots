@@ -28,13 +28,13 @@
 
 from deepcell.layers import TensorProduct
 from deepcell.model_zoo import bn_feature_net_skip_2D
-from tensorflow.python.keras import backend as K
-from tensorflow.python.keras.initializers import RandomNormal
-from tensorflow.python.keras.layers import (Activation, BatchNormalization,
+from tensorflow.keras import backend as K
+from tensorflow.keras.initializers import RandomNormal
+from tensorflow.keras.layers import (Activation, BatchNormalization,
                                             Conv2D, Input, Lambda, Permute,
                                             Reshape, Softmax)
-from tensorflow.python.keras.models import Model
-from tensorflow.python.keras.regularizers import l2
+from tensorflow.keras.models import Model
+from tensorflow.keras.regularizers import l2
 
 
 def default_heads(input_shape, num_classes):
