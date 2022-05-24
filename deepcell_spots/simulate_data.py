@@ -379,7 +379,7 @@ def gaussian_spot_image_generator(L,
             label = np.zeros((L, L))     # create the image
             for spot_ind in range(len(x_list)):
                 rr, cc = skimage.draw.disk(
-                    x_list[spot_ind], y_list[spot_ind], sigma_list[spot_ind], shape=label.shape)
+                    (x_list[spot_ind], y_list[spot_ind]), sigma_list[spot_ind], shape=label.shape)
                 label[cc, rr] = spot_ind + 1
         else:
             # create image with background 0, spot centers labeled with 1
