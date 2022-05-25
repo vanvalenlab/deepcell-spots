@@ -32,7 +32,8 @@ from tensorflow.python.platform import test
 
 from deepcell_spots.spot_em import (calc_tpr_fpr, define_edges,
                                     det_likelihood, em_spot,
-                                    norm_marg_likelihood)
+                                    norm_marg_likelihood, load_coords,
+                                    cluster_coords, predict_cluster_probabilities)
 
 
 class TestSpotEM(test.TestCase):
@@ -141,6 +142,57 @@ class TestSpotEM(test.TestCase):
         threshold = 0
         A = define_edges(coords_df, threshold)
         self.assertEqual(A.all(), np.zeros((2, 2)).all())
+
+    def test_load_coords(self):
+        num_detections = 10
+        coords_dict = {'A': [np.random.random_sample((num_detections, 2)),
+                             np.random.random_sample((num_detections, 2))],
+                       'B': [np.random.random_sample((num_detections, 2)),
+                             np.random.random_sample((num_detections, 2))]}
+
+        coords_df = load_coords(coords_dict)
+
+        self.assertEqual(sorted(coords_df.columns),
+                         sorted(['Algorithm', 'Image', 'x', 'y', 'Cluster']))
+        # 10 detections * 2 images * 2 algorithms
+        self.assertEqual(len(coords_df), num_detections * 4)
+        self.assertEqual(sorted(list(coords_df.Algorithm.unique())), sorted(['A', 'B']))
+        self.assertEqual(sorted(list(coords_df.Image.unique())), sorted([0, 1]))
+
+    def test_cluster_coords(self):
+        num_detections = 10
+        coords_dict = {'A': [np.random.random_sample((num_detections, 2)),
+                             np.random.random_sample((num_detections, 2))],
+                       'B': [np.random.random_sample((num_detections, 2)),
+                             np.random.random_sample((num_detections, 2))]}
+
+        coords_df = load_coords(coords_dict)
+        coords_df = cluster_coords(coords_df)
+
+        self.assertEqual(sorted(coords_df.columns),
+                         sorted(['Algorithm', 'Image', 'x', 'y', 'Cluster']))
+
+    def test_predict_cluster_probabilities(self):
+        num_detections = 10
+        coords_dict = {'A': [np.random.random_sample((num_detections, 2)),
+                             np.random.random_sample((num_detections, 2))],
+                       'B': [np.random.random_sample((num_detections, 2)),
+                             np.random.random_sample((num_detections, 2))]}
+
+        coords_df = load_coords(coords_dict)
+        coords_df = cluster_coords(coords_df)
+
+        tpr_dict = {'A': 0, 'B': 0}
+        fpr_dict = {'A': 0, 'B': 0}
+        bad_tpr_dict = {'C': 0, 'D': 0}
+        bad_fpr_dict = {'C': 0, 'D': 0}
+        with self.assertRaises(NameError):
+            prob_df = predict_cluster_probabilities(coords_df, bad_tpr_dict, fpr_dict)
+        with self.assertRaises(NameError):
+            prob_df = predict_cluster_probabilities(coords_df, tpr_dict, bad_fpr_dict)
+
+        with self.assertRaises(ValueError):
+            prob_df = predict_cluster_probabilities(coords_df, tpr_dict, fpr_dict, prior=2)
 
 
 if __name__ == '__main__':
