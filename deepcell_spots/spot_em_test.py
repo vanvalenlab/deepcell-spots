@@ -143,7 +143,7 @@ class TestSpotEM(test.TestCase):
         coords_df['y'] = np.random.random_sample((num_annotators * num_detections))
         alg_list = []
         for i in range(num_annotators):
-            alg_list.extend([i]*num_detections)
+            alg_list.extend([i] * num_detections)
         coords_df['Algorithm'] = alg_list
 
         print('Input type: {}'.format(type(coords_df)))
