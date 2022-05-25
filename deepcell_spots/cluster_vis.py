@@ -74,23 +74,25 @@ def ca_to_adjacency_matrix(ca_matrix):
     return A
 
 
-def label_graph_ann(G, coords, exclude_last=False):
+def label_graph_ann(G, coords_df, exclude_last=False):
     """Labels the annotator associated with each node in the graph
 
     Args:
         G (networkx.Graph): Graph with edges indicating clusters of points
-        assumed to be derived from the same ground truth detection
-    coords (numpy.array): 2d-array of detected point locations for each
-        classical algorithm used
-    exclude_last (bool): Only set as True to exclude a point that has been
-        included for the purpose of normalization
+            assumed to be derived from the same ground truth detection
+        coords_df (DataFrame): Data frame with columns 'x' and 'y' which encode the
+            spot locations and 'Algorithm' which encodes the algorithm that
+            corresponds with that spot
+        exclude_last (bool): Only set as True to exclude a point that has been
+            included for the purpose of normalization
 
     Returns:
         networkx.Graph: Labeled graph
     """
 
     G_new = G.copy()
-    num_spots = [len(x) for x in coords]
+    algs = coords_df.Algorithm.unique()
+    num_spots = [len(coords_df.loc[coords_df['Algorithm'] == alg]) for alg in algs]
 
     # Create list of annotator labels
     ann_labels = np.array([0] * num_spots[0])
