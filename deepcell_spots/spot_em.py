@@ -27,6 +27,7 @@
 """Expectation maximization functions for spot detection"""
 
 from itertools import combinations
+from multiprocessing.sharedctypes import Value
 
 import networkx as nx
 import numpy as np
@@ -433,8 +434,20 @@ def predict_cluster_probabilities(coords_df, tpr_dict, fpr_dict, prior=0.9, max_
         coords_df (DataFrame): Dataframe containing algorithm, image, location,
             cluster, spot probability, and centroid information about each cluster.
     """
+
+    if prior < 0 or prior > 1:
+        raise ValueError('Input prior probability was {}, but prior must be between'
+                         ' zero and one'.format(prior))
+
     lookup_dict = {i: item for i, item in enumerate(coords_df.Algorithm.unique())}
     num_algorithms = len(lookup_dict.keys())
+
+    if not sorted(tpr_dict.keys()) == sorted(lookup_dict.values()):
+        raise NameError('Keys of tpr_dict must match algorithm names. These names are'
+                        ' set by the input dictionary of coordinates')
+    if not sorted(fpr_dict.keys()) == sorted(lookup_dict.values()):
+        raise NameError('Keys of fpr_dict must match algorithm names. These names are'
+                        ' set by the input dictionary of coordinates')
 
     images = coords_df.Image.unique()
     num_clusters = [max(coords_df.loc[coords_df.Image == im].Cluster) + 1 for im in images]
@@ -450,7 +463,7 @@ def predict_cluster_probabilities(coords_df, tpr_dict, fpr_dict, prior=0.9, max_
             if len(cluster_counter) == 0:
                 cluster_counter.extend([0] * len(cluster_df))
             else:
-                cluster_counter.extend([cluster_counter[-1]+1] * len(cluster_df))
+                cluster_counter.extend([cluster_counter[-1] + 1] * len(cluster_df))
 
     copy_df['Cluster'] = cluster_counter
 
