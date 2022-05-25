@@ -97,7 +97,7 @@ def label_graph_ann(G, coords_df, exclude_last=False):
     # Create list of annotator labels
     labels = []
     for i in range(len(num_spots)):
-        labels.extend([i]*num_spots[i])
+        labels.extend([i] * num_spots[i])
 
     nodes = list(G_new.nodes)
 
