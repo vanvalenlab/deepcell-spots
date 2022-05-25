@@ -277,11 +277,23 @@ def em_spot(cluster_matrix, tp_list, fp_list, prior=0.9, max_iter=10):
     return tp_list, fp_list, likelihood_matrix
 
 
-def load_coords(coords):
+def load_coords(coords_dict):
+    """Loads a dictionary of coordinate spot locations into a Pandas DataFrame
+
+    Args:
+        coords_dict (dictionary): Dictionary in which keys are names of spot
+            detection algorithms and values are coordinate locations of spots
+            detected with each algorithm. Coordinates are nested list (length
+            is numer of images) of lists (shape=(number spots, 2)).
+
+    Returns:
+        coords_df (DataFrame): Dataframe containing algorithm, image, and location
+            information about each cluster.
+    """
     coords_df = pd.DataFrame(columns=['Algorithm', 'Image', 'x', 'y', 'Cluster'])
 
-    for key in coords.keys():
-        one_alg_coords = coords[key]
+    for key in coords_dict.keys():
+        one_alg_coords = coords_dict[key]
 
         for i in range(len(one_alg_coords)):
             num_spots = len(one_alg_coords[i])
@@ -300,7 +312,22 @@ def load_coords(coords):
     return coords_df
 
 
-def cluster_coords(coords_df, threshold):
+def cluster_coords(coords_df, threshold=1.5):
+    """ Clusters coordinates in each image by proximity. If clusters contain
+    more than one detection from a single algorithm, the detection closest to
+    the centroid of the cluster is retained and all others are separated into
+    new clusters.
+
+    Args:
+        coords_df (DataFrame): Dataframe containing algorithm, image, and location
+            information about each cluster.
+        threshold (float): Distance in pixels below which detections will be
+            grouped into clusters.
+
+    Returns:
+        coords_df (DataFrame): Dataframe containing algorithm, image, location,
+            and cluster information about each cluster.
+    """
     for i in tqdm(range(len(coords_df['Image'].unique()))):
         image_df = coords_df.loc[coords_df['Image'] == i]
         image_df = image_df.reset_index(drop=True)
@@ -388,6 +415,24 @@ def cluster_coords(coords_df, threshold):
 
 
 def predict_cluster_probabilities(coords_df, tpr_dict, fpr_dict, prior=0.9, max_iter=10):
+    """ Predicts the probability that each cluster of detections corresponds with a true
+    positive detection.
+
+    Args:
+        coords_df (DataFrame): Dataframe containing algorithm, image, location,
+            and cluster information about each cluster.
+        tpr_dict (dictionary): Dictionary in which keys are algorithm names and values
+            are estimates for TPR of each algorithm
+        fpr_dict (dictionary): Dictionary in which keys are algorithm names and values
+            are estimates for FPR of each algorithm
+        prior (float): Prior probability that a cluster will correspond with a true
+            positive detection. Value must be between 0 and 1.
+        max_iter (int): Number of iterations performed by EM algorithm.
+
+    Returns:
+        coords_df (DataFrame): Dataframe containing algorithm, image, location,
+            cluster, spot probability, and centroid information about each cluster.
+    """
     lookup_dict = {i: item for i, item in enumerate(coords_df.Algorithm.unique())}
     num_algorithms = len(lookup_dict.keys())
 
@@ -445,4 +490,5 @@ def predict_cluster_probabilities(coords_df, tpr_dict, fpr_dict, prior=0.9, max_
     copy_df['Probability'] = probability_list
     copy_df['Centroid_x'] = centroid_x_list
     copy_df['Centroid_y'] = centroid_y_list
+
     return copy_df
