@@ -287,11 +287,11 @@ def load_coords(coords):
             num_spots = len(one_alg_coords[i])
 
             temp_df = pd.DataFrame(columns=['Algorithm', 'Image', 'x', 'y', 'Cluster'])
-            temp_df['Algorithm'] = [key]*num_spots
-            temp_df['Image'] = [i]*num_spots
+            temp_df['Algorithm'] = [key] * num_spots
+            temp_df['Image'] = [i] * num_spots
             temp_df['x'] = one_alg_coords[i][:, 1]
             temp_df['y'] = one_alg_coords[i][:, 0]
-            temp_df['Cluster'] = [0]*num_spots
+            temp_df['Cluster'] = [0] * num_spots
 
             coords_df = pd.concat([coords_df, temp_df])
 
@@ -344,11 +344,11 @@ def cluster_coords(coords_df, threshold):
                 # calculate distance to centroid
                 distance_list = []
                 for i in range(len(cluster_df)):
-                    distance_list.append(np.linalg.norm(centroid-np.array([cluster_df['x'][i],
-                                                                           cluster_df['y'][i]])))
+                    distance_list.append(np.linalg.norm(centroid - np.array([cluster_df['x'][i],
+                                                                             cluster_df['y'][i]])))
                 cluster_df['Distance'] = distance_list
 
-                highest_cluster = max(image_df['Cluster'])+1
+                highest_cluster = max(image_df['Cluster']) + 1
                 for alg in multiple_keys:
                     # slice data frame by algorithm
                     alg_df = cluster_df.loc[cluster_df['Algorithm'] == alg]
@@ -392,7 +392,7 @@ def predict_cluster_probabilities(coords_df, tpr_dict, fpr_dict, prior=0.9, max_
     num_algorithms = len(lookup_dict.keys())
 
     images = coords_df.Image.unique()
-    num_clusters = [max(coords_df.loc[coords_df.Image == im].Cluster)+1 for im in images]
+    num_clusters = [max(coords_df.loc[coords_df.Image == im].Cluster) + 1 for im in images]
     total_clusters = int(sum(num_clusters))
 
     copy_df = coords_df.copy()
@@ -403,9 +403,9 @@ def predict_cluster_probabilities(coords_df, tpr_dict, fpr_dict, prior=0.9, max_
         for c in range(len(image_df.Cluster.unique())):
             cluster_df = image_df.loc[image_df.Cluster == c]
             if len(cluster_counter) == 0:
-                cluster_counter.extend([0]*len(cluster_df))
+                cluster_counter.extend([0] * len(cluster_df))
             else:
-                cluster_counter.extend([cluster_counter[-1]+1]*len(cluster_df))
+                cluster_counter.extend([cluster_counter[-1]+1] * len(cluster_df))
 
     copy_df['Cluster'] = cluster_counter
 
