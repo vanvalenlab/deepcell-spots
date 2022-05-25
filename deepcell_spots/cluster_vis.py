@@ -95,19 +95,18 @@ def label_graph_ann(G, coords_df, exclude_last=False):
     num_spots = [len(coords_df.loc[coords_df['Algorithm'] == alg]) for alg in algs]
 
     # Create list of annotator labels
-    ann_labels = np.array([0] * num_spots[0])
-    for i in range(1, len(num_spots)):
-        temp_labels = np.array([i] * num_spots[i])
-        ann_labels = np.hstack((ann_labels, temp_labels))
+    labels = []
+    for i in range(len(num_spots)):
+        labels.extend([i]*num_spots[i])
 
     nodes = list(G_new.nodes)
 
     if exclude_last:
         for i in range(len(nodes) - 1):
-            G_new.nodes[i]['name'] = ann_labels[i]
+            G_new.nodes[i]['name'] = labels[i]
     else:
         for i in range(len(nodes)):
-            G_new.nodes[i]['name'] = ann_labels[i]
+            G_new.nodes[i]['name'] = labels[i]
 
     return G_new
 
