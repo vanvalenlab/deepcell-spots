@@ -30,6 +30,7 @@ from itertools import combinations
 
 import networkx as nx
 import numpy as np
+import pandas as pd
 from scipy.spatial import distance
 
 from deepcell_spots.cluster_vis import label_graph_ann
@@ -441,17 +442,16 @@ def ca_matrix(G):
     return ca_matrix
 
 
-def define_edges(coords, threshold):
+def define_edges(coords_df, threshold):
 
     """Defines that adjacency matrix for the multiple annotators, connecting
     points that are sufficiently close to one another. It is assumed that these
     spots are derived from the same ground truth spot in the original image.
 
     Args:
-        coords (array): Array of coordinates from each annotator, length is
-            equal to the number of annotators. Each item in the array is a
-            matrix of detection locations with dimensions:
-            ``(number of detections)x2``.
+        coords (DataFrame): Data frame with columns 'x' and 'y' which encode the
+            spot locations and 'Algorithm' which encodes the algorithm that
+            corresponds with that spot
         threshold (float): The distance in pixels. Detections closer than the
             threshold distance will be grouped into a "cluster" of detections,
             assumed to be derived from the same ground truth detection.
@@ -463,13 +463,22 @@ def define_edges(coords, threshold):
             truth detection. A value of 1 denotes two connected nodes in the
             eventual graph and a value of 0 denotes disconnected nodes.
     """
-    # flatten detection coordinates into single 1d array
-    all_coords = np.vstack(coords)
+    if not all(col in coords_df.columns for col in ['x', 'y', 'Algorithm']):
+        raise NameError('coords_df must be a Pandas dataframe with columns'
+                        '\'x\', \'y\', and \'Algorithm\'')
+
+    all_coords = np.array([coords_df['x'], coords_df['y']]).T
     num_spots = len(all_coords)
 
     A = np.zeros((num_spots, num_spots))
     for i in range(num_spots):
+        alg = coords_df['Algorithm'][i]
+
         for ii in range(i + 1, num_spots):
+            # skip iteration if same algorithm
+            temp_alg = coords_df['Algorithm'][ii]
+            if alg == temp_alg:
+                continue
             # calculate distance between points
             dist = np.linalg.norm(all_coords[i] - all_coords[ii])
             if dist < threshold:
