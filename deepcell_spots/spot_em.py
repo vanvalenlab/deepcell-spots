@@ -325,8 +325,10 @@ def cluster_coords(coords_df, threshold=1.5):
         coords_df (DataFrame): Dataframe containing algorithm, image, location,
             and cluster information about each cluster.
     """
-    for i in tqdm(range(len(coords_df['Image'].unique()))):
-        image_df = coords_df.loc[coords_df['Image'] == i]
+    images = coords_df['Image'].unique()
+    for i in tqdm(range(len(images))):
+        im = images[i]
+        image_df = coords_df.loc[coords_df['Image'] == im]
         image_df = image_df.reset_index(drop=True)
 
         if len(image_df) == 0:
@@ -402,7 +404,7 @@ def cluster_coords(coords_df, threshold=1.5):
         image_df = image_df.sort_values(by=['Cluster'])
         image_df = image_df.reset_index(drop=True)
 
-        coords_df = coords_df.drop(coords_df[coords_df.Image == i].index)
+        coords_df = coords_df.drop(coords_df[coords_df.Image == im].index)
         coords_df = pd.concat([coords_df, image_df])
         coords_df = coords_df.reset_index(drop=True)
 
