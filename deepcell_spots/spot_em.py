@@ -26,13 +26,9 @@
 
 """Expectation maximization functions for spot detection"""
 
-from itertools import combinations
-from multiprocessing.sharedctypes import Value
-
 import networkx as nx
 import numpy as np
 import pandas as pd
-from scipy.spatial import distance
 from tqdm import tqdm
 
 from deepcell_spots.cluster_vis import label_graph_ann
