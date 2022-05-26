@@ -30,7 +30,7 @@ import os
 
 import numpy as np
 from sklearn.model_selection import train_test_split
-from tensorflow.python.keras import backend as K
+from tensorflow.keras import backend as K
 from tensorflow.python.platform import test
 
 from deepcell_spots.data_utils import (get_data, slice_annotated_image,

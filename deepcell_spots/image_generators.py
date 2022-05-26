@@ -32,7 +32,7 @@ import os
 
 import numpy as np
 from tensorflow.keras.utils import to_categorical
-from tensorflow.python.keras import backend as K
+from tensorflow.keras import backend as K
 from tensorflow.keras.preprocessing.image import (ImageDataGenerator,
                                                   Iterator,
                                                   array_to_img)
