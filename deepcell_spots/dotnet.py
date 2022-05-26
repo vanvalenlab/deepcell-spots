@@ -116,7 +116,7 @@ def offset_regression_head(input_shape,
             **options
         )(outputs)
 
-    outputs = Conv2D(filters=2, name='offset_regression', **options)(outputs)
+    outputs = Conv2D(filters=2, name='offset_regression_output', **options)(outputs)
 
     return Model(inputs=inputs, outputs=outputs, name=name)
 
