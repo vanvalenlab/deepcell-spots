@@ -145,10 +145,11 @@ class TestSpotEM(test.TestCase):
 
     def test_load_coords(self):
         num_detections = 10
-        coords_dict = {'A': [np.random.random_sample((num_detections, 2)),
-                             np.random.random_sample((num_detections, 2))],
-                       'B': [np.random.random_sample((num_detections, 2)),
-                             np.random.random_sample((num_detections, 2))]}
+        image_dim = 128
+        coords_dict = {'A': [np.random.random_sample((num_detections, 2)) * image_dim,
+                             np.random.random_sample((num_detections, 2)) * image_dim],
+                       'B': [np.random.random_sample((num_detections, 2)) * image_dim,
+                             np.random.random_sample((num_detections, 2)) * image_dim]}
 
         coords_df = load_coords(coords_dict)
 
@@ -161,29 +162,46 @@ class TestSpotEM(test.TestCase):
 
     def test_cluster_coords(self):
         num_detections = 10
-        coords_dict = {'A': [np.random.random_sample((num_detections, 2)),
-                             np.random.random_sample((num_detections, 2))],
-                       'B': [np.random.random_sample((num_detections, 2)),
-                             np.random.random_sample((num_detections, 2))]}
+        image_dim = 128
+        coords_dict = {'A': [np.random.random_sample((num_detections, 2)) * image_dim,
+                             np.random.random_sample((num_detections, 2)) * image_dim],
+                       'B': [np.random.random_sample((num_detections, 2)) * image_dim,
+                             np.random.random_sample((num_detections, 2)) * image_dim]}
 
         coords_df = load_coords(coords_dict)
+
+        print(coords_df)
+
         coords_df = cluster_coords(coords_df)
+
+        print(coords_df)
 
         self.assertEqual(sorted(coords_df.columns),
                          sorted(['Algorithm', 'Image', 'x', 'y', 'Cluster']))
+        # 10 detections * 2 images * 2 algorithms
+        self.assertEqual(len(coords_df), num_detections * 4)
 
     def test_predict_cluster_probabilities(self):
         num_detections = 10
-        coords_dict = {'A': [np.random.random_sample((num_detections, 2)),
-                             np.random.random_sample((num_detections, 2))],
-                       'B': [np.random.random_sample((num_detections, 2)),
-                             np.random.random_sample((num_detections, 2))]}
+        image_dim = 128
+        coords_dict = {'A': [np.random.random_sample((num_detections, 2)) * image_dim,
+                             np.random.random_sample((num_detections, 2)) * image_dim],
+                       'B': [np.random.random_sample((num_detections, 2)) * image_dim,
+                             np.random.random_sample((num_detections, 2)) * image_dim]}
 
         coords_df = load_coords(coords_dict)
         coords_df = cluster_coords(coords_df)
 
         tpr_dict = {'A': 0, 'B': 0}
         fpr_dict = {'A': 0, 'B': 0}
+        prob_df = predict_cluster_probabilities(coords_df, tpr_dict, fpr_dict)
+
+        self.assertEqual(sorted(prob_df.columns),
+                         sorted(['Algorithm', 'Image', 'x', 'y', 'Cluster',
+                                 'Centroid_x', 'Centroid_y', 'Probability']))
+        # 10 detections * 2 images * 2 algorithms
+        self.assertEqual(len(coords_df), num_detections * 4)
+
         bad_tpr_dict = {'C': 0, 'D': 0}
         bad_fpr_dict = {'C': 0, 'D': 0}
         with self.assertRaises(NameError):
