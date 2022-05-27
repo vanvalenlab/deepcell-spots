@@ -169,12 +169,7 @@ class TestSpotEM(test.TestCase):
                              np.random.random_sample((num_detections, 2)) * image_dim]}
 
         coords_df = load_coords(coords_dict)
-
-        print(coords_df)
-
         coords_df = cluster_coords(coords_df)
-
-        print(coords_df)
 
         self.assertEqual(sorted(coords_df.columns),
                          sorted(['Algorithm', 'Image', 'x', 'y', 'Cluster']))

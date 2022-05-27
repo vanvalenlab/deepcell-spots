@@ -112,7 +112,6 @@ def label_graph_ann(G, coords_df, exclude_last=False):
 
 
 def label_graph_gt(G, detection_data, gt):
-
     """Labels the ground truth identity of each node in the graph.
 
     Intended for simulated data.
@@ -154,7 +153,6 @@ def label_graph_gt(G, detection_data, gt):
 
 
 def label_graph_prob(G, detection_data, p_matrix):
-
     """Labels the EM output probability of being a ground truth true detection
     for each cluster in the graph.
 

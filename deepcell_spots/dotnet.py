@@ -64,7 +64,6 @@ def classification_head(input_shape,
                         reg=1e-5,
                         init='he_normal',
                         name='classification_head'):
-
     """Creates a classification head.
 
     Args:

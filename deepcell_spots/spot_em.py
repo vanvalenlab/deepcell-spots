@@ -115,7 +115,6 @@ def det_likelihood(cluster_data, pr_list):
 
 
 def norm_marg_likelihood(cluster_data, tp_list, fp_list, prior):
-
     """Calculates the normalized marginal likelihood that each cluster is a
     true positive or a false positive.
 
@@ -144,7 +143,6 @@ def norm_marg_likelihood(cluster_data, tp_list, fp_list, prior):
 
 
 def define_edges(coords_df, threshold):
-
     """Defines that adjacency matrix for the multiple annotators, connecting
     points that are sufficiently close to one another. It is assumed that these
     spots are derived from the same ground truth spot in the original image.
@@ -192,7 +190,6 @@ def define_edges(coords_df, threshold):
 
 
 def em_spot(cluster_matrix, tp_list, fp_list, prior=0.9, max_iter=10):
-
     """Estimate the TPR/FPR and probability of true detection for various spot
     annotators using expectation maximization.
 
