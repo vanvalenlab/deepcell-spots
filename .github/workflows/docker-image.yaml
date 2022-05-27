@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      DEEPCELL_VERSION: 0.11.0
+      DEEPCELL_VERSION: 0.12.0
 
     steps:
     - uses: actions/checkout@v2

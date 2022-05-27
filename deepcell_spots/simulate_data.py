@@ -64,7 +64,6 @@ def sim_gt_clusters(num_clusters, tp_ratio):
 
 
 def sim_detections(gt, tpr, fpr):
-
     """Simulates detection data for a set of ground truth cluster labels and an
     annotator with a specified TPR and FPR.
 
@@ -111,7 +110,6 @@ def sim_detections(gt, tpr, fpr):
 
 
 def sim_annotators(gt, tpr_list, fpr_list):
-
     """Simulate the detections of multiple annotators with different TPRs and
     FPRs on the same ground truth data.
 
@@ -154,7 +152,6 @@ def sim_annotators(gt, tpr_list, fpr_list):
 
 
 def percent_correct(gt, data_array):
-
     """Calculates the percent of detections correctly labeled.
 
     Returns a value from 0 to 1 indicating the fraction of detections correctly
@@ -193,7 +190,6 @@ def percent_correct(gt, data_array):
 
 
 def is_in_image(x, y, a, L):
-
     """Determines if a square with defined vertices is contained in an image
     with larger dimensions
 
@@ -222,7 +218,6 @@ def is_in_image(x, y, a, L):
 def is_overlapping(x_list, y_list, a_list, x, y, a):
     # check if a square with left corner at x,y,a
     # overlaps with other squares with corner coordinates and side length in the list
-
     """Determines if a square overlaps with a list of other squares.
 
     Returns boolean, true if square overlaps with any of squares in list,
@@ -378,8 +373,8 @@ def gaussian_spot_image_generator(L,
             # create segmentation mask
             label = np.zeros((L, L))     # create the image
             for spot_ind in range(len(x_list)):
-                rr, cc = skimage.draw.circle(
-                    x_list[spot_ind], y_list[spot_ind], sigma_list[spot_ind], shape=label.shape)
+                rr, cc = skimage.draw.disk(
+                    (x_list[spot_ind], y_list[spot_ind]), sigma_list[spot_ind], shape=label.shape)
                 label[cc, rr] = spot_ind + 1
         else:
             # create image with background 0, spot centers labeled with 1

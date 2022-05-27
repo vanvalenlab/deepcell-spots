@@ -28,7 +28,7 @@
 
 import numpy as np
 from sklearn.model_selection import train_test_split
-from tensorflow.python.keras import backend as K
+from tensorflow.keras import backend as K
 
 
 def slice_image(X, reshape_size, overlap=0):

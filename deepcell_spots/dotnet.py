@@ -28,13 +28,13 @@
 
 from deepcell.layers import TensorProduct
 from deepcell.model_zoo import bn_feature_net_skip_2D
-from tensorflow.python.keras import backend as K
-from tensorflow.python.keras.initializers import RandomNormal
-from tensorflow.python.keras.layers import (Activation, BatchNormalization,
-                                            Conv2D, Input, Lambda, Permute,
-                                            Reshape, Softmax)
-from tensorflow.python.keras.models import Model
-from tensorflow.python.keras.regularizers import l2
+from tensorflow.keras import backend as K
+from tensorflow.keras.initializers import RandomNormal
+from tensorflow.keras.layers import (Activation, BatchNormalization,
+                                     Conv2D, Input, Lambda, Permute,
+                                     Reshape, Softmax)
+from tensorflow.keras.models import Model
+from tensorflow.keras.regularizers import l2
 
 
 def default_heads(input_shape, num_classes):
@@ -64,7 +64,6 @@ def classification_head(input_shape,
                         reg=1e-5,
                         init='he_normal',
                         name='classification_head'):
-
     """Creates a classification head.
 
     Args:
@@ -116,7 +115,7 @@ def offset_regression_head(input_shape,
             **options
         )(outputs)
 
-    outputs = Conv2D(filters=2, name='offset_regression', **options)(outputs)
+    outputs = Conv2D(filters=2, name='offset_regression_output', **options)(outputs)
 
     return Model(inputs=inputs, outputs=outputs, name=name)
 

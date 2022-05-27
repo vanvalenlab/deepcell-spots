@@ -32,7 +32,6 @@ import numpy as np
 
 
 def match_spots_to_cells(labeled_im, coords):
-
     """Assigns detected spots to regions of a labeled image.
 
     Returns a dictionary where keys are labeled regions of input image and
@@ -64,7 +63,6 @@ def match_spots_to_cells(labeled_im, coords):
 
 
 def process_spot_dict(spot_dict):
-
     """Processes spot dictionary into an array of coordinates and list of
     region labels for spots.
 
@@ -92,7 +90,6 @@ def process_spot_dict(spot_dict):
 
 
 def remove_nuc_spots_from_cyto(labeled_im_nuc, labeled_im_cyto, coords):
-
     """Removes spots in nuclear regions from spots assigned to cytoplasmic
     regions.
 
