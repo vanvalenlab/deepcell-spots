@@ -150,20 +150,16 @@ def align_images(image_dict, reference_dict):
 
         keypoints1, descriptors1 = orb.detectAndCompute(im1, None)
 
-        # Match features.
+        # Match features
         matcher = cv2.DescriptorMatcher_create(cv2.DESCRIPTOR_MATCHER_BRUTEFORCE_HAMMING)
         matches = matcher.match(descriptors1, descriptors2, None)
 
         # Sort matches by score
-        matches.sort(key=lambda x: x.distance, reverse=False)
+        matches = sorted(matches, key=lambda x: x.distance, reverse=False)
 
         # Remove not so good matches
         numGoodMatches = int(len(matches) * GOOD_MATCH_PERCENT)
         matches = matches[:numGoodMatches]
-
-        # Draw top matches
-        imMatches = cv2.drawMatches(reference_im, keypoints2, im1, keypoints1, matches, None)
-        cv2.imwrite("matches.jpg", imMatches)
 
         # Extract location of good matches
         points1 = np.zeros((len(matches), 2), dtype=np.float32)
