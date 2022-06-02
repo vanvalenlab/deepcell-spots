@@ -161,10 +161,6 @@ def align_images(image_dict, reference_dict):
         numGoodMatches = int(len(matches) * GOOD_MATCH_PERCENT)
         matches = matches[:numGoodMatches]
 
-        # Draw top matches
-        imMatches = cv2.drawMatches(reference_im, keypoints2, im1, keypoints1, matches, None)
-        cv2.imwrite("matches.jpg", imMatches)
-
         # Extract location of good matches
         points1 = np.zeros((len(matches), 2), dtype=np.float32)
         points2 = np.zeros((len(matches), 2), dtype=np.float32)
