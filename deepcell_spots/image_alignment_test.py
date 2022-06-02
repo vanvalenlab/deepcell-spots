@@ -33,9 +33,9 @@ from deepcell_spots.image_alignment import crop_images, align_images
 
 
 def pad_with(vector, pad_width, iaxis, kwargs):
-        pad_value = kwargs.get('padder', 0)
-        vector[:pad_width[0]] = pad_value
-        vector[-pad_width[1]:] = pad_value
+    pad_value = kwargs.get('padder', 0)
+    vector[:pad_width[0]] = pad_value
+    vector[-pad_width[1]:] = pad_value
 
 
 class TestImageAlignment(test.TestCase):
