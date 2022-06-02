@@ -155,7 +155,7 @@ def align_images(image_dict, reference_dict):
         matches = matcher.match(descriptors1, descriptors2, None)
 
         # Sort matches by score
-        matches = sorted(matches, key=lambda x: x.distance)
+        matches = sorted(matches, key=lambda x: x.distance, reverse=False)
 
         # Remove not so good matches
         numGoodMatches = int(len(matches) * GOOD_MATCH_PERCENT)
