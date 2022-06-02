@@ -150,12 +150,13 @@ def align_images(image_dict, reference_dict):
 
         keypoints1, descriptors1 = orb.detectAndCompute(im1, None)
 
-        # Match features.
+        # Match features
         matcher = cv2.DescriptorMatcher_create(cv2.DESCRIPTOR_MATCHER_BRUTEFORCE_HAMMING)
         matches = matcher.match(descriptors1, descriptors2, None)
 
         # Sort matches by score
-        matches.sort(key=lambda x: x.distance, reverse=False)
+        # matches.sort(key=lambda x: x.distance, reverse=False)
+        matches = sorted(matches, key=lambda x: x.distance)
 
         # Remove not so good matches
         numGoodMatches = int(len(matches) * GOOD_MATCH_PERCENT)
