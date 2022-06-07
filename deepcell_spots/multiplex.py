@@ -378,7 +378,7 @@ def assign_gene_identities(cp_dict, dataorg, threshold, codebook):
             and probability of assignment.
     """
     # Create array from classification prediction dictionary
-    cp_array = np.array(list(cp_dict.values()))[:, 1, 0, :, :, 1]
+    cp_array = np.array([cp_dict[key]['classification'][0, ..., 1] for key in cp_dict.keys()])
 
     # Create maximum projection
     max_cp = np.max(cp_array, axis=0)
