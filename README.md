@@ -9,6 +9,21 @@
 
 `deepcell-spots` is a deep learning library for fluorescent spot detection image analysis. It allows you to apply pre-existing models and train new deep learning models for spot detection. It is written in Python and built using [TensorFlow](https://github.com/tensorflow/tensorflow), [Keras](https://www.tensorflow.org/guide/keras) and [DeepCell](https://github.com/vanvalenlab/deepcell-tf).
 
+## DeepCell Spots Application
+
+`deepcell-spots` contains an application that greatly simplifies the implementation of deep learning models for spot detection. `deepcell-spots.applications` contains a pre-trained model for fluorescent spot detection on images derived from assays such as RNA FISH and in-situ sequencing. This model returns a list of coordinate locations for fluorescent spots detected in the input image.
+
+### How to Use
+
+```python
+from deepcell_spots.applications import Polaris
+
+app = Polaris()
+# image is an np array with dimensions (batch,x,y,channel)
+# threshold is the probability threshold that a pixel must exceed to be considered a spot
+coords = app.predict(image,threshold=0.9)
+```
+
 ## DeepCell-Spots for Developers
 
 Build and run a local docker container, similarly to the instructions for deepcell-tf. The relevant parts are copied here with modifications to work for deepcell-spots. For more elaborate instructions, see the [deepcell-tf README](https://github.com/vanvalenlab/deepcell-tf/blob/master/README.md).
@@ -40,21 +55,6 @@ docker run --gpus '"device=0"' -it \
     -v $PWD/notebooks:/notebooks \
     -v /$PWD:/data \
     $USER/deepcell-spots
-```
-
-## DeepCell Spots Application
-
-`deepcell-spots` contains an application that greatly simplifies the implementation of deep learning models for spot detection. `deepcell-spots.applications` contains a pre-trained model for fluorescent spot detection on images derived from assays such as RNA FISH and in-situ sequencing. This model returns a list of coordinate locations for fluorescent spots detected in the input image.
-
-### How to Use
-
-```python
-from deepcell_spots.applications import Polaris
-
-app = Polaris()
-# image is an np array with dimensions (batch,x,y,channel)
-# threshold is the probability threshold that a pixel must exceed to be considered a spot
-coords = app.predict(image,threshold=0.9)
 ```
 
 ## Copyright
