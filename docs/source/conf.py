@@ -86,6 +86,9 @@ master_doc = 'index'
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = []
 
+# The name of the Pygments (syntax highlighting) style to use.
+pygments_style = 'sphinx'
+
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
@@ -113,6 +116,26 @@ autodoc_mock_imports = [
     'pyro-ppl'
 ]
 
+# Disable nbsphinx extension from running notebooks
+nbsphinx_execute = 'never'
+exclude_patterns = ['_build', '**.ipynb_checkpoints']
+
+# TODO: fix relative URL for notebooks, using replace() is not perfect.
+nbsphinx_prolog = (
+r"""
+{% if env.metadata[env.docname]['nbsphinx-link-target'] %}
+{% set docpath = env.metadata[env.docname]['nbsphinx-link-target'].replace('../', '') %}
+{% else %}
+{% set docpath = env.doc2path(env.docname, base='docs/source') %}
+{% endif %}
+.. raw:: html
+    <div class="admonition note">
+        <p>This page was generated from <a href="https://github.com/vanvalenlab/deepcell-spots/blob/""" + git_rev + r"""{{ docpath }}">{{ docpath }}</a>
+        </p>
+    </div>
+"""
+)
+
 # -- Options for intersphinx extension ---------------------------------------
 
 intersphinx_mapping = {
@@ -124,3 +147,23 @@ intersphinx_mapping = {
 }
 
 intersphinx_cache_limit = 0
+
+# -- Custom Additions --------------------------------------------------------
+nitpick_ignore = []
+# See the following page for more information and syntax:
+#  www.sphinx-doc.org/en/master/usage/configuration.html#confval-nitpick_ignore
+
+for line in open('.nitpick-ignore'):
+    line = line.strip()
+    if not line or line.startswith('#'):
+        continue
+
+    reftype, target = line.split(' ', 1)
+    nitpick_ignore.append((reftype, target.strip()))
+
+StandaloneHTMLBuilder.supported_image_types = [
+    'image/svg+xml',
+    'image/gif',
+    'image/png',
+    'image/jpeg'
+]

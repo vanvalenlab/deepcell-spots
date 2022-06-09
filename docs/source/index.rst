@@ -1,6 +1,14 @@
 .. _index:
 
 .. toctree::
+   :maxdepth: 1
+   :hidden:
+   :caption: Start Here:
+
+   notebooks/Training-Spot-Detection
+   notebooks/Singleplex-FISH-Analysis
+
+.. toctree::
    :maxdepth: 2
    :hidden:
    :caption: DeepCell Spots API:
