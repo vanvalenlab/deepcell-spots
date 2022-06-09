@@ -20,8 +20,8 @@ sys.path.insert(0, os.path.abspath('../..'))
 
 # -- Project information -----------------------------------------------------
 
-project = 'Deepcell Spots'
-copyright = ('2016-{currentyear}, Van Valen Lab at the '
+project = 'DeepCell Spots'
+copyright = ('2019-{currentyear}, Van Valen Lab at the '
              'California Institute of Technology (Caltech)').format(
                  currentyear=datetime.now().year)
 author = 'Van Valen Lab at Caltech'
