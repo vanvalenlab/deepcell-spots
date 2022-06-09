@@ -1,3 +1,6 @@
+DeepCell Spots API
+==================
+
 .. toctree::
 
     deepcell_spots.applications
