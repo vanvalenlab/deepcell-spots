@@ -1,7 +1,10 @@
 deepcell_spots.preprocessing_utils
 =====================
 
-.. automodule:: deepcell_spots.preprocessing_utils
-    :members:
-    :undoc-members:
-    :show-inheritance:
+mean_std_normalize
+------------------
+.. autofunction:: deepcell_spots.preprocessing_utils.mean_std_normalize
+
+min_max_normalize
+-----------------
+.. autofunction:: deepcell_spots.preprocessing_utils.min_max_normalize
