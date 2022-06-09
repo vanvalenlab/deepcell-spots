@@ -26,13 +26,15 @@
 
 """Expectation maximization functions for spot detection"""
 
-from itertools import combinations
-
 import networkx as nx
 import numpy as np
-from scipy.spatial import distance
+import pandas as pd
+from tqdm import tqdm
 
 from deepcell_spots.cluster_vis import label_graph_ann
+
+# supress a chained assignment warning
+pd.set_option('chained_assignment', None)
 
 
 def calc_tpr_fpr(gt, data):
@@ -113,7 +115,6 @@ def det_likelihood(cluster_data, pr_list):
 
 
 def norm_marg_likelihood(cluster_data, tp_list, fp_list, prior):
-
     """Calculates the normalized marginal likelihood that each cluster is a
     true positive or a false positive.
 
@@ -141,8 +142,54 @@ def norm_marg_likelihood(cluster_data, tp_list, fp_list, prior):
     return norm_tp_likelihood, norm_fp_likelihood
 
 
-def em_spot(cluster_matrix, tp_list, fp_list, prior=0.9, max_iter=10):
+def define_edges(coords_df, threshold):
+    """Defines that adjacency matrix for the multiple annotators, connecting
+    points that are sufficiently close to one another. It is assumed that these
+    spots are derived from the same ground truth spot in the original image.
 
+    Args:
+        coords (DataFrame): Data frame with columns 'x' and 'y' which encode the
+            spot locations and 'Algorithm' which encodes the algorithm that
+            corresponds with that spot
+        threshold (float): The distance in pixels. Detections closer than the
+            threshold distance will be grouped into a "cluster" of detections,
+            assumed to be derived from the same ground truth detection.
+
+    Returns:
+        numpy.array: Matrix of dimensions (number of detections) x (number of
+            detections) defining edges of a graph clustering detections by
+            detections from different annotators derived from the same ground
+            truth detection. A value of 1 denotes two connected nodes in the
+            eventual graph and a value of 0 denotes disconnected nodes.
+    """
+    if not all(col in coords_df.columns for col in ['x', 'y', 'Algorithm']):
+        raise NameError('coords_df must be a Pandas dataframe with columns'
+                        '\'x\', \'y\', and \'Algorithm\'')
+
+    all_coords = np.array([coords_df['x'], coords_df['y']]).T
+    num_spots = len(all_coords)
+
+    A = np.zeros((num_spots, num_spots))
+    for i in range(num_spots):
+        alg = coords_df['Algorithm'][i]
+
+        for ii in range(i + 1, num_spots):
+            # skip iteration if same algorithm
+            temp_alg = coords_df['Algorithm'][ii]
+            if alg == temp_alg:
+                continue
+            # calculate distance between points
+            dist = np.linalg.norm(all_coords[i] - all_coords[ii])
+            if dist < threshold:
+                # define an edge if the detections are sufficiently close
+                A[i][ii] += 1
+                # symmetrical edge, because graph is non-directed
+                A[ii][i] += 1
+
+    return A
+
+
+def em_spot(cluster_matrix, tp_list, fp_list, prior=0.9, max_iter=10):
     """Estimate the TPR/FPR and probability of true detection for various spot
     annotators using expectation maximization.
 
@@ -219,334 +266,237 @@ def em_spot(cluster_matrix, tp_list, fp_list, prior=0.9, max_iter=10):
         fp_list = [fp_sum_list[i] / (fp_sum_list[i] + tn_sum_list[i])
                    for i in range(np.shape(cluster_matrix)[1])]
 
-    likelihood_matrix = np.round(likelihood_matrix, 2)
+    likelihood_matrix = np.round(likelihood_matrix, 6)
 
     return tp_list, fp_list, likelihood_matrix
 
 
-def cluster_coords(all_coords, image_stack, threshold):
-
-    """Cluster coords from different clasical annotators.
+def load_coords(coords_dict):
+    """Loads a dictionary of coordinate spot locations into a Pandas DataFrame
 
     Args:
-        all_coords (matrix): List with length (number of classical algorithms),
-            where each entry has length (number of images), where each of those
-            entries has dimensions (number of detections) x 2 and is filled by
-            the locations of the detected points for each image for each
-            classical annotator
-        image_stack (matrix): Image matrix with the dimensions:
-            ``(batch, image_dim_x, image_dim_y, channel)``
-        threshold (float): Value for the distance in pixels below which
-            detections will be considered clustered.
+        coords_dict (dictionary): Dictionary in which keys are names of spot
+            detection algorithms and values are coordinate locations of spots
+            detected with each algorithm. Coordinates are nested list (length
+            is numer of images) of lists (shape=(number spots, 2)).
 
     Returns:
-        numpy.array: Matrix with dimensions (number of detections) x (number of
-            algorithms), filled with value 1 if the algorithm detected that
-            cluster, and 0 if it did not
-        centroid_list (matrix): List with length (number of images), where each
-            entry has dimensions (number of detections) x 2, filled with the
-            centroids of all clusters of detections.
-        all_coords_updated (matrix): Same values as input all_coords, with
-            entries removed from images with no detections.
-        image_stack_updated (matrix): Same values as input image_stack, with
-            entries removed from images with no detections.
+        coords_df (DataFrame): Dataframe containing algorithm, image, and location
+            information about each cluster.
     """
+    coords_df = pd.DataFrame(columns=['Algorithm', 'Image', 'x', 'y', 'Cluster'])
 
-    # create one annotator data matrix from all images
-    # first iteration out of loop
-    coords = np.array([item[0] for item in all_coords])
-    # adjacency matrix
-    A = define_edges(coords, threshold)
-    # create graph
-    G = nx.from_numpy_matrix(A)
-    # label each annotator on graph
-    G_labeled = label_graph_ann(G, coords)
-    # break up clusters with multiple spots from single annotator
-    G_clean = check_spot_ann_num(G_labeled, coords)
-    # calculate centroid of each cluster
-    spot_centroids = cluster_centroids(G_clean, coords)
+    for key in coords_dict.keys():
+        one_alg_coords = coords_dict[key]
 
-    # create annotator data matrix for first image
-    cluster_matrix = ca_matrix(G_clean)
-    ind_skipped = []
-    num_spots_list = [len(cluster_matrix)]
-    centroid_list = [spot_centroids]
-    # iterate through images
-    for i in range(1, len(all_coords[0])):
-        len_list = np.array([len(item[i]) for item in all_coords])
+        for i in range(len(one_alg_coords)):
+            num_spots = len(one_alg_coords[i])
 
-        if 0 in len_list:
-            ind_skipped.append(i)
+            temp_df = pd.DataFrame(columns=['Algorithm', 'Image', 'x', 'y', 'Cluster'])
+            temp_df['Algorithm'] = [key] * num_spots
+            temp_df['Image'] = [i] * num_spots
+            temp_df['x'] = one_alg_coords[i][:, 1]
+            temp_df['y'] = one_alg_coords[i][:, 0]
+            temp_df['Cluster'] = [0] * num_spots
+
+            coords_df = pd.concat([coords_df, temp_df])
+
+    coords_df = coords_df.reset_index(drop=True)
+
+    return coords_df
+
+
+def cluster_coords(coords_df, threshold=1.5):
+    """ Clusters coordinates in each image by proximity. If clusters contain
+    more than one detection from a single algorithm, the detection closest to
+    the centroid of the cluster is retained and all others are separated into
+    new clusters.
+
+    Args:
+        coords_df (DataFrame): Dataframe containing algorithm, image, and location
+            information about each cluster.
+        threshold (float): Distance in pixels below which detections will be
+            grouped into clusters.
+
+    Returns:
+        coords_df (DataFrame): Dataframe containing algorithm, image, location,
+            and cluster information about each cluster.
+    """
+    images = coords_df['Image'].unique()
+    for i in tqdm(range(len(images))):
+        im = images[i]
+        image_df = coords_df.loc[coords_df['Image'] == im]
+        image_df = image_df.reset_index(drop=True)
+
+        if len(image_df) == 0:
             continue
 
-        coords = np.array([item[i] for item in all_coords])
-        A = define_edges(coords, threshold)
+        A = define_edges(image_df, threshold=threshold)
+
         G = nx.from_numpy_matrix(A)
-        G_labeled = label_graph_ann(G, coords)
-        G_clean = check_spot_ann_num(G_labeled, coords)
+        G_labeled = label_graph_ann(G, image_df)
 
-        spot_centroids = cluster_centroids(G_clean, coords)
-        centroid_list.append(spot_centroids)
+        clusters = list(nx.connected_components(G_labeled))
 
-        temp_data = ca_matrix(G_clean)
-        num_spots_list.append(len(temp_data))
+        cluster_labels = np.zeros(len(image_df))
+        for ii in range(len(clusters)):
+            for iii in range(len(clusters[ii])):
+                cluster_labels[list(clusters[ii])[iii]] = ii
 
-        cluster_matrix = np.vstack((cluster_matrix, temp_data))
+        image_df['Cluster'] = cluster_labels
+        image_df = image_df.sort_values(by=['Cluster'])
+        image_df = image_df.reset_index(drop=True)
 
-        image_stack_updated = np.delete(image_stack, ind_skipped, 0)
-        image_stack_updated = np.expand_dims(image_stack_updated, axis=-1)
+        for item in image_df.Cluster.unique():
+            # slice data frame by cluster
+            cluster_df = image_df.loc[image_df['Cluster'] == item]
+            cluster_df = cluster_df.sort_values(by=['Algorithm'])
+            cluster_df = cluster_df.reset_index(drop=True)
 
-        all_coords_updated = []
-        for i in range(np.shape(all_coords)[0]):
-            temp_coords = all_coords[i]
-            temp_coords_updated = np.delete(temp_coords, ind_skipped, axis=0)
-            all_coords_updated.append(temp_coords_updated)
+            # check if more than one detection per alg in each cluster
+            if any(cluster_df['Algorithm'].value_counts() > 1):
+                # find algorithms with more than one detection
+                count_dict = dict(cluster_df['Algorithm'].value_counts())
+                multiple_keys = [key for key in count_dict.keys() if count_dict[key] > 1]
 
-        centroid_list = [np.array(item) for item in centroid_list]
+                # get centroid of cluster
+                centroid_x = np.mean(cluster_df['x'])
+                centroid_y = np.mean(cluster_df['y'])
+                centroid = np.array([centroid_x, centroid_y])
 
-    return cluster_matrix, centroid_list, all_coords_updated, image_stack_updated
+                # calculate distance to centroid
+                distance_list = []
+                for i in range(len(cluster_df)):
+                    distance_list.append(np.linalg.norm(centroid - np.array([cluster_df['x'][i],
+                                                                             cluster_df['y'][i]])))
+                cluster_df['Distance'] = distance_list
 
+                highest_cluster = max(image_df['Cluster']) + 1
+                for alg in multiple_keys:
+                    # slice data frame by algorithm
+                    alg_df = cluster_df.loc[cluster_df['Algorithm'] == alg]
+                    alg_df = alg_df.reset_index(drop=True)
+                    new_cluster_list = []
 
-def running_total_spots(centroid_list):
+                    # assign spots far from centroid to new cluster
+                    min_dist = min(alg_df['Distance'])
+                    for ii in range(len(alg_df)):
+                        if alg_df['Distance'][ii] > min_dist:
+                            new_cluster_list.append(highest_cluster)
+                            highest_cluster += 1
+                        else:
+                            new_cluster_list.append(item)
 
-    """Returns a running total of the number of detections in each image
+                    # replace values in cluster data frame
+                    alg_df['Cluster'] = new_cluster_list
+                    cluster_df = cluster_df.drop(cluster_df[cluster_df.Algorithm == alg].index)
+                    cluster_df = pd.concat([cluster_df, alg_df])
 
-    Args:
-        centroid_list (matrix): List with length (number of images), where
-            each entry has dimensions (number of detections) x 2, filled
-            with the centroids of all clusters of detections.
+                # replace values in image data frame
+                del cluster_df['Distance']
+                image_df = image_df.drop(image_df[image_df.Cluster == item].index)
+                image_df = pd.concat([image_df, cluster_df])
 
-    Returns:
-        numpy.array: Array of running total number of detections from each image
-    """
-    num_spots_list = [len(item) for item in centroid_list]
-    running_total = np.zeros(len(num_spots_list) + 1)
+        # re-sort data frame
+        image_df = image_df.sort_values(by=['Cluster'])
+        image_df = image_df.reset_index(drop=True)
 
-    for i in range(len(num_spots_list)):
-        running_total[i + 1] = sum(num_spots_list[:i + 1])
+        coords_df = coords_df.drop(coords_df[coords_df.Image == im].index)
+        coords_df = pd.concat([coords_df, image_df])
+        coords_df = coords_df.reset_index(drop=True)
 
-    running_total = running_total.astype(int)
-
-    return running_total
-
-
-def cluster_to_adjacency_matrix(cluster_matrix):
-
-    """Converts cluster_matrix to adjacency matrix.
-
-    Args:
-        cluster_matrix (matrix): Output of cluster_coords.
-            Matrix with dimensions (number of detections) x (number of
-            algorithms), filled with value 1 if the algorithm detected that
-            cluster, and 0 if it did not.
-
-    Returns:
-        A (matrix): Adjacency matrix with dimensions (number of detections) x
-        (number of detections), filled with value 1 if two detections (nodes)
-        are connected because they are closer than some threshold distance.
-    """
-    num_clusters = np.shape(cluster_matrix)[0]
-    num_annnotators = np.shape(cluster_matrix)[1]
-    tot_det_list = [sum(cluster_matrix[:, i]) for i in range(num_annnotators)]
-    tot_num_detections = int(sum(tot_det_list))
-
-    A = np.zeros((tot_num_detections, tot_num_detections))
-    for i in range(num_clusters):
-        det_list = np.ndarray.flatten(np.argwhere(cluster_matrix[i] == 1))
-        combos = list(combinations(det_list, 2))
-
-        for ii in range(len(combos)):
-            ann_index0 = combos[ii][0]
-            ann_index1 = combos[ii][1]
-            det_index0 = int(
-                sum(tot_det_list[:ann_index0]) + sum(cluster_matrix[:i, ann_index0]))
-            det_index1 = int(
-                sum(tot_det_list[:ann_index1]) + sum(cluster_matrix[:i, ann_index1]))
-
-            A[det_index0, det_index1] += 1
-            A[det_index1, det_index0] += 1
-
-    return A
+    coords_df = coords_df.sort_values(by=['Image', 'Cluster'])
+    coords_df = coords_df.reset_index(drop=True)
+    return coords_df
 
 
-def check_spot_ann_num(G, coords):
-    """
-    Check that each annotator only has one spot per cluster,
-    break up clusters that have multiple spots per annotator
-    """
-    # Get all node labels
-    node_labels = list(nx.get_node_attributes(G, 'name').values())
-    # Get all connected nodes = clusters
-    clusters = list(nx.connected_components(G))
-    flat_coords = np.vstack(coords)
-
-    # Iterate through clusters
-    for i in range(len(clusters)):
-        # Get points in a cluster
-        cluster_pts = list(clusters[i])
-
-        # Get labels for points in cluster
-        pt_labels = np.array(node_labels)[cluster_pts]
-
-        # Check for repeated labels
-        if len(pt_labels) != len(np.unique(pt_labels)):
-            pt_labels = pt_labels.tolist()
-            # Find which labels repeat
-            repeats = set([x for x in pt_labels if pt_labels.count(x) > 1])
-            repeats = list(repeats)
-            # Calculate the centroid of the cluster
-            pt_locs = flat_coords[cluster_pts]
-            centroid = [np.mean(pt_locs[:, 0]), np.mean(pt_locs[:, 1])]
-
-            # Iterate through the repeated clusters
-            for ii in range(len(repeats)):
-                # Get points with a particular repeated label
-                repeat_pts = np.argwhere(np.array(pt_labels) == repeats[ii])
-                repeat_pts = repeat_pts.tolist()
-
-                # Find point that is the closest to the centroid of the cluster
-                pt_dists = [distance.euclidean(
-                    pt_locs[item], centroid) for item in repeat_pts]
-                min_ind = np.argmin(pt_dists)
-
-                # Remove the point that is the closest to the centroid of the cluster
-                repeat_pts.pop(min_ind)
-
-                # need to break all edges that have repeating annotators
-                for item in repeat_pts:
-                    repeat_node = cluster_pts[item[0]]
-                    edges = list(G.edges(repeat_node))
-                    for edge in edges:
-                        G.remove_edge(*edge)
-    return G
-
-
-def ca_matrix(G):
-    """
-    Convert graph into cluster x annotators matrix (cluster_matrix) where 0
-    means annotator did not find a point in that cluster and 1 means that
-    the annotator did find a point in that cluster
-    """
-    clusters = list(nx.connected_components(G))
-    node_labels = list(nx.get_node_attributes(G, 'name').values())
-    num_ann = len(np.unique(node_labels))
-
-    ca_matrix = np.zeros((len(clusters), num_ann))
-    for i in range(len(clusters)):
-        cluster_pts = list(clusters[i])
-
-        for item in cluster_pts:
-            ca_matrix[i, node_labels[item]] += 1
-
-    return ca_matrix
-
-
-def define_edges(coords, threshold):
-
-    """Defines that adjacency matrix for the multiple annotators, connecting
-    points that are sufficiently close to one another. It is assumed that these
-    spots are derived from the same ground truth spot in the original image.
+def predict_cluster_probabilities(coords_df, tpr_dict, fpr_dict, prior=0.9, max_iter=10):
+    """ Predicts the probability that each cluster of detections corresponds with a true
+    positive detection.
 
     Args:
-        coords (array): Array of coordinates from each annotator, length is
-            equal to the number of annotators. Each item in the array is a
-            matrix of detection locations with dimensions:
-            ``(number of detections)x2``.
-        threshold (float): The distance in pixels. Detections closer than the
-            threshold distance will be grouped into a "cluster" of detections,
-            assumed to be derived from the same ground truth detection.
+        coords_df (DataFrame): Dataframe containing algorithm, image, location,
+            and cluster information about each cluster.
+        tpr_dict (dictionary): Dictionary in which keys are algorithm names and values
+            are estimates for TPR of each algorithm
+        fpr_dict (dictionary): Dictionary in which keys are algorithm names and values
+            are estimates for FPR of each algorithm
+        prior (float): Prior probability that a cluster will correspond with a true
+            positive detection. Value must be between 0 and 1.
+        max_iter (int): Number of iterations performed by EM algorithm.
 
     Returns:
-        numpy.array: Matrix of dimensions (number of detections) x (number of
-            detections) defining edges of a graph clustering detections by
-            detections from different annotators derived from the same ground
-            truth detection. A value of 1 denotes two connected nodes in the
-            eventual graph and a value of 0 denotes disconnected nodes.
+        coords_df (DataFrame): Dataframe containing algorithm, image, location,
+            cluster, spot probability, and centroid information about each cluster.
     """
-    # flatten detection coordinates into single 1d array
-    all_coords = np.vstack(coords)
-    num_spots = len(all_coords)
 
-    A = np.zeros((num_spots, num_spots))
-    for i in range(num_spots):
-        for ii in range(i + 1, num_spots):
-            # calculate distance between points
-            dist = np.linalg.norm(all_coords[i] - all_coords[ii])
-            if dist < threshold:
-                # define an edge if the detections are sufficiently close
-                A[i][ii] += 1
-                # symmetrical edge, because graph is non-directed
-                A[ii][i] += 1
+    if prior < 0 or prior > 1:
+        raise ValueError('Input prior probability was {}, but prior must be between'
+                         ' zero and one'.format(prior))
 
-    return A
+    lookup_dict = {i: item for i, item in enumerate(coords_df.Algorithm.unique())}
+    num_algorithms = len(lookup_dict.keys())
 
+    if not sorted(tpr_dict.keys()) == sorted(lookup_dict.values()):
+        raise NameError('Keys of tpr_dict must match algorithm names. These names are'
+                        ' set by the input dictionary of coordinates')
+    if not sorted(fpr_dict.keys()) == sorted(lookup_dict.values()):
+        raise NameError('Keys of fpr_dict must match algorithm names. These names are'
+                        ' set by the input dictionary of coordinates')
 
-def cluster_centroids(G, coords):
+    images = coords_df.Image.unique()
+    num_clusters = [max(coords_df.loc[coords_df.Image == im].Cluster) + 1 for im in images]
+    total_clusters = int(sum(num_clusters))
 
-    """Calculate the location of the centroid of a cluster of detections.
+    copy_df = coords_df.copy()
+    cluster_counter = []
+    for im in copy_df.Image.unique():
+        image_df = copy_df.loc[copy_df.Image == im]
 
-    Returns a list of coordinates for the centroid of each cluster in an
-    input graph.
+        for c in range(len(image_df.Cluster.unique())):
+            cluster_df = image_df.loc[image_df.Cluster == c]
+            if len(cluster_counter) == 0:
+                cluster_counter.extend([0] * len(cluster_df))
+            else:
+                cluster_counter.extend([cluster_counter[-1] + 1] * len(cluster_df))
 
-    Args:
-        G (networkx.Graph): Graph with edges connecting nodes representing
-            detections derived from the same ground truth detection
-        coords (matrix): Array of coordinates from each annotator, length
-            is equal to the number of annotators. Each item in the array is a
-            matrix of detection locations with dimensions:
-            ``(number of detections)x2``.
+    copy_df['Cluster'] = cluster_counter
 
-    Returns:
-        centroid_list (matrix): Matrix with dimensions:
-            ``(number of detections) x 2``, filled with the
-            centroids of all clusters of detections
-    """
-    clusters = list(nx.connected_components(G))
-    flat_coords = np.vstack(coords)
+    cluster_matrix = np.zeros((total_clusters, num_algorithms))
+    for i in tqdm(range(total_clusters)):
+        algs = list(copy_df.loc[copy_df.Cluster == i]['Algorithm'])
+        for ii in range(num_algorithms):
+            if lookup_dict[ii] in algs:
+                cluster_matrix[i, ii] += 1
 
-    centroid_list = []
-    for i in range(len(clusters)):
-        cluster_pts = list(clusters[i])
-        pt_locs = flat_coords[cluster_pts]
-        centroid = [np.mean(pt_locs[:, 0]), np.mean(pt_locs[:, 1])]
-        centroid_list.append(centroid)
+    tp_guess = np.zeros((len(lookup_dict.keys())))
+    fp_guess = np.zeros((len(lookup_dict.keys())))
 
-    return centroid_list
+    for key in lookup_dict.keys():
+        tp_guess[key] = tpr_dict[lookup_dict[key]]
+        fp_guess[key] = fpr_dict[lookup_dict[key]]
 
+    tp_final_all, fp_final_all, p_matrix_all = em_spot(cluster_matrix,
+                                                       tp_guess,
+                                                       fp_guess,
+                                                       prior,
+                                                       max_iter)
 
-def consensus_coords(p_matrix, centroid_list, running_total, threshold=0.5):
+    probability_list = []
+    centroid_x_list = []
+    centroid_y_list = []
+    for c in range(len(copy_df.Cluster.unique())):
+        cluster_df = copy_df.loc[copy_df.Cluster == c]
+        probability_list.extend([p_matrix_all[c, 0]] * len(cluster_df))
 
-    """Converts EM output to a list of consensus spot coordinate locations.
+        # get centroid of cluster
+        centroid_x = np.mean(cluster_df['x'])
+        centroid_y = np.mean(cluster_df['y'])
+        centroid_x_list.extend([centroid_x] * len(cluster_df))
+        centroid_y_list.extend([centroid_y] * len(cluster_df))
 
-    Args:
-        p_matrix: matrix with the dimensions (number of cluster)x2, each entry
-            is the probability that the detection is a true detection or
-            false detection.
-        centroid_list: list of coordinate locations of the centroids of each
-            of the clusters.
-        running_total: list with running total for the number of clusters in
-            each image.
-        threshold: value for probability threshold for a cluster to be
-            considered a true detection.
+    copy_df['Probability'] = probability_list
+    copy_df['Centroid_x'] = centroid_x_list
+    copy_df['Centroid_y'] = centroid_y_list
 
-    Returns:
-        list: nested list with length (number of images) with the coordinate
-            locations of spots in each image.
-    """
-    y = []
-    for i in range(len(running_total) - 1):
-        temp_spots = centroid_list[i]
-        start_ind = running_total[i]
-        end_ind = running_total[i + 1]
-
-        labels = p_matrix[start_ind:end_ind, 0]
-        labels = np.array([item > threshold for item in labels])
-
-        temp_y = []
-        for ii in range(len(labels)):
-            if labels[ii] == 1:
-                temp_y.append(temp_spots[ii])
-
-        y.append(temp_y)
-
-    return y
+    return copy_df

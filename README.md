@@ -2,7 +2,7 @@
 
 [![Build Status](https://github.com/vanvalenlab/deepcell-spots/workflows/build/badge.svg)](https://github.com/vanvalenlab/deepcell-spots/actions)
 [![Coverage Status](https://coveralls.io/repos/github/vanvalenlab/deepcell-spots/badge.svg)](https://coveralls.io/github/vanvalenlab/deepcell-spots)
-[![Modified Apache 2.0](https://img.shields.io/badge/license-Modified%20Apache%2020-blue)](https://github.com/vanvalenlab/deepcell-spots/blob/master/LICENSE)
+[![Modified Apache 2.0](https://img.shields.io/badge/license-Modified%20Apache%202-blue)](https://github.com/vanvalenlab/deepcell-spots/blob/master/LICENSE)
 [![PyPI version](https://badge.fury.io/py/DeepCell-Spots.svg)](https://badge.fury.io/py/DeepCell-Spots)
 [![PyPi Monthly Downloads](https://img.shields.io/pypi/dm/deepcell-spots)](https://pypistats.org/packages/deepcell-spots)
 [![Python Versions](https://img.shields.io/pypi/pyversions/deepcell-spots.svg)](https://pypi.org/project/deepcell-spots/)
@@ -18,7 +18,7 @@ Build and run a local docker container, similarly to the instructions for deepce
 ```bash
 git clone https://github.com/vanvalenlab/deepcell-spots.git
 cd deepcell-spots
-docker build --build-arg DEEPCELL_VERSION=0.11.0-gpu -t $USER/deepcell-spots . 
+docker build --build-arg DEEPCELL_VERSION=0.12.0-gpu -t $USER/deepcell-spots . 
 ```
 
 ### Run the new docker image

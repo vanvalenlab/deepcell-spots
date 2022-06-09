@@ -32,7 +32,7 @@
 
 import tensorflow as tf
 from deepcell import losses
-from tensorflow.python.keras import backend as K
+from tensorflow.keras import backend as K
 
 
 # DIFFERENCE FROM DEEPCELL.losses: doesn't sum over channel axis.

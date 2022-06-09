@@ -39,7 +39,7 @@ from deepcell_spots.preprocessing_utils import min_max_normalize
 
 
 MODEL_PATH = ('https://deepcell-data.s3-us-west-1.amazonaws.com/'
-              'saved-models/SpotDetection-3.tar.gz')
+              'saved-models/SpotDetection-7.tar.gz')
 
 
 def output_to_dictionary(output_images, output_names):
@@ -92,7 +92,7 @@ class SpotDetection(Application):
         if model is None:
             archive_path = tf.keras.utils.get_file(
                 'SpotDetection.tgz', MODEL_PATH,
-                file_hash='2b9a46087b25e9aab20a2c9f67f4f559',
+                file_hash='f52d473ad7e4ce33472f1a9a9cae2d85',
                 extract=True, cache_subdir='models'
             )
             model_path = os.path.splitext(archive_path)[0]

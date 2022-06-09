@@ -35,7 +35,7 @@ def mean_std_normalize(image, epsilon=1e-07):
     """Normalize image data by subtracting standard deviation pixel value
     and dividing by mean pixel value
     Args:
-        image (numpy.array): numpy array of image data
+        image (numpy.array): 4D numpy array of image data
         epsilon (float): fuzz factor used in numeric expressions.
     Returns:
         numpy.array: normalized image data
@@ -43,6 +43,10 @@ def mean_std_normalize(image, epsilon=1e-07):
     if not np.issubdtype(image.dtype, np.floating):
         logging.info('Converting image dtype to float')
     image = image.astype('float32')
+
+    if not len(np.shape(image)) == 4:
+        raise ValueError('Image must be 4D, input image shape was'
+                         ' {}.'.format(np.shape(image)))
 
     for batch in range(image.shape[0]):
         for channel in range(image.shape[-1]):
@@ -56,7 +60,7 @@ def min_max_normalize(image, clip=False):
     """Normalize image data by subtracting minimum pixel value and
      dividing by the maximum pixel value
     Args:
-        image (numpy.array): numpy array of image data
+        image (numpy.array): 4D numpy array of image data
         clip (boolean): Defaults to false. Determines if pixel
             values are clipped by percentile.
     Returns:
@@ -65,6 +69,10 @@ def min_max_normalize(image, clip=False):
     if not np.issubdtype(image.dtype, np.floating):
         logging.info('Converting image dtype to float')
     image = image.astype('float32')
+
+    if not len(np.shape(image)) == 4:
+        raise ValueError('Image must be 4D, input image shape was'
+                         ' {}.'.format(np.shape(image)))
 
     for batch in range(image.shape[0]):
         for channel in range(image.shape[-1]):
