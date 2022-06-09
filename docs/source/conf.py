@@ -31,10 +31,12 @@ author = 'Van Valen Lab at Caltech'
 release = '0.3.1'
 
 try:
-    git_rev = subprocess.check_output(['git', 'describe', '--exact-match', 'HEAD'], universal_newlines=True)
+    git_rev = subprocess.check_output(['git', 'describe', '--exact-match', 'HEAD'],
+                                      universal_newlines=True)
 except subprocess.CalledProcessError:
     try:
-        git_rev = subprocess.check_output(['git', 'rev-parse', 'HEAD'], universal_newlines=True)
+        git_rev = subprocess.check_output(['git', 'rev-parse', 'HEAD'],
+                                          universal_newlines=True)
     except subprocess.CalledProcessError:
         git_rev = ''
 if git_rev:
