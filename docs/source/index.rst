@@ -3,7 +3,7 @@
 .. toctree::
    :maxdepth: 1
    :hidden:
-   :caption: Start Here:
+   :caption: Example Notebooks:
 
    notebooks/Singleplex-FISH-Analysis
    notebooks/Multiplex-FISH-Analysis
@@ -11,7 +11,7 @@
 .. toctree::
    :maxdepth: 2
    :hidden:
-   :caption: DeepCell Spots API:
+   :caption: Documentation:
 
    API/deepcell_spots
 
