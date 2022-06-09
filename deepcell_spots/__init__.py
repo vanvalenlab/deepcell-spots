@@ -24,6 +24,8 @@
 # limitations under the License.
 # ==============================================================================
 
+"""Package for fluorescent spot detection with convolutional neural networks"""
+
 from deepcell_spots import applications
 from deepcell_spots._version import __version__
 
