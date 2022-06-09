@@ -141,7 +141,7 @@ nbsphinx_prolog = (
     {% endif %}
     .. raw:: html
         <div class="admonition note">
-            <p>This page was generated from <a href="https://github.com/vanvalenlab/deepcell-spots/blob/""" + git_rev + r"""{{ docpath }}">{{ docpath }}</a>
+            <p>This page was generated from <a href="https://github.com/vanvalenlab/deepcell-spots/blob/""" + git_rev + r"""{{ docpath }}">{{ docpath }}</a>  # noqa
             </p>
         </div>
     """

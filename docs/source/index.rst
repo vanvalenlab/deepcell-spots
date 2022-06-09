@@ -5,8 +5,8 @@
    :hidden:
    :caption: Start Here:
 
-   notebooks/Training-Spot-Detection
    notebooks/Singleplex-FISH-Analysis
+   notebooks/Multiplex-FISH-Analysis
 
 .. toctree::
    :maxdepth: 2
