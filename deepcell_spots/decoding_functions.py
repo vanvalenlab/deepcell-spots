@@ -17,7 +17,7 @@ from pyro.infer import SVI, TraceEnum_ELBO, config_enumerate, infer_discrete
 from pyro import poutine
 from pyro.infer.autoguide import AutoDelta
 
-assert pyro.__version__.startswith('1')
+# assert pyro.__version__.startswith('1')  # TODO: pin pyro-ppl version
 
 # torch.manual_seed(set_seed)
 # random.seed(set_seed)
