@@ -200,7 +200,7 @@ autodoc_mock_imports = [
     'numpy',
     'scipy',
     'skimage',
-    'scikit-learn',
+    'sklearn',
     'tensorflow',
     'jupyter',
     'networkx',
