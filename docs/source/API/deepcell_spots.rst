@@ -1,6 +1,9 @@
 deepcell\_spots package
 =======================
 
+.. contents:: Contents
+    :local:
+
 Applications
 ------------
 
