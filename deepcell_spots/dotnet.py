@@ -48,7 +48,7 @@ def default_heads(input_shape, num_classes):
 
     Returns:
         list(tuple): A list of tuples, where the first element is the name of
-            the submodel and the second element is the submodel itself.
+        the submodel and the second element is the submodel itself.
     """
     return [
         ('offset_regression', offset_regression_head(
