@@ -36,18 +36,18 @@ import skimage
 def sim_gt_clusters(num_clusters, tp_ratio):
     """Generate random simulated labels (true detection or false detection)
     for clusters, with a specified rate of true detections and false detections,
-    ``tp_ratio``.
+    `tp_ratio`.
 
-    Returns a list of length num_clusters of cluster labels with value 1 for a
+    Returns a list of length `num_clusters` of cluster labels with value 1 for a
     true detection and 0 for a false detection.
 
     Args:
-        num_clusters (int): The number of cluster labels to be generated
+        num_clusters (int): The number of cluster labels to be generated.
         tp_ratio (float): The average percentage of the detections that are
-            true detections
+            true detections.
 
     Returns:
-        list: List of random simulated cluster labels 1 or 0
+        list: List of random simulated cluster labels 1 or 0.
     """
 
     assert tp_ratio >= 0 and tp_ratio <= 1, "TP ratio must be between 0 and 1"
@@ -67,7 +67,7 @@ def sim_detections(gt, tpr, fpr):
     """Simulates detection data for a set of ground truth cluster labels and an
     annotator with a specified TPR and FPR.
 
-    Returns an array of with same length as input gt, where 1 indicates the
+    Returns an array of with same length as input `gt`, where 1 indicates the
     simulated annotator detected a cluster and 0 indicates an undetected
     cluster.
 
@@ -85,8 +85,8 @@ def sim_detections(gt, tpr, fpr):
 
     Returns:
         array: Array of detected cluster labels. A value of 1 indicates that
-            a cluster was detected by the annotator, and 0 indicates that the
-            cluster was not detected by the annotator.
+        a cluster was detected by the annotator, and 0 indicates that the
+        cluster was not detected by the annotator.
     """
 
     assert tpr >= 0 and tpr <= 1, "TPR must be between 0 and 1"
@@ -130,8 +130,8 @@ def sim_annotators(gt, tpr_list, fpr_list):
 
     Returns:
         numpy.array: Matrix of simulated detection data with dimensions
-            clusters x annotators. A value of 1 indicates a detected cluster
-            and a value of 0 indicates an undetected cluster.
+        clusters x annotators. A value of 1 indicates a detected cluster
+        and a value of 0 indicates an undetected cluster.
     """
 
     assert type(tpr_list) == list or type(
@@ -166,7 +166,7 @@ def percent_correct(gt, data_array):
 
     Returns:
         percent_corr (float): Value for fraction of detections correctly
-            labeled compared to ground truth.
+        labeled compared to ground truth.
     """
 
     assert len(gt) == np.shape(data_array)[
@@ -208,20 +208,13 @@ def is_in_image(x, y, a, L):
     return (x + a <= (L - 1)) and (y + a <= (L - 1)) and (x >= 0) and (y >= 0)
 
 
-# # NOT TESTED BC NOT USED
-# def is_in_square(x,y,a,x1,y1):
-#     # returns True if (x1,y1) is inside the square with left bottom corner at (x,y) and side
-#     # length a
-
-#     return (x<=x1<=x+a) and (y<=y1<=y+a)
-
 def is_overlapping(x_list, y_list, a_list, x, y, a):
     # check if a square with left corner at x,y,a
     # overlaps with other squares with corner coordinates and side length in the list
     """Determines if a square overlaps with a list of other squares.
 
-    Returns boolean, true if square overlaps with any of squares in list,
-    false if it doesn't overlap with any of squares in list
+    Returns boolean, ``True`` if square overlaps with any of squares in list,
+    ``False`` if it doesn't overlap with any of squares in list
 
     Args:
         x_list (list): List of x coordinates for top left corners of squares
@@ -282,33 +275,33 @@ def gaussian_spot_image_generator(L,
                                   noise_std=0,
                                   segmask=False,
                                   yield_pos=False):
-    """Generates random images of gaussian spots with random uniformly
-    distributed center positions in the image area, i.e. in [0,L-1]*[0,L-1].
-    The number of spots in an image is uniformly distributed in [N_min, N_max].
+    """Generates random images of Gaussian spots with random uniformly
+    distributed center positions in the image area, i.e. in ``[0,L-1]*[0,L-1].``
+    The number of spots in an image is uniformly distributed in `[N_min, N_max]`.
     Each spot is a gaussian with standard deviation normally distributed with
-    mean sigma0, std sigma1, and cutoff value of 0.5 (it is redrawn if a
+    `sigma_mean`, `sigma_std`, and cutoff value of 0.5 (it is redrawn if a
     smaller value is drawn). The intensity of each spot is normally distributed.
 
     Args:
-        L : generated image side length - the generated images have shape (L,L)
+        L : generated image side length - the generated images have shape `(L,L)`
         N_min, N_max: the number of spots plotted in each image is uniformly
-            distributed in [N_min, N_max].
-        sigma0, sigma1: the mean and standard deviation of the normally
-            distributed spot width sigma (i.e. each spot is a gaussian with
+            distributed in `[N_min, N_max]`.
+        sigma_mean, sigma_std: the mean and standard deviation of the normally
+            distributed spot width sigma (i.e. each spot is a Gaussian with
             standard deviation sigma).
         A_mean, A_std: the intensity of each spot is normally distributed in
-            with mean A_mean, and standard deviation A_std.
-        yield_pos: if True, will yield lists of x and y positions and bounding
+            with mean `A_mean`, and standard deviation `A_std`.
+        yield_pos: if ``True``, will yield lists of x and y positions and bounding
             boxes in addition to image and label image.
-            noise_mean, noise_std: mean and std of white noise to be added to
+        noise_mean, noise_std: mean and std of white noise to be added to
             every pixel of the image
 
-    Yields:
-        img: (L, L) numpy array simulated image
-        label: (L, L) numpy array of - 0 background, 1 for pixel of (rounded)
-            spot center if segmask is False segmentation mask if segmask is True
-            (pixel values are 0 in background, 1,...,N for pixels belonging to
-            the N spots in the image)
+    Returns:
+        img: `(L, L)` numpy array simulated image
+        label: `(L, L)` numpy array of - 0 background, 1 for pixel of (rounded)
+        spot center if segmask is ``False`` segmentation mask if `segmask` is
+        ``True`` (pixel values are `0` in background, `1,...,N` for pixels belonging
+        to the `N` spots in the image)
     """
 
     while True:  # keep yielding images forever
@@ -318,9 +311,6 @@ def gaussian_spot_image_generator(L,
         X = np.arange(0, L, 1)
         Y = np.arange(0, L, 1)
         X, Y = np.meshgrid(X, Y)
-        # pos = np.empty(X.shape + (2,))
-        # pos[:, :, 0] = X
-        # pos[:, :, 1] = Y
 
         # draw the number of dots that will be created in the image - an integer N_min <= N <= N_max
         N = random.randint(N_min, N_max)
@@ -356,9 +346,6 @@ def gaussian_spot_image_generator(L,
 
             # plot a gaussian
             # Mean vector and covariance matrix
-            # mu = np.array([x, y])
-            # sigma = np.array([[sigma , 0], [0,  sigma]])
-            # Z = A*multivariate_normal.pdf(pos,mean=mu, cov=sigma)
             Z = A * np.exp(-((X - x)**2 + (Y - y)**2) / (2 * sigma**2))
             img += Z
 

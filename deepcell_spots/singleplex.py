@@ -39,15 +39,15 @@ def match_spots_to_cells(labeled_im, coords):
 
     Args:
         labeled_im (array): Image output from segmentation algorithm with
-            dimensions (1,x,y,1) where pixels values label regions of the
+            dimensions `(1,x,y,1)` where pixels values label regions of the
             image corresponding with objects of interest
-            (nuclei, cytoplasm, etc.)
+            (nuclei, cytoplasm, etc.).
         coords (array): Array of coordinates for spot location with dimensions
-            (number of spots,2)
+            `(number of spots,2)`.
 
     Returns:
         dict: Dictionary where keys are labeled regions of input image and
-            values are spot coordinates corresponding with that labeled region.
+        values are spot coordinates corresponding with that labeled region.
     """
 
     spot_dict = defaultdict(list)
@@ -72,11 +72,10 @@ def process_spot_dict(spot_dict):
             labeled region.
 
     Returns:
-        coords (array): Array of coordinates for spot location with dimensions
-            (number of spots,2). Re-ordered to correspond with list of region
-            labels.
-        cmap_list (list): List of region labels corresponding with coordinates.
-            Intended to be used to color a cmap when visualizing spots.
+        (array, list): (1) Array of coordinates for spot location with dimensions
+        `(number of spots,2)`. Re-ordered to correspond with list of region
+        labels. (2) List of region labels corresponding with coordinates.
+        Intended to be used to color a ``cmap`` when visualizing spots.
     """
     coords = []
     cmap_list = []
@@ -99,16 +98,16 @@ def remove_nuc_spots_from_cyto(labeled_im_nuc, labeled_im_cyto, coords):
 
     Args:
         labeled_im_nuc (array): Image output from segmentation algorithm with
-            dimensions (1,x,y,1) where pixels values label nuclear regions.
+            dimensions `(1,x,y,1)` where pixels values label nuclear regions.
         labeled_im_cyto (array): Image output from segmentation algorithm with
-            dimensions (1,x,y,1) where pixels values label cytoplasmic regions.
+            dimensions `(1,x,y,1)` where pixels values label cytoplasmic regions.
         coords (array): Array of coordinates for spot location with dimensions
-            (number of spots,2)
+            `(number of spots,2)`.
 
     Returns:
         dict: Dictionary where keys are labeled regions of input image and
             values are spot coordinates corresponding with that labeled region
-            (cytoplasm excluding nucleus)
+            (cytoplasm excluding nucleus).
     """
     # Match spots to nuclei and cytoplasms
     spot_dict_nuc = match_spots_to_cells(labeled_im_nuc, coords)
