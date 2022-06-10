@@ -157,7 +157,7 @@ class DotNetLosses(object):
     def classification_loss(self, y_true, y_pred):
         """
         Args:
-            y_true, y_pred: numpy arrya of size (batch, Ly, Lx, 2).
+            y_true, y_pred: numpy array of size (batch, Ly, Lx, 2).
                 one hot encoded pixel classification
 
         Returns:

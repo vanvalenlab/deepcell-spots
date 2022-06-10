@@ -39,8 +39,7 @@ from tensorflow.keras.regularizers import l2
 
 def default_heads(input_shape, num_classes):
     """
-    Create a list of the default heads for dot detection center pixel detection
-    and offset regression
+    Create a list of the default heads for spot detection.
 
     Args:
         input_shape
