@@ -9,9 +9,6 @@ Applications
 
    deepcell_spots.applications
 
-Submodules
-----------
-
 deepcell\_spots.cluster\_vis module
 -----------------------------------
 
