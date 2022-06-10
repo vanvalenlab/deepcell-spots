@@ -133,7 +133,8 @@ class ImageFullyConvDotIterator(Iterator):
 
         one_hot_encoded_cp = to_categorical(contains_point)
 
-        annotations = {'detections': one_hot_encoded_cp, 'offset': offset}  # TODO: refactor detections to classification
+        # TODO: refactor detections to classification
+        annotations = {'detections': one_hot_encoded_cp, 'offset': offset}
         return annotations
 
     def _get_batches_of_transformed_samples(self, index_array):
@@ -235,7 +236,7 @@ class ImageFullyConvDotIterator(Iterator):
 
 class ImageFullyConvDotDataGenerator(ImageDataGenerator):
     """Generates batches of tensor image data with real-time data augmentation.
-    
+
     The data will be looped over in batches.
 
     Args:
@@ -249,15 +250,15 @@ class ImageFullyConvDotDataGenerator(ImageDataGenerator):
         zca_epsilon (float): Epsilon for ZCA whitening. Default is 1e-6.
         zca_whitening (bool): Whether to apply ZCA whitening.
         rotation_range (int): Degree range for random rotations.
-        width_shift_range: float, 1-D array-like or int
-            - float: fraction of total width, if < 1, or pixels if >= 1.
-            - 1-D array-like: random elements from the array.
-            - int: integer number of pixels from interval
-                `(-width_shift_range, +width_shift_range)` with
-                `width_shift_range=2` possible values are ints [-1, 0, +1],
-                same as with `width_shift_range=[-1, 0, +1]`, while with
-                `width_shift_range=1.0` possible values are floats in
-                the interval [-1.0, +1.0).
+        width_shift_range: float, 1-D array-like or int.
+                - float: fraction of total width, if < 1, or pixels if >= 1.
+                - 1-D array-like: random elements from the array.
+                - int: integer number of pixels from interval
+                  `(-width_shift_range, +width_shift_range)` with
+                  `width_shift_range=2` possible values are ints [-1, 0, +1],
+                  same as with `width_shift_range=[-1, 0, +1]`, while with
+                  `width_shift_range=1.0` possible values are floats in
+                  the interval [-1.0, +1.0).
         shear_range (float): Shear angle in counter-clockwise direction in
             degrees
         zoom_range: float or [lower, upper], Range for random zoom.
