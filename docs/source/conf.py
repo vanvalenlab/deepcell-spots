@@ -202,6 +202,8 @@ autodoc_mock_imports = [
     'skimage',
     'sklearn',
     'tensorflow',
+    'keras',
+    'tensorflow_addons',
     'jupyter',
     'networkx',
     'cv2',
