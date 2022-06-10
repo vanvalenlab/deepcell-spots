@@ -40,26 +40,35 @@ from deepcell_toolbox.deep_watershed import deep_watershed
 class Polaris(object):
     """Loads spot detection and cell segmentation applications
     from deepcell_spots and deepcell_tf, respectively.
+
     The ``predict`` method calls the predict method of each
     application.
+
     Example:
+
     .. code-block:: python
+
         from skimage.io import imread
         from deepcell_spots.applications import Polaris
+
         # Load the images
         spots_im = imread('spots_image.png')
         cyto_im = imread('cyto_image.png')
+
         # Expand image dimensions to rank 4
         spots_im = np.expand_dims(spots_im, axis=[0,-1])
         cyto_im = np.expand_dims(cyto_im, axis=[0,-1])
+
         # Create the application
         app = Polaris()
+
         # Find the spot locations
         result = app.predict(spots_image=spots_im,
                              segmentation_image=cyto_im)
         spots_dict = result[0]['spots_assignment']
         labeled_im = result[0]['cell_segmentation']
         coords = result[0]['spot_locations']
+
     Args:
         segmentation_model (tf.keras.Model): The model to load.
             If ``None``, a pre-trained model will be downloaded.

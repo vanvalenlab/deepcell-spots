@@ -44,6 +44,16 @@ MODEL_PATH = ('https://deepcell-data.s3-us-west-1.amazonaws.com/'
 
 
 def output_to_dictionary(output_images, output_names):
+    """Formats model output from list to dictionary.
+    
+    Args:
+        output_images (list): Model output list of length 2 containing
+            classification prediction and regression prediction
+        output_names (list): Model output names
+
+    Returns:
+        Dictionary with output names as keys and output images as values
+    """
     return {name: pred for name, pred in zip(output_names,
                                              output_images)}
 
@@ -58,6 +68,7 @@ class SpotDetection(Application):
     Example:
 
     .. code-block:: python
+
         from skimage.io import imread
         from deepcell_spots.applications import SpotDetection
 
