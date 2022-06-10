@@ -156,9 +156,9 @@ class DotNetLosses(object):
     def classification_loss(self, y_true, y_pred):
         """
         Args:
-            y_true: numpy array of size (batch, Ly, Lx, 2)
+            y_true: numpy array of size `(batch, Ly, Lx, 2)`
                 one hot encoded pixel classification.
-            y_pred: numpy array of size (batch, Ly, Lx, 2)
+            y_pred: numpy array of size `(batch, Ly, Lx, 2)`
                 one hot encoded pixel classification.
 
         Returns:
@@ -179,9 +179,9 @@ class DotNetLosses(object):
         """Regularized classification loss.
 
         Args:
-            y_true: numpy array of size (batch, Ly, Lx, 2)
+            y_true: numpy array of size `(batch, Ly, Lx, 2)`
                 one hot encoded pixel classification.
-            y_pred: numpy array of size (batch, Ly, Lx, 2)
+            y_pred: numpy array of size `(batch, Ly, Lx, 2)`
                 one hot encoded pixel classification.
             mu (float): weight of regularization term.
 
