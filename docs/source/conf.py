@@ -199,7 +199,7 @@ autodoc_mock_imports = [
     'pandas',
     'numpy',
     'scipy',
-    'scikit-image',
+    'skimage',
     'scikit-learn',
     'tensorflow',
     'jupyter',
