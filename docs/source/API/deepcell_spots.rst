@@ -1,8 +1,8 @@
 deepcell\_spots package
 =======================
 
-Subpackages
------------
+Applications
+------------
 
 .. toctree::
    :maxdepth: 4
@@ -20,26 +20,10 @@ deepcell\_spots.cluster\_vis module
    :undoc-members:
    :show-inheritance:
 
-deepcell\_spots.cluster\_vis\_test module
------------------------------------------
-
-.. automodule:: deepcell_spots.cluster_vis_test
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 deepcell\_spots.data\_utils module
 ----------------------------------
 
 .. automodule:: deepcell_spots.data_utils
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-deepcell\_spots.data\_utils\_test module
-----------------------------------------
-
-.. automodule:: deepcell_spots.data_utils_test
    :members:
    :undoc-members:
    :show-inheritance:
@@ -76,26 +60,10 @@ deepcell\_spots.image\_alignment module
    :undoc-members:
    :show-inheritance:
 
-deepcell\_spots.image\_alignment\_test module
----------------------------------------------
-
-.. automodule:: deepcell_spots.image_alignment_test
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 deepcell\_spots.image\_generators module
 ----------------------------------------
 
 .. automodule:: deepcell_spots.image_generators
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-deepcell\_spots.image\_generators\_test module
-----------------------------------------------
-
-.. automodule:: deepcell_spots.image_generators_test
    :members:
    :undoc-members:
    :show-inheritance:
@@ -108,26 +76,10 @@ deepcell\_spots.multiplex module
    :undoc-members:
    :show-inheritance:
 
-deepcell\_spots.multiplex\_test module
---------------------------------------
-
-.. automodule:: deepcell_spots.multiplex_test
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 deepcell\_spots.point\_metrics module
 -------------------------------------
 
 .. automodule:: deepcell_spots.point_metrics
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-deepcell\_spots.point\_metrics\_test module
--------------------------------------------
-
-.. automodule:: deepcell_spots.point_metrics_test
    :members:
    :undoc-members:
    :show-inheritance:
@@ -140,26 +92,10 @@ deepcell\_spots.postprocessing\_utils module
    :undoc-members:
    :show-inheritance:
 
-deepcell\_spots.postprocessing\_utils\_test module
---------------------------------------------------
-
-.. automodule:: deepcell_spots.postprocessing_utils_test
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 deepcell\_spots.preprocessing\_utils module
 -------------------------------------------
 
 .. automodule:: deepcell_spots.preprocessing_utils
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-deepcell\_spots.preprocessing\_utils\_test module
--------------------------------------------------
-
-.. automodule:: deepcell_spots.preprocessing_utils_test
    :members:
    :undoc-members:
    :show-inheritance:
@@ -172,14 +108,6 @@ deepcell\_spots.simulate\_data module
    :undoc-members:
    :show-inheritance:
 
-deepcell\_spots.simulate\_data\_test module
--------------------------------------------
-
-.. automodule:: deepcell_spots.simulate_data_test
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 deepcell\_spots.singleplex module
 ---------------------------------
 
@@ -188,26 +116,10 @@ deepcell\_spots.singleplex module
    :undoc-members:
    :show-inheritance:
 
-deepcell\_spots.singleplex\_test module
----------------------------------------
-
-.. automodule:: deepcell_spots.singleplex_test
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 deepcell\_spots.spot\_em module
 -------------------------------
 
 .. automodule:: deepcell_spots.spot_em
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-deepcell\_spots.spot\_em\_test module
--------------------------------------
-
-.. automodule:: deepcell_spots.spot_em_test
    :members:
    :undoc-members:
    :show-inheritance:
@@ -224,22 +136,6 @@ deepcell\_spots.utils module
 ----------------------------
 
 .. automodule:: deepcell_spots.utils
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-deepcell\_spots.utils\_test module
-----------------------------------
-
-.. automodule:: deepcell_spots.utils_test
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-Module contents
----------------
-
-.. automodule:: deepcell_spots
    :members:
    :undoc-members:
    :show-inheritance:
