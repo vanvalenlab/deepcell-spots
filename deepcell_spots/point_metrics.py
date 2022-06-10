@@ -87,8 +87,8 @@ def match_points_min_dist(pts1, pts2, threshold=None):
     the Euclidean distances between matched points from each set.
 
     Args:
-        pts1 (array): Array of shape (N1,d), set of `N1` points in `d` dimensions.
-        pts2 (array): Array of shape (N2,d), set of `N2` points in `d` dimensions.
+        pts1 (array): Array of shape `(N1,d)`, set of `N1` points in `d` dimensions.
+        pts2 (array): Array of shape `(N2,d)`, set of `N2` points in `d` dimensions.
             Each row of `pts1` and `pts2` should be the coordinates of a single
             d-dimensional point.
         threshold (float): A distance threshold for matching two points.
@@ -141,8 +141,8 @@ def match_points_mutual_nearest_neighbor(pts1, pts2, threshold=None):
     of points are mutual nearest neighbors.
 
     Args:
-        pts1 (array): Array of shape (N1,d), set of `N1` points in `d` dimensions.
-        pts2 (array): Array of shape (N2,d), set of `N2` points in `d` dimensions.
+        pts1 (array): Array of shape `(N1,d)`, set of `N1` points in `d` dimensions.
+        pts2 (array): Array of shape `(N2,d)`, set of `N2` points in `d` dimensions.
             Each row of `pts1` and `pts2` should be the coordinates of a single
             d-dimensional point.
         threshold (float): A distance threshold for matching two points.
@@ -201,8 +201,8 @@ def point_precision(points_true,
     ``(the number of true positives) / (total number of predicted points)``
 
     Args:
-        pts1 (array): Array of shape (N1,d), set of `N1` points in `d` dimensions.
-        pts2 (array): Array of shape (N2,d), set of `N2` points in `d` dimensions.
+        pts1 (array): Array of shape `(N1,d)`, set of `N1` points in `d` dimensions.
+        pts2 (array): Array of shape `(N2,d)`, set of `N2` points in `d` dimensions.
             Each row of `pts1` and `pts2` should be the coordinates of a single
             d-dimensional point.
         threshold (float): A distance threshold used in the definition of `tp`
@@ -247,8 +247,8 @@ def point_recall(points_true,
     ``(the number of true positives) / (total number of true points)``
 
     Args:
-        pts1 (array): Array of shape (N1,d), set of `N1` points in `d` dimensions.
-        pts2 (array): Array of shape (N2,d), set of `N2` points in `d` dimensions.
+        pts1 (array): Array of shape `(N1,d)`, set of `N1` points in `d` dimensions.
+        pts2 (array): Array of shape `(N2,d)`, set of `N2` points in `d` dimensions.
             Each row of `pts1` and `pts2` should be the coordinates of a single
             d-dimensional point.
         threshold (float): A distance threshold used in the definition of `tp` and `fn`.
@@ -296,8 +296,8 @@ def point_F1_score(points_true,
     false negative (`fn`).
 
     Args:
-        pts1 (array): Array of shape (N1,d), set of `N1` points in `d` dimensions.
-        pts2 (array): Array of shape (N2,d), set of `N2` points in `d` dimensions.
+        pts1 (array): Array of shape `(N1,d)`, set of `N1` points in `d` dimensions.
+        pts2 (array): Array of shape `(N2,d)`, set of `N2` points in `d` dimensions.
             Each row of `pts1` and `pts2` should be the coordinates of a single
             d-dimensional point.
         threshold (float): A distance threshold used in the definition of `tp` and `fp`.
@@ -320,8 +320,8 @@ def stats_points(points_true,
     """Calculates point-based statistics (precision, recall, F1, JAC, RMSE, d_md).
 
     Args:
-        pts1 (array): Array of shape (N1,d), set of `N1` points in `d` dimensions.
-        pts2 (array): Array of shape (N2,d), set of `N2` points in `d` dimensions.
+        pts1 (array): Array of shape `(N1,d)`, set of `N1` points in `d` dimensions.
+        pts2 (array): Array of shape `(N2,d)`, set of `N2` points in `d` dimensions.
             Each row of `pts1` and `pts2` should be the coordinates of a single
             d-dimensional point.
         threshold (float): A distance threshold used in the definition of `tp` and `fp`.
@@ -397,7 +397,7 @@ def get_mean_stats(y_test, y_pred, threshold=0.98, d_thresh=1):
     for stack of predictions.
 
     Args:
-        y_test (array): Array of shape (N1,d), set of `N1` points in `d` dimensions.
+        y_test (array): Array of shape `(N1,d),` set of `N1` points in `d` dimensions.
         y_pred (array): A batch of predictions, of the format: `y_pred[annot_type][ind]`
             is an annotation for image ind in the batch where annot_type = 0
             or 1: 0 - `classification` (from classification head),
@@ -439,7 +439,7 @@ def model_benchmarking(pred, coords, threshold, min_distance):
             1 - `offset_regression` (from regression head).
         coords (list): Nested list of coordinate locations for ground truth spots
             from a single annotator.
-        threshold (float): A number in [0, 1]. Pixels with classification
+        threshold (float): A number in ``[0, 1]``. Pixels with classification
             score > `threshold` are considered containing a spot center,
             and their corresponding regression values will be used to create a
             final spot position prediction which will be added to the output
