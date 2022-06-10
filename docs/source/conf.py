@@ -206,7 +206,7 @@ autodoc_mock_imports = [
     'networkx',
     'opencv-python-headless',
     'deepcell',
-    'deepcell-toolbox'
+    'deepcell_toolbox',
     'tqdm',
     'trackpy',
     'torch',
