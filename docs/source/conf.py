@@ -212,7 +212,7 @@ autodoc_mock_imports = [
     'trackpy',
     'torch',
     'torchvision',
-    'pyro-ppl'
+    'pyro'
 ]
 
 # Disable nbsphinx extension from running notebooks
