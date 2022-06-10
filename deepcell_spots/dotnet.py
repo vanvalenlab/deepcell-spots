@@ -42,11 +42,12 @@ def default_heads(input_shape, num_classes):
     Create a list of the default heads for spot detection.
 
     Args:
-        input_shape
-        num_classes
+        input_shape (tuple): Shape of input image.
+        num_classes (int): Number of output features (number of possible classes
+            for each pixel).
 
     Returns:
-        list(tuple): A list of tuple, where the first element is the name of
+        list(tuple): A list of tuples, where the first element is the name of
             the submodel and the second element is the submodel itself.
     """
     return [
@@ -66,14 +67,16 @@ def classification_head(input_shape,
     """Creates a classification head.
 
     Args:
+        input_shape (tuple): Shape of input image.
         n_features (int): Number of output features (number of possible classes
-            for each pixel).
-        default is 2: contains point / does not contain point)
-        reg (int): regularization value
+            for each pixel). Default is 2: contains point / does not contain
+            point).
+        n_dense_filters (int)
+        reg (float): Regularization value
         init (str): Method for initalizing weights.
 
     Returns:
-        tensorflow.keras.Model for classification (softmax output)
+        tensorflow.keras.Model for classification (softmax output).
     """
 
     channel_axis = 1 if K.image_data_format() == 'channels_first' else -1
@@ -95,6 +98,15 @@ def classification_head(input_shape,
 def offset_regression_head(input_shape,
                            regression_feature_size=256,
                            name='offset_regression_head'):
+    """Creates a offset regression head.
+
+    Args:
+        input_shape (tuple): Shape of input image.
+        regression_feature_size(int)
+
+    Returns:
+        tensorflow.keras.Model for offset regression.
+    """
 
     options = {
         'kernel_size': 3,
@@ -131,6 +143,24 @@ def dot_net_2D(receptive_field=13,
                norm_method='std',
                padding_mode='reflect',
                **kwargs):
+    """Creates a 2D featurenet with prediction heads for spot detection.
+
+    Model architecture based on ``deepcell.model_zoo.bn_feature_net_skip_2D``.
+
+    Args:
+        receptive_field (int): the receptive field of the neural network.
+        input_shape (tuple): Shape of input image.
+        inputs (tensor): optional input tensor
+        n_skips (int): The number of skip-connections.
+        norm_method (str): Normalization method to use with the
+            :mod:``deepcell.layers.normalization.ImageNormalization2D`` layer.
+        padding_mode (str): Type of padding, one of `('reflect' or 'zero')`.
+        kwargs (dict): Other model options defined in ``~bn_feature_net_2D``.
+
+    Returns:
+        tensorflow.keras.Model: 2D FeatureNet with prediction heads for spot
+        detection.
+    """
 
     inputs = Input(shape=input_shape)
 
