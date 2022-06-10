@@ -45,7 +45,7 @@ MODEL_PATH = ('https://deepcell-data.s3-us-west-1.amazonaws.com/'
 
 def output_to_dictionary(output_images, output_names):
     """Formats model output from list to dictionary.
-    
+
     Args:
         output_images (list): Model output list of length 2 containing
             classification prediction and regression prediction
