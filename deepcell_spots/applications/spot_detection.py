@@ -50,29 +50,29 @@ def output_to_dictionary(output_images, output_names):
 class SpotDetection(Application):
     """Loads a :mod:`deepcell.model_zoo.featurenet.FeatureNet` model
     for fluorescent spot detection with pretrained weights.
-    
+
     The ``predict`` method handles prep and post processing steps
     to return a list of spot locations.
-    
+
     Example:
-    
+
     .. code-block:: python
         from skimage.io import imread
         from deepcell_spots.applications import SpotDetection
-        
+
         # Load the image
         im = imread('spots_image.png')
-        
+
         # Expand image dimensions to rank 4
         im = np.expand_dims(im, axis=-1)
         im = np.expand_dims(im, axis=0)
-        
+
         # Create the application
         app = SpotDetection()
-        
+
         # Find spot locations
         coords = app.predict(im)
-    
+
     Args:
         model (tf.keras.Model): The model to load. If ``None``,
             a pre-trained model will be downloaded.
@@ -177,11 +177,12 @@ class SpotDetection(Application):
         """Generates a list of coordinate spot locations of the input running
         prediction with appropriate pre and post processing functions.
         This differs from parent Application class which returns a labeled image.
-        
+
         Input images are required to have 4 dimensions
-        ``[batch, x, y, channel]``. Additional empty dimensions can be added
-        using ``np.expand_dims``.
-        
+        ``[batch, x, y, channel]``.
+
+        Additional empty dimensions can be added using ``np.expand_dims``.
+
         Args:
             image (numpy.array): Input image with shape
                 ``[batch, x, y, channel]``.
@@ -191,12 +192,12 @@ class SpotDetection(Application):
                 pre-processing function.
             postprocess_kwargs (dict): Keyword arguments to pass to the
                 post-processing function.
-        
+
         Raises:
             ValueError: Input data must match required rank, calculated as one
                 dimension more (batch dimension) than expected by the model.
             ValueError: Input data must match required number of channels.
-        
+
         Returns:
             numpy.array: Coordinate spot locations
         """
@@ -233,12 +234,12 @@ class SpotDetection(Application):
         """Generates a list of coordinate spot locations of the input
         running prediction with appropriate pre and post processing
         functions.
-        
+
         Input images are required to have 4 dimensions
         ``[batch, x, y, channel]``.
-        
+
         Additional empty dimensions can be added using ``np.expand_dims``.
-        
+
         Args:
             image (numpy.array): Input image with shape
                 ``[batch, x, y, channel]``.
@@ -251,14 +252,14 @@ class SpotDetection(Application):
             threshold (float): Probability threshold for a pixel to be
                                 considered as a spot.
             clip (bool): Determines if pixel values will be clipped by percentile.
-        
+
         Raises:
             ValueError: Input data must match required rank of the application,
                 calculated as one dimension more (batch dimension) than
                 expected by the model.
             ValueError: Input data must match required number of channels.
             ValueError: Threshold value must be between 0 and 1.
-        
+
         Returns:
             numpy.array: Coordinate locations of detected spots.
         """
