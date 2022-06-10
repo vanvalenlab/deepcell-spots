@@ -204,7 +204,7 @@ autodoc_mock_imports = [
     'tensorflow',
     'jupyter',
     'networkx',
-    'opencv-python-headless',
+    'cv2',
     'deepcell',
     'deepcell_toolbox',
     'tqdm',
