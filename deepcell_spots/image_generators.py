@@ -251,6 +251,7 @@ class ImageFullyConvDotDataGenerator(ImageDataGenerator):
         zca_whitening (bool): Whether to apply ZCA whitening.
         rotation_range (int): Degree range for random rotations.
         width_shift_range: float, 1-D array-like or int.
+            Values for the following formats:
                 - float: fraction of total width, if < 1, or pixels if >= 1.
                 - 1-D array-like: random elements from the array.
                 - int: integer number of pixels from interval
