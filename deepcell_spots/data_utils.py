@@ -110,8 +110,8 @@ def slice_annotated_image(X, y, reshape_size, overlap=0):
         (array, list): Two outputs (1) Stack of reshaped images in order of
         small to large y position, then small to large x position in the
         original image `np.array` of size `(n*img_number, y_size, x_size, channel)`
-        where `n` is number of images each image in `X` was sliced into if the
-        original image lengths aren't divisible by y_size, x_size, the last image
+        where `n` is number of images each image in `X` was sliced into. If the
+        original image lengths aren't divisible by `y_size`, `x_size`, the last image
         in each row / column overlaps with the one before and (2) list of length
         `n*img_number`.
     """
