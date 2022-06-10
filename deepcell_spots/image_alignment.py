@@ -41,7 +41,7 @@ def read_images(root_dir, dataorg, verbose=True):
         dataorg (pandas.DataFrame): Data frame with required columns `'fileName'` (item in
             image_files), `'readoutName'` (unique ID name given to each channel in each image),
             `'fiducialFrame'` (frame number for image to be used for alignment), `'cytoplasmFrame'`
-            (frame number for image to be used for cell segmentation)
+            (frame number for image to be used for cell segmentation).
         verbose (bool, optional): Boolean determining if file names are printed as they are
             processed. Defaults to ``True``.
 
@@ -52,7 +52,7 @@ def read_images(root_dir, dataorg, verbose=True):
         fiducial channel (image used for alignment) for each readout name (multiple readout names
         may have the same). `cytoplasm_dict` is a dictionary where keys are image IDs
         (`'readoutName'`) and values are cytoplasm label image for each readout name (multiple
-        readout names may have the same)
+        readout names may have the same).
     """
 
     max_im_dict = {}
@@ -119,15 +119,15 @@ def align_images(image_dict, reference_dict):
 
     Args:
         image_dict (dict): Dictionary where keys are image IDs (`'readoutName'`) and values are
-            images to be aligned for each readout name
+            images to be aligned for each readout name.
         reference_dict (dict): Dictionary where keys are image IDs (`'readoutName'`) and values are
             fiducial channel (image used for alignment) for each readout name (multiple readout
-            names may have the same reference image)
+            names may have the same reference image).
 
     Returns:
         aligned_dict (dict): Dictionary where keys are image IDs (`'readoutName'`) and values are
             images from `image_dict` that have been aligned by transformations learned from
-            images from `reference_dict`
+            images from `reference_dict`.
     """
 
     aligned_dict = {}
@@ -187,11 +187,11 @@ def crop_images(aligned_dict):
 
     Args:
         aligned_dict (dict): Dictionary where keys are image IDs (`'readoutName'`) and values are
-            images from `image_dict` that have been aligned with `align_images`
+            images from `image_dict` that have been aligned with `align_images`.
     Returns:
         crop_dict (dict): Dictionary where keys are image IDs (`'readoutName'`) and values are
             images from `image_dict` that have been aligned with `align_images` with zero-value
-            pixels cropped out
+            pixels cropped out.
     """
     crop_dict = {}
 
