@@ -7,18 +7,18 @@
 [![PyPi Monthly Downloads](https://img.shields.io/pypi/dm/deepcell-spots)](https://pypistats.org/packages/deepcell-spots)
 [![Python Versions](https://img.shields.io/pypi/pyversions/deepcell-spots.svg)](https://pypi.org/project/deepcell-spots/)
 
-`deepcell-spots` is a deep learning library for fluorescent spot detection image analysis. It allows you to apply pre-existing models and train new deep learning models for spot detection. It is written in Python and built using [TensorFlow](https://github.com/tensorflow/tensorflow), [Keras](https://www.tensorflow.org/guide/keras) and [DeepCell](https://github.com/vanvalenlab/deepcell-tf).
+`deepcell-spots` is a deep learning library for fluorescent spot detection image analysis. It allows you to apply pre-existing models and train new deep learning models for spot detection. It is written in Python and built using [TensorFlow](https://github.com/tensorflow/tensorflow), [Keras](https://www.tensorflow.org/guide/keras) and [DeepCell](https://github.com/vanvalenlab/deepcell-tf). More detailed documentation is available [here](https://deepcell-spots.readthedocs.io/).
 
 ## DeepCell Spots Application
 
-`deepcell-spots` contains an application that greatly simplifies the implementation of deep learning models for spot detection. `deepcell-spots.applications` contains a pre-trained model for fluorescent spot detection on images derived from assays such as RNA FISH and in-situ sequencing. This model returns a list of coordinate locations for fluorescent spots detected in the input image.
+`deepcell-spots` contains an applications that greatly simplify the implementation of deep learning models for spot detection. `deepcell-spots.applications.SpotDetection` contains a pre-trained model for fluorescent spot detection on images derived from assays such as RNA FISH and in-situ sequencing. This model returns a list of coordinate locations for fluorescent spots detected in the input image. `deepcell-spots.applications.Polaris` pairs this spot detection model with [DeepCell](https://github.com/vanvalenlab/deepcell-tf) models for nuclear and cytoplasmic segmentation.
 
 ### How to Use
 
 ```python
-from deepcell_spots.applications import Polaris
+from deepcell_spots.applications import SpotDetection
 
-app = Polaris()
+app = SpotDetection()
 # image is an np array with dimensions (batch,x,y,channel)
 # threshold is the probability threshold that a pixel must exceed to be considered a spot
 coords = app.predict(image,threshold=0.9)
