@@ -336,7 +336,7 @@ def gene_counts_DBSCAN(spots_to_cells_dict, codebook, threshold, error_corr=True
 
 def error_correction(barcode, codebook_dict):
     """Corrects barcodes that have no match in codebook.
-    
+
     To be assigned, a barcode may have a maximum of one bit flipped
     (Hamming distance of one) from input barcode.
 

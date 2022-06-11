@@ -268,10 +268,10 @@ class ImageFullyConvDotDataGenerator(ImageDataGenerator):
         fill_mode (str): One of `("constant", "nearest", "reflect" or "wrap")`.
             Default is `"nearest"`. Points outside the boundaries of the input
             are filled according to the given mode:
-                - 'constant': kkkkkkkk|abcd|kkkkkkkk (cval=k)
-                - 'nearest':  aaaaaaaa|abcd|dddddddd
-                - 'reflect':  abcddcba|abcd|dcbaabcd
-                - 'wrap':  abcdabcd|abcd|abcdabcd
+                - `'constant'`: kkkkkkkk|abcd|kkkkkkkk (cval=k)
+                - `'nearest'`:  aaaaaaaa|abcd|dddddddd
+                - `'reflect'`:  abcddcba|abcd|dcbaabcd
+                - `'wrap'`:  abcdabcd|abcd|abcdabcd
         cval: float or int, value used for points outside the boundaries
             when `fill_mode = "constant"`.
         horizontal_flip (bool): Whether to randomly flip inputs horizontally.
