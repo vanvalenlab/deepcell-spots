@@ -24,5 +24,7 @@
 # limitations under the License.
 # ==============================================================================
 
+"""Applications for pre-trained spot detection models"""
+
 from deepcell_spots.applications.spot_detection import SpotDetection
 from deepcell_spots.applications.polaris import Polaris

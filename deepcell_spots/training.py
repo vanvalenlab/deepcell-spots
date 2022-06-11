@@ -70,12 +70,13 @@ def train_model_dot(model,
                     cval=0.,
                     **kwargs):
     """Train a dot center detection model using fully convolutional mode.
+
         Args:
             model (tensorflow.keras.Model): The model to train.
             dataset (str): Path to a dataset to train the model with.
             expt (str): Experiment, substring to include in model name.
             test_size (float): Percent of data to leave as test data.
-            seed (int): Random seed used for train-test split
+            seed (int): Random seed used for train-test split.
             n_epoch (int): Number of training epochs.
             batch_size (int): Number of batches per training step.
             num_gpus (int): The number of GPUs to train on.
@@ -87,20 +88,22 @@ def train_model_dot(model,
             focal (bool): If true, uses focal loss.
             sigma (float): The point where the loss changes from L2 to L1.
             alpha (float): Scale the focal weight with alpha.
-            gamma (float): Parameter for focal loss (Take the power of the focal weight with gamma.)
-            optimizer (object): Pre-initialized optimizer object (SGD, Adam, etc.)
-            lr_sched (function): Learning rate scheduler function
-            rotation_range (int): Maximum rotation range for image augmentation
-            flip (bool): Enables horizontal and vertical flipping for augmentation
-            shear (int): Maximum shear range for image augmentation
-            zoom_range (tuple): Minimum and maximum zoom values (0.8, 1.2)
+            gamma (float): Parameter for focal loss (Take the power of the focal
+                weight with gamma.).
+            optimizer (object): Pre-initialized optimizer object (SGD, Adam, etc.).
+            lr_sched (function): Learning rate scheduler function.
+            rotation_range (int): Maximum rotation range for image augmentation.
+            flip (bool): Enables horizontal and vertical flipping for augmentation.
+            shear (int): Maximum shear range for image augmentation.
+            zoom_range (tuple): Minimum and maximum zoom values `(0.8, 1.2)`.
             fill_mode (str): padding style for data augmentation (input parameter of
-                            tf.keras.preprocessing.image.ImageDataGenerator)
-            cval (float or int): used for pixels outside the boundaries of the input image when
-                            fill_mode='constant'
-            kwargs (dict): Other parameters to pass to _transform_masks
+                ``tf.keras.preprocessing.image.ImageDataGenerator``).
+            cval (float or int): used for pixels outside the boundaries of the input
+                image when ``fill_mode='constant'``.
+            kwargs (dict): Other parameters to pass to ``_transform_masks``.
+
         Returns:
-            tensorflow.keras.Model: The trained model
+            tensorflow.keras.Model: The trained model.
     """
 
     is_channels_first = K.image_data_format() == 'channels_first'

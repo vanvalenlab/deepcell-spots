@@ -46,23 +46,23 @@ def sum_of_min_distance(pts1, pts2, normalized=False):
     https://link.springer.com/article/10.1007/s002360050075
 
     Args:
-        pts1 ((N1,d) numpy.array): set of N1 points in d dimensions
-        pts2 ((N2,d) numpy.array): set of N2 points in d dimensions
-            each row of pts1 and pts2 should be the coordinates of a single
-            d-dimensional point
-        normalized (bool): if true, each sum will be normalized by the number
+        pts1 (array): Array of shape `(N1,d)`, set of `N1` points in `d` dimensions.
+        pts2 (array): Array of shape `(N2,d)`, set of `N2` points in `d` dimensions.
+            Each row of `pts1` and `pts2` should be the coordinates of a single
+            d-dimensional point.
+        normalized (bool): If ``True``, each sum will be normalized by the number
             of elements in it, resulting in an intensive distance measure which
-            doesn't scale like the number of points
+            doesn't scale like the number of points.
 
     Returns:
         float: the sum of minimal distance between point sets X and Y,
-            defined as:
-            d(X,Y) = 1/2 * (sum over x in X of min on y in Y of d(x,y)
-            + sum over y in Y of min on x in X of d(x,y))
-            = 1/2( sum over x in X of d(x,Y) + sum over y in Y of d(X,y))
-            where d(x,y) is the Euclidean distance
-            Note that this isn't a metric in the mathematical sense
-            (it doesn't satisfy the triangle inequality)
+        defined as:
+        d(X,Y) = 1/2 * (sum over x in X of min on y in Y of d(x,y)
+        + sum over y in Y of min on x in X of d(x,y))
+        = 1/2( sum over x in X of d(x,Y) + sum over y in Y of d(X,y))
+        where d(x,y) is the Euclidean distance
+        Note that this isn't a metric in the mathematical sense
+        (it doesn't satisfy the triangle inequality)
     """
 
     if len(pts1) == 0 or len(pts2) == 0:
@@ -87,12 +87,13 @@ def match_points_min_dist(pts1, pts2, threshold=None):
     the Euclidean distances between matched points from each set.
 
     Args:
-        pts1 ((N1,d) numpy.array): a set of N1 points in d dimensions
-        pts2 ((N2,d) numpy.array): a set of N2 points in d dimensions
-            where N1/N2 is the number of points and d is the dimension
-        threshold (float): a distance threshold for matching two points.
+        pts1 (array): Array of shape `(N1,d)`, set of `N1` points in `d` dimensions.
+        pts2 (array): Array of shape `(N2,d)`, set of `N2` points in `d` dimensions.
+            Each row of `pts1` and `pts2` should be the coordinates of a single
+            d-dimensional point.
+        threshold (float): A distance threshold for matching two points.
             Points that are more than the threshold distance apart,
-            cannot be matched
+            cannot be matched.
 
     Returns:
         (numpy.array, numpy.array): An array of row indices and one of
@@ -140,12 +141,13 @@ def match_points_mutual_nearest_neighbor(pts1, pts2, threshold=None):
     of points are mutual nearest neighbors.
 
     Args:
-        pts1 ((N1,d) numpy.array): a set of N1 points in d dimensions
-        pts2 ((N2,d) numpy.array): a set of N2 points in d dimensions
-            where N1/N2 is the number of points and d is the dimension
-        threshold (float): a distance threshold for matching two points.
+        pts1 (array): Array of shape `(N1,d)`, set of `N1` points in `d` dimensions.
+        pts2 (array): Array of shape `(N2,d)`, set of `N2` points in `d` dimensions.
+            Each row of `pts1` and `pts2` should be the coordinates of a single
+            d-dimensional point.
+        threshold (float): A distance threshold for matching two points.
             Points that are more than the threshold distance apart,
-            cannot be matched
+            cannot be matched.
 
     Returns:
         (numpy.array, numpy.array): An array of row indices and one of
@@ -186,31 +188,33 @@ def point_precision(points_true,
                     points_pred,
                     threshold,
                     match_points_function=match_points_mutual_nearest_neighbor):
-    """Calculates the precision, tp/(tp + fp), of point detection using the
+    """Calculates the precision, `tp/(tp + fp)`, of point detection using the
     following definitions:
 
-    true positive (tp) = a predicted dot p with a matching true dot t,
+    true positive (`tp`) = a predicted dot p with a matching true dot t,
     where the matching between predicted and true points is such that the
     total distance between matched points is minimized, and points can be
     matched only if the distance between them is smaller than the threshold.
-    Otherwise, the predicted dot is a false positive (fp).
+    Otherwise, the predicted dot is a false positive (`fp`).
 
     The precision is equal to:
     ``(the number of true positives) / (total number of predicted points)``
 
     Args:
-        points_true ((N1,d) numpy.array): ground truth points for a single image
-        points_pred ((N2,d) numpy.array): predicted points for a single image
-            where N1/N2 is the number of points and d is the dimension
-        threshold (float): a distance threshold used in the definition of tp and fp
-        match_points_function: a function that matches points in two sets,
-            and has three parameters: pts1, pts2, threshold -
+        pts1 (array): Array of shape `(N1,d)`, set of `N1` points in `d` dimensions.
+        pts2 (array): Array of shape `(N2,d)`, set of `N2` points in `d` dimensions.
+            Each row of `pts1` and `pts2` should be the coordinates of a single
+            d-dimensional point.
+        threshold (float): A distance threshold used in the definition of `tp`
+            and `fp`.
+        match_points_function: A function that matches points in two sets,
+            and has three parameters: `pts1`, `pts2`, `threshold` -
             two sets of points, and a threshold distance for allowing a match
             supported matching functions are ``match_points_min_dist``,
-            ``match_points_mutual_nearest_neighbor``
+            ``match_points_mutual_nearest_neighbor``.
 
     Returns:
-        float: the precision as defined above (a number between 0 and 1)
+        float: the precision as defined above (a number between 0 and 1).
     """
     if len(points_true) == 0 or len(points_pred) == 0:
         return 0
@@ -230,31 +234,32 @@ def point_recall(points_true,
                  points_pred,
                  threshold,
                  match_points_function=match_points_mutual_nearest_neighbor):
-    """Calculates the precision, tp/(tp + fp), of point detection using the
+    """Calculates the recall, tp/(tp + fn), of point detection using the
     following definitions:
 
-    true positive (tp) = a predicted dot p with a matching true dot t,
+    true positive (`tp`) = a predicted dot p with a matching true dot t,
     where the matching between predicted and true points is such that the
     total distance between matched points is minimized, and points can be
     matched only if the distance between them is smaller than the threshold.
-    Otherwise, the predicted dot is a false positive (fp).
+    Otherwise, the true dot is a false negative (`fn`).
 
-    The precision is equal to:
-    ``(the number of true positives) / (total number of predicted points)``
+    The recall is equal to:
+    ``(the number of true positives) / (total number of true points)``
 
     Args:
-        points_true ((N1,d) numpy.array): ground truth points for a single image
-        points_pred ((N2,d) numpy.array): predicted points for a single image
-            where N1/N2 is the number of points and d is the dimension
-        threshold (float): a distance threshold used in the definition of tp and fp
-        match_points_function: a function that matches points in two sets,
-            and has three parameters: pts1, pts2, threshold -
+        pts1 (array): Array of shape `(N1,d)`, set of `N1` points in `d` dimensions.
+        pts2 (array): Array of shape `(N2,d)`, set of `N2` points in `d` dimensions.
+            Each row of `pts1` and `pts2` should be the coordinates of a single
+            d-dimensional point.
+        threshold (float): A distance threshold used in the definition of `tp` and `fn`.
+        match_points_function: A function that matches points in two sets,
+            and has three parameters: `pts1`, `pts2`, `threshold` -
             two sets of points, and a threshold distance for allowing a match
             supported matching functions are ``match_points_min_dist``,
-            ``match_points_mutual_nearest_neighbor``
+            ``match_points_mutual_nearest_neighbor``.
 
     Returns:
-        float: the precision as defined above (a number between 0 and 1)
+        float: the recall as defined above (a number between 0 and 1).
     """
     if len(points_true) == 0 or len(points_pred) == 0:
         return 0
@@ -276,22 +281,26 @@ def point_F1_score(points_true,
                    match_points_function=match_points_mutual_nearest_neighbor):
     """Calculates the F1 score of dot detection using the following definitions:
 
-    F1 score = 2*p*r / (p+r)
-    where
-    p = precision = (the number of true positives) / (total number of predicted points)
-    r = recall = (the number of true positives) / (total number of true points)
+    The F1 score is equal to:
+    ``F1 score = 2*p*r / (p+r)``
+    where the precision is equal to:
+    ``(the number of true positives) / (total number of predicted points)``
+    and the recall is equal to:
+    ``(the number of true positives) / (total number of true points)``
     and
-    true positive (tp) = a predicted dot p with a matching true dot t,
+    true positive (`tp`) = a predicted dot p with a matching true dot t,
     where the matching between predicted and true points is such that the total
     distance between matched points is minimized, and points can be matched
     only if the distance between them is smaller than the threshold.
-    Otherwise, the predicted dot is a false positive (fp).
+    Otherwise, the predicted dot is a false positive (`fp`) and the true dot is a
+    false negative (`fn`).
 
     Args:
-        points_true ((N1,d) numpy.array): ground truth points for a single image
-        points_pred ((N2,d) numpy.array): predicted points for a single image
-            where N1/N2 is the number of points and d is the dimension
-        threshold (float): a distance threshold used in the definition of tp and fp
+        pts1 (array): Array of shape `(N1,d)`, set of `N1` points in `d` dimensions.
+        pts2 (array): Array of shape `(N2,d)`, set of `N2` points in `d` dimensions.
+            Each row of `pts1` and `pts2` should be the coordinates of a single
+            d-dimensional point.
+        threshold (float): A distance threshold used in the definition of `tp` and `fp`.
 
     Returns:
         float: the F1 score as defined above (a number between 0 and 1)
@@ -308,13 +317,15 @@ def stats_points(points_true,
                  points_pred,
                  threshold,
                  match_points_function=match_points_mutual_nearest_neighbor):
-    """Calculates point-based statistics
-    (precision, recall, F1, JAC, RMSE, d_md)
+    """Calculates point-based statistics (precision, recall, F1, JAC, RMSE, d_md).
+
     Args:
-        points_true ((N1,d) numpy.array): ground truth points for a single image
-        points_pred ((N2,d) numpy.array): predicted points for a single image
-            where N1/N2 is the number of points and d is the dimension
-        threshold (float): a distance threshold used in the definition of tp and fp
+        pts1 (array): Array of shape `(N1,d)`, set of `N1` points in `d` dimensions.
+        pts2 (array): Array of shape `(N2,d)`, set of `N2` points in `d` dimensions.
+            Each row of `pts1` and `pts2` should be the coordinates of a single
+            d-dimensional point.
+        threshold (float): A distance threshold used in the definition of `tp` and `fp`.
+
     Returns:
         dictionary: containing the calculated statistics
     """
@@ -382,12 +393,18 @@ def stats_points(points_true,
 
 
 def get_mean_stats(y_test, y_pred, threshold=0.98, d_thresh=1):
-    # decision_function: a postprocessing function with inputs y_pred, ind, threshold
-    # this is a function that performs postprocessing on the output of the neural net for the image
-    # ind in the batch,
-    # and returns a decision for the list of coordinates of spot centers
-    # d_thresh = 2 # distance in pixels for precision quantification
-    # threshold = 0.95 # threshold for classification
+    """Calculates the precision, recall, F1 score, and sum of min distances
+    for stack of predictions.
+
+    Args:
+        y_test (array): Array of shape `(N1,d),` set of `N1` points in `d` dimensions.
+        y_pred (array): A batch of predictions, of the format: `y_pred[annot_type][ind]`
+            is an annotation for image ind in the batch where annot_type = 0
+            or 1: 0 - `classification` (from classification head),
+            1 - `offset_regression` (from regression head).
+        threshold (float): Probability threshold for determining spot locations.
+        d_thresh (float): A distance threshold used in the definition of `tp` and `fp`.
+    """
     n_test = len(y_test)  # number of test images
 
     d_md_list = [None] * n_test
@@ -397,7 +414,6 @@ def get_mean_stats(y_test, y_pred, threshold=0.98, d_thresh=1):
 
     y_pred = y_annotations_to_point_list_max(y_pred, threshold)
     for ind in range(n_test):  # loop over test images
-        # y_pred_ind = y_annotations_to_point_list(y_pred_test, ind, threshold)
         s = stats_points(y_test[ind], y_pred[ind], threshold=d_thresh)
         d_md_list[ind] = s['d_md']
         precision_list[ind] = s['precision']
@@ -417,18 +433,18 @@ def model_benchmarking(pred, coords, threshold, min_distance):
     square error, and sum of min distances for stack of predictions.
 
     Args:
-        pred: a batch of predictions, of the format: y_pred[annot_type][ind]
+        pred (array): A batch of predictions, of the format: `y_pred[annot_type][ind]`
             is an annotation for image ind in the batch where annot_type = 0
-            or 1: 0 - contains_dot (from classification head),
-            1 - offset matrices (from regression head)
-        coords: nested list of coordinate locations for ground truth spots
-            from a single annotator
-        threshold: a number in [0, 1]. Pixels with classification
-            score > threshold are considered containing a spot center,
+            or 1: 0 - `classification` (from classification head),
+            1 - `offset_regression` (from regression head).
+        coords (list): Nested list of coordinate locations for ground truth spots
+            from a single annotator.
+        threshold (float): A number in ``[0, 1]``. Pixels with classification
+            score > `threshold` are considered containing a spot center,
             and their corresponding regression values will be used to create a
             final spot position prediction which will be added to the output
             spot center coordinates list.
-        min_distance: the minimum distance between detected spots in pixels
+        min_distance (float): The minimum distance between detected spots in pixels
 
     Returns:
         list: values for the precision of the predicted spot numbers

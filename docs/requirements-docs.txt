@@ -1,0 +1,10 @@
+m2r
+mock==3.0.5
+Sphinx==2.3.1
+docutils==0.16
+ipython
+nbsphinx
+nbsphinx-link
+sphinx-rtd-theme
+# Jinja2 imports for sphinx are deprecated over 3.1
+Jinja2<3.1

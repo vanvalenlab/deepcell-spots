@@ -49,12 +49,12 @@ def calc_tpr_fpr(gt, data):
         an undetected cluster.
 
     Returns:
-        float: Value for the true positive rate of an annotator.
-            This is the probability that an annotator will detect a spot that
-            is labeled as a ground truth true detection.
-        float: Value for the false positive rate of an annotator.
-            This is the probability that an annotator will detect a spot that
-            is labeled as a ground truth false detection.
+        (float, float): (1) Value for the true positive rate of an annotator.
+        This is the probability that an annotator will detect a spot that
+        is labeled as a ground truth true detection. (2) Value for the false
+        positive rate of an annotator. This is the probability that an
+        annotator will detect a spot that is labeled as a ground truth false
+        detection.
     """
     tp = 0
     fn = 0
@@ -82,7 +82,7 @@ def calc_tpr_fpr(gt, data):
 
 def det_likelihood(cluster_data, pr_list):
     """Calculate the likelihood that a cluster is a true positive or false
-    positive. To calculate the likelihood of a true positive, pr_list should
+    positive. To calculate the likelihood of a true positive, `pr_list` should
     be a list of TPRs for all annotators. To calculate the likelihood of a
     cluster being a false positive, pr_list should be a list of FPRs for all
     annotators.
@@ -102,7 +102,7 @@ def det_likelihood(cluster_data, pr_list):
 
     Returns:
         float: Value for the likelihood that a cluster is either a true positive
-            or a false positive detection.
+        or a false positive detection.
     """
     likelihood = 1  # init likelihood
 
@@ -126,10 +126,9 @@ def norm_marg_likelihood(cluster_data, tp_list, fp_list, prior):
         fp_list (array): Array of false postive rates for each annotator.
 
     Returns:
-        float: Value for the normalized marginal likelihood that a cluster is
-            either a true positive detection
-        float: Value for the normalized marginal likelihood that a cluster is
-            either a false positive detection
+        (float, float): (1) Value for the normalized marginal likelihood that
+        a cluster is either a true positive detection (2) Value for the normalized
+        marginal likelihood that a cluster is either a false positive detection.
     """
     tp_likelihood = det_likelihood(cluster_data, tp_list)
     fp_likelihood = det_likelihood(cluster_data, fp_list)
@@ -148,19 +147,19 @@ def define_edges(coords_df, threshold):
     spots are derived from the same ground truth spot in the original image.
 
     Args:
-        coords (DataFrame): Data frame with columns 'x' and 'y' which encode the
-            spot locations and 'Algorithm' which encodes the algorithm that
+        coords (DataFrame): ``Dataframe`` with columns `'x'` and `'y'` which encode the
+            spot locations and `'Algorithm'` which encodes the algorithm that
             corresponds with that spot
         threshold (float): The distance in pixels. Detections closer than the
-            threshold distance will be grouped into a "cluster" of detections,
+            threshold distance will be grouped into a cluster of detections,
             assumed to be derived from the same ground truth detection.
 
     Returns:
-        numpy.array: Matrix of dimensions (number of detections) x (number of
-            detections) defining edges of a graph clustering detections by
-            detections from different annotators derived from the same ground
-            truth detection. A value of 1 denotes two connected nodes in the
-            eventual graph and a value of 0 denotes disconnected nodes.
+        numpy.array: Matrix of dimensions ``(number of detections) x (number of
+        detections)`` defining edges of a graph clustering detections by
+        detections from different annotators derived from the same ground
+        truth detection. A value of 1 denotes two connected nodes in the
+        eventual graph and a value of 0 denotes disconnected nodes.
     """
     if not all(col in coords_df.columns for col in ['x', 'y', 'Algorithm']):
         raise NameError('coords_df must be a Pandas dataframe with columns'
@@ -213,13 +212,11 @@ def em_spot(cluster_matrix, tp_list, fp_list, prior=0.9, max_iter=10):
             TPR and FPR of the annotators.
 
     Returns:
-        tp_list (array): Array of final estimates for the true positive rates
-            for each annotator.
-        fp_list (array): Array of final estimates for the false postitive rates
-            for each annotator.
-        likelihood_matrix (matrix): Matrix of probabilities that each cluster
-            is a true detection (column 0) or false detection (column 1).
-            Dimensions spots x 2.
+        (array, array, matrix): (1) Array of final estimates for the true
+        positive rates for each annotator. (2) Array of final estimates for the
+        false postitive rates for each annotator. (3) Matrix of probabilities
+        that each cluster is a true detection (column 0) or false detection
+        (column 1). Dimensions `(spots x 2)`.
     """
 
     likelihood_matrix = np.zeros((len(cluster_matrix), 2))
@@ -272,16 +269,16 @@ def em_spot(cluster_matrix, tp_list, fp_list, prior=0.9, max_iter=10):
 
 
 def load_coords(coords_dict):
-    """Loads a dictionary of coordinate spot locations into a Pandas DataFrame
+    """Loads a dictionary of coordinate spot locations into a ``DataFrame``.
 
     Args:
         coords_dict (dictionary): Dictionary in which keys are names of spot
             detection algorithms and values are coordinate locations of spots
             detected with each algorithm. Coordinates are nested list (length
-            is numer of images) of lists (shape=(number spots, 2)).
+            is number of images) of lists of shape ``(number spots, 2)``.
 
     Returns:
-        coords_df (DataFrame): Dataframe containing algorithm, image, and location
+        coords_df (DataFrame): ``Dataframe`` containing algorithm, image, and location
             information about each cluster.
     """
     coords_df = pd.DataFrame(columns=['Algorithm', 'Image', 'x', 'y', 'Cluster'])
@@ -313,13 +310,13 @@ def cluster_coords(coords_df, threshold=1.5):
     new clusters.
 
     Args:
-        coords_df (DataFrame): Dataframe containing algorithm, image, and location
-            information about each cluster.
+        coords_df (DataFrame): ``Dataframe`` containing algorithm, image, and
+            location information about each cluster.
         threshold (float): Distance in pixels below which detections will be
             grouped into clusters.
 
     Returns:
-        coords_df (DataFrame): Dataframe containing algorithm, image, location,
+        coords_df (DataFrame): ``Dataframe`` containing algorithm, image, location,
             and cluster information about each cluster.
     """
     images = coords_df['Image'].unique()
@@ -415,18 +412,18 @@ def predict_cluster_probabilities(coords_df, tpr_dict, fpr_dict, prior=0.9, max_
     positive detection.
 
     Args:
-        coords_df (DataFrame): Dataframe containing algorithm, image, location,
+        coords_df (DataFrame): ``Dataframe`` containing algorithm, image, location,
             and cluster information about each cluster.
         tpr_dict (dictionary): Dictionary in which keys are algorithm names and values
-            are estimates for TPR of each algorithm
+            are estimates for TPR of each algorithm.
         fpr_dict (dictionary): Dictionary in which keys are algorithm names and values
-            are estimates for FPR of each algorithm
+            are estimates for FPR of each algorithm.
         prior (float): Prior probability that a cluster will correspond with a true
             positive detection. Value must be between 0 and 1.
         max_iter (int): Number of iterations performed by EM algorithm.
 
     Returns:
-        coords_df (DataFrame): Dataframe containing algorithm, image, location,
+        coords_df (DataFrame): ``Dataframe`` containing algorithm, image, location,
             cluster, spot probability, and centroid information about each cluster.
     """
 

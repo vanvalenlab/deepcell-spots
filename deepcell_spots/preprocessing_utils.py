@@ -33,12 +33,14 @@ import numpy as np
 
 def mean_std_normalize(image, epsilon=1e-07):
     """Normalize image data by subtracting standard deviation pixel value
-    and dividing by mean pixel value
+    and dividing by mean pixel value.
+
     Args:
-        image (numpy.array): 4D numpy array of image data
+        image (numpy.array): 4D numpy array of image data.
         epsilon (float): fuzz factor used in numeric expressions.
+
     Returns:
-        numpy.array: normalized image data
+        numpy.array: normalized image data.
     """
     if not np.issubdtype(image.dtype, np.floating):
         logging.info('Converting image dtype to float')
@@ -58,13 +60,15 @@ def mean_std_normalize(image, epsilon=1e-07):
 
 def min_max_normalize(image, clip=False):
     """Normalize image data by subtracting minimum pixel value and
-     dividing by the maximum pixel value
+     dividing by the maximum pixel value.
+
     Args:
-        image (numpy.array): 4D numpy array of image data
+        image (numpy.array): 4D numpy array of image data.
         clip (boolean): Defaults to false. Determines if pixel
             values are clipped by percentile.
+
     Returns:
-        numpy.array: normalized image data
+        numpy.array: normalized image data.
     """
     if not np.issubdtype(image.dtype, np.floating):
         logging.info('Converting image dtype to float')
