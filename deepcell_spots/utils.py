@@ -121,7 +121,7 @@ def generate_transformation_matrix(transform_parameters, image_shape, img_row_ax
     ``tf.keras.preprocessing.image.apply_affine_transform``
     to obtain `final_affine_matrix` and `final_offset`, and returns them.
 
-    A point p in the output image of `affine_transform` corresponds to the point
+    A point `p` in the output image of `affine_transform` corresponds to the point
     `pT+s` in the input image
 
     Args:
