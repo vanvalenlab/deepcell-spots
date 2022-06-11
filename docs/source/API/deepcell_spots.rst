@@ -28,14 +28,6 @@ deepcell\_spots.data\_utils
    :undoc-members:
    :show-inheritance:
 
-deepcell\_spots.decoding\_functions
------------------------------------
-
-.. automodule:: deepcell_spots.decoding_functions
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 deepcell\_spots.dotnet
 ----------------------
 
