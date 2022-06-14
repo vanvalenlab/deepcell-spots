@@ -66,7 +66,7 @@ class FeatureNetTest(keras_parameterized.TestCase):
         },
     ])
     def test_dot_net_2D(self, padding_mode, norm_method, shape,
-                               receptive_field, data_format):
+                        receptive_field, data_format):
 
         inputs = None
         n_skips = 3
@@ -79,8 +79,7 @@ class FeatureNetTest(keras_parameterized.TestCase):
                 inputs=inputs,
                 n_skips=n_skips,
                 norm_method=norm_method,
-                padding_mode=padding_mode
-                )
+                padding_mode=padding_mode)
             self.assertEqual(len(model.output_shape), 2)
             self.assertEqual(len(model.output_shape[0]), 4)
             self.assertEqual(len(model.output_shape[1]), 4)
