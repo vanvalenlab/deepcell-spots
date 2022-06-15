@@ -148,6 +148,15 @@ class TestUtils(test.TestCase):
         self.assertEqual(np.shape(transformed_points_in_image), (num_points, 2))
         self.assertAllEqual(points, transformed_points_in_image)
 
+        # Fill with wrap
+        transformed_points_in_image = affine_transform_points(points,
+                                                              transform_parameters,
+                                                              image_shape,
+                                                              fill_mode='wrap')
+
+        self.assertEqual(np.shape(transformed_points_in_image), (num_points, 2))
+        self.assertAllEqual(points, transformed_points_in_image)
+
 
 if __name__ == '__main__':
     test.main()
