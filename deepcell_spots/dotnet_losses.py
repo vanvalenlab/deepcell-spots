@@ -35,7 +35,7 @@ from deepcell import losses
 from tensorflow.keras import backend as K
 
 
-def smooth_l1(y_true, y_pred, sigma=3.0):  # , axis=None):
+def smooth_l1(y_true, y_pred, sigma=3.0):
     """Compute the smooth L1 loss of `y_pred` w.r.t. `y_true`.
 
     Similar to ``deepcell.losses.smooth_l1`` without summation over
