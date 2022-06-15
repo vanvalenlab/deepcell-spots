@@ -24,12 +24,14 @@
 # limitations under the License.
 # ==============================================================================
 
-"""Functions for utils"""
+"""Tests for utils"""
 
 import numpy as np
 from tensorflow.python.platform import test
 
-from deepcell_spots.utils import subpixel_distance_transform
+from deepcell_spots.utils import (affine_transform_points,
+                                  generate_transformation_matrix,
+                                  subpixel_distance_transform)
 
 
 class TestUtils(test.TestCase):
@@ -54,10 +56,58 @@ class TestUtils(test.TestCase):
         self.assertEqual(np.shape(delta_x), image_shape)
         self.assertEqual(np.shape(nearest_point), image_shape)
 
-        # are more tests needed?
+    def test_generate_transformation_matrix(self):
+        transform_parameters = {
+            'theta': 0,
+            'tx': 0,
+            'ty': 0,
+            'shear': 0,
+            'zx': 1,
+            'zy': 1
+        }
 
-    # def test_generate_transformation_matrix(self):
-    #     # not sure what to test beside the shape
+        image_shape = (10, 10)
+        img_row_axis = 0
+        img_col_axis = 1
+
+        final_affine_matrix, final_offset = generate_transformation_matrix(
+            transform_parameters,
+            image_shape,
+            img_row_axis,
+            img_col_axis
+        )
+
+        # null transformation matrix
+        transform_matrix = np.array([[1, 0, 0],
+                                     [0, 1, 0],
+                                     [0, 0, 1]])
+
+        self.assertEqual(np.shape(final_affine_matrix), (2, 2))
+        self.assertEqual(len(final_offset), 2)
+        self.assertAllEqual(final_affine_matrix, transform_matrix[:2, :2])
+        self.assertAllEqual(final_offset, transform_matrix[:2, 2])
+
+    def test_affine_transform_points(self):
+        num_points = 10
+        points = np.random.randint(low=0, high=10, size=(num_points, 2))
+
+        transform_parameters = {
+            'theta': 0,
+            'tx': 0,
+            'ty': 0,
+            'shear': 0,
+            'zx': 1,
+            'zy': 1
+        }
+
+        image_shape = (10, 10)
+
+        transformed_points_in_image = affine_transform_points(points,
+                                                              transform_parameters,
+                                                              image_shape)
+
+        self.assertEqual(np.shape(transformed_points_in_image), (num_points, 2))
+        self.assertAllEqual(points, transformed_points_in_image)
 
 
 if __name__ == '__main__':
