@@ -87,6 +87,34 @@ class TestUtils(test.TestCase):
         self.assertAllEqual(final_affine_matrix, transform_matrix[:2, :2])
         self.assertAllEqual(final_offset, transform_matrix[:2, 2])
 
+        transform_parameters = {
+            'theta': 5,
+            'tx': 1,
+            'ty': 1,
+            'shear': 5,
+            'zx': 5,
+            'zy': 5
+        }
+
+        image_shape = (10, 10)
+        img_row_axis = 0
+        img_col_axis = 1
+
+        final_affine_matrix, final_offset = generate_transformation_matrix(
+            transform_parameters,
+            image_shape,
+            img_row_axis,
+            img_col_axis
+        )
+
+        # null transformation matrix
+        transform_matrix = np.array([[1, 0, 0],
+                                     [0, 1, 0],
+                                     [0, 0, 1]])
+
+        self.assertEqual(np.shape(final_affine_matrix), (2, 2))
+        self.assertEqual(len(final_offset), 2)
+
     def test_affine_transform_points(self):
         num_points = 10
         points = np.random.randint(low=0, high=10, size=(num_points, 2))
