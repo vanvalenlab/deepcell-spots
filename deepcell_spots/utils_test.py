@@ -117,7 +117,7 @@ class TestUtils(test.TestCase):
 
     def test_affine_transform_points(self):
         num_points = 10
-        points = np.random.randint(low=0, high=10, size=(num_points, 2))
+        points = np.random.randint(low=1, high=9, size=(num_points, 2))
 
         transform_parameters = {
             'theta': 0,
@@ -130,9 +130,20 @@ class TestUtils(test.TestCase):
 
         image_shape = (10, 10)
 
+        # Fill with nearest
         transformed_points_in_image = affine_transform_points(points,
                                                               transform_parameters,
-                                                              image_shape)
+                                                              image_shape,
+                                                              fill_mode='nearest')
+
+        self.assertEqual(np.shape(transformed_points_in_image), (num_points, 2))
+        self.assertAllEqual(points, transformed_points_in_image)
+
+        # Fill with reflect
+        transformed_points_in_image = affine_transform_points(points,
+                                                              transform_parameters,
+                                                              image_shape,
+                                                              fill_mode='reflect')
 
         self.assertEqual(np.shape(transformed_points_in_image), (num_points, 2))
         self.assertAllEqual(points, transformed_points_in_image)
