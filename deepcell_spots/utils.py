@@ -141,8 +141,8 @@ def generate_transformation_matrix(transform_parameters, image_shape, img_row_ax
                 - `'zy'`: Float. Zoom in the y direction.
                 - `'flip_horizontal'`: Boolean. Horizontal flip. - NOT USED HERE
                 - `'flip_vertical'`: Boolean. Vertical flip. - NOT USED HERE
-                - `'channel_shift_intensity'`: Float. Channel shift intensity.
-                - `'brightness'`: Float. Brightness shift intensity.
+                - `'channel_shift_intensity'`: Float. Channel shift intensity. - NOT USED HERE
+                - `'brightness'`: Float. Brightness shift intensity. - NOT USED HERE
 
     Returns:
         (array, array): final_affine_matrix (2*2 matrix ,denote below: T),
