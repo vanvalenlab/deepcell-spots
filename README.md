@@ -1,6 +1,7 @@
 # DeepCell Spots
 
 [![Build Status](https://github.com/vanvalenlab/deepcell-spots/workflows/build/badge.svg)](https://github.com/vanvalenlab/deepcell-spots/actions)
+[![Documentation Status](https://readthedocs.org/projects/deepcell-spots/badge/?version=latest)](https://deepcell-spots.readthedocs.io/en/latest/?badge=latest)
 [![Coverage Status](https://coveralls.io/repos/github/vanvalenlab/deepcell-spots/badge.svg)](https://coveralls.io/github/vanvalenlab/deepcell-spots)
 [![Modified Apache 2.0](https://img.shields.io/badge/license-Modified%20Apache%202-blue)](https://github.com/vanvalenlab/deepcell-spots/blob/master/LICENSE)
 [![PyPI version](https://badge.fury.io/py/DeepCell-Spots.svg)](https://badge.fury.io/py/DeepCell-Spots)
