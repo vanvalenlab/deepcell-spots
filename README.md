@@ -54,7 +54,7 @@ It can also be helpful to mount the local copy of the repository and the noteboo
 # you can now start the docker image with the code mounted for easy editing
 docker run --gpus '"device=0"' -it \
     -p 8888:8888 \
-    -v $PWD/deepcell-spots/deepcell_spots:/usr/local/lib/python3.6/dist-packages/deepcell_spots \
+    -v $PWD/deepcell-spots/deepcell_spots:/usr/local/lib/python3.8/dist-packages/deepcell_spots \
     -v $PWD/notebooks:/notebooks \
     -v /$PWD:/data \
     $USER/deepcell-spots
