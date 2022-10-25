@@ -153,7 +153,7 @@ def label_graph_gt(G, detection_data, gt):
         for ii in range(len(detection_data[:, i])):
             if detection_data[ii, i] == 1:
                 labels.append(gt[ii])
-                
+
     for i in range(len(list(G.nodes))):
         G_new.nodes[i]['name'] = labels[i]
 
