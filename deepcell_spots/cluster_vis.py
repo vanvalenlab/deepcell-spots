@@ -49,6 +49,46 @@ def jitter(coords, size):
     return np.array(result)
 
 
+def ca_to_adjacency_matrix(ca_matrix):
+    """Converts cluster x annotator matrix to an adjacency matrix.
+
+    Args:
+        ca_matrix (matrix): Matrix of detection labels for each spot for
+            each annotator. Dimensions spots x annotators. A value of 1
+            indicates that the spot was detected by that annotator and a value
+            of 0 indicates that the spot was not detected by that annotator.
+
+    Returns:
+        numpy.array: Matrix of dimensions ``(number of detections) x (number of
+        detections)`` defining edges of a graph clustering detections by
+        detections from different annotators derived from the same ground
+        truth detection. A value of 1 denotes two connected nodes in the
+        eventual graph and a value of 0 denotes disconnected nodes.
+    """
+    num_clusters = np.shape(ca_matrix)[0]
+    num_annnotators = np.shape(ca_matrix)[1]
+    tot_det_list = np.sum(ca_matrix, axis=0)
+    tot_num_detections = int(sum(tot_det_list))
+
+    A = np.zeros((tot_num_detections, tot_num_detections))
+    for i in range(num_clusters):
+        det_list = np.ndarray.flatten(np.argwhere(ca_matrix[i] == 1))
+        combos = list(combinations(det_list, 2))
+
+        for ii in range(len(combos)):
+            ann_index0 = combos[ii][0]
+            ann_index1 = combos[ii][1]
+            det_index0 = int(
+                sum(tot_det_list[:ann_index0]) + sum(ca_matrix[:i, ann_index0]))
+            det_index1 = int(
+                sum(tot_det_list[:ann_index1]) + sum(ca_matrix[:i, ann_index1]))
+
+            A[det_index0, det_index1] += 1
+            A[det_index1, det_index0] += 1
+
+    return A
+
+
 def label_graph_ann(G, coords_df, exclude_last=False):
     """Labels the annotator associated with each node in the graph
 
@@ -110,18 +150,11 @@ def label_graph_gt(G, detection_data, gt):
 
     labels = []
     for i in range(num_annotators):
-        detections = detection_data[:, i]
+        for ii in range(len(detection_data[:, i])):
+            if detection_data[ii, i] == 1:
+                labels.append(gt[ii])
 
-        for ii in range(len(detections)):
-            if detections[ii] == 1:
-                if gt[ii] == 1:
-                    labels.append(1)
-                if gt[ii] == 0:
-                    labels.append(0)
-
-    nodes = list(G.nodes)
-
-    for i in range(len(nodes) - 1):
+    for i in range(len(list(G.nodes))):
         G_new.nodes[i]['name'] = labels[i]
 
     return G_new
@@ -159,7 +192,7 @@ def label_graph_prob(G, detection_data, p_matrix):
 
     nodes = list(G.nodes)
 
-    for i in range(len(nodes) - 1):
+    for i in range(len(nodes)):
         G_new.nodes[i]['name'] = labels[i]
 
     return G_new
