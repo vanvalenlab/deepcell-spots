@@ -116,7 +116,7 @@ class Polaris(object):
         cells of the input.
 
         Input images are required to have 4 dimensions
-        ``[batch, x, y, channel]``. Channel dimension should be 2.
+        ``[batch, x, y, channel]``. Channel dimension should be 1.
 
         Additional empty dimensions can be added using ``np.expand_dims``.
 
