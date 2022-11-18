@@ -24,8 +24,19 @@
 # limitations under the License.
 # ==============================================================================
 
-"""Applications for pre-trained spot detection models"""
+"""Spot decoding application"""
 
-from deepcell_spots.applications.spot_detection import SpotDetection
-from deepcell_spots.applications.spot_decoding import SpotDecoding
-from deepcell_spots.applications.polaris import Polaris
+
+class SpotDecoding(Application):
+    """Initialize a model for spot decoding of multiplex images.
+
+    """
+    
+    dataset_metadata = {
+    }
+
+    model_metadata = {
+    }
+    def __init__(self, ):
+        pass
+
