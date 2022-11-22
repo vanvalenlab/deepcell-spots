@@ -101,9 +101,10 @@ class SpotDecoding(Application):
             pd.DataFrame: The augmented codebook.
 
         """
-        df_barcodes.loc[df_barcodes.index.max()+1] = ['Background'] + [0]*(df_barcodes.shape[1]-1)
-        df_barcodes.loc[df_barcodes.index.max()+1] = ['Unknown'] + [-1]*(df_barcodes.shape[1]-1)
-        return df_barcodes
+        df_barcodes_aug = df_barcodes.copy()
+        df_barcodes_aug.loc[df_barcodes_aug.index.max()+1] = ['Background'] + [0]*(df_barcodes_aug.shape[1]-1)
+        df_barcodes_aug.loc[df_barcodes_aug.index.max()+1] = ['Unknown'] + [-1]*(df_barcodes_aug.shape[1]-1)
+        return df_barcodes_aug
 
 
     def _decoding_output_to_dict(self, out):
