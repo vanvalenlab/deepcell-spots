@@ -39,48 +39,155 @@ from pyro.infer.autoguide import AutoDelta
 assert pyro.__version__.startswith('1')
 
 
-def torch_format(numpy_array):
-    D = numpy_array.shape[1] * numpy_array.shape[2]
-    return torch.tensor(numpy_array).float().transpose(1, 2).reshape(numpy_array.shape[0], D)
+def reshape_torch_array(torch_array):
+    """Reshape a ``[k, r, c]`` array into a ``[k, r * c]``.
 
-def torch_format_1(torch_array):
+    Args:
+        torch_array (torch.array): Array to be reshaped.
+
+    Returns:
+        torch.array: Reshaped array.
+    """
     D = torch_array.shape[1] * torch_array.shape[2]
     return torch_array.transpose(1, 2).reshape(torch_array.shape[0], D)
 
 
-def barcodes_01_from_channels(barcodes_1234, C, R):
-    K = barcodes_1234.shape[0]
-    barcodes_01 = np.ones((K, C, R))
-    for b in range(K):
-        barcodes_01[b, :, :] = 1 * np.transpose(barcodes_1234[b, :].reshape(R, 1) == np.arange(1, C + 1))
-    return barcodes_01
+@config_enumerate
+def model_constrained_tensor(data, codes, c, r, batch_size=None, params_mode='2*R*C'):
+    """Model definition: relaxed bernoulli, paramters are shared across all genes, but might differ across channels or rounds.
+
+    Args:
+        data (torch.array): Input data formatted as torch array with shape ``[num_spots, r * c]``.
+        codes (torch.array): Codebook formatted as torch array with shape ``[num_barcodes + 1, r * c]``.
+        c (int): Number of channels.
+        r (int): Number of rounds.
+        batch_size (int): Size of batch for training. Defaults to 1000.
+        params_mode (str): Number of model parameters, whether the parameters are shared across
+            channels or rounds. valid options: {'1', '2', '2*R', '2*C', '2*R*C'}.
+    
+    Returns:
+        None
+    """
+    k = codes.shape[0]
+    w = pyro.param('weights', torch.ones(k) / k, constraint=constraints.simplex)
+
+    if params_mode == '1':
+        ## one param
+        sigma = pyro.param("sigma", torch.ones(torch.Size([1])) * 0.5, constraint=constraints.unit_interval)
+        scaled_sigma = codes + (-1)**codes * 0.3 * sigma
+        temperature = pyro.param("temperature", torch.ones(torch.Size([1])) * 0.5, constraint=constraints.unit_interval)
+        aug_temperature = temperature.unsqueeze(-1).repeat(k, 1)
+    elif params_mode == '2': ## two param - one for 0-channel, one for 1-channel
+        sigma = pyro.param("sigma", torch.ones(torch.Size([2])) * 0.5, constraint=constraints.unit_interval)
+        aug_sigma = torch.gather(sigma,0, codes.reshape(-1).long()).reshape(codes.shape)
+        scaled_sigma = codes + (-1)**codes * 0.3 * aug_sigma
+        temperature = pyro.param('temperature', torch.ones(torch.Size([2])) * 0.5, constraint=constraints.unit_interval)
+        aug_temperature = torch.gather(temperature,0, codes.reshape(-1).long()).reshape(codes.shape)
+    elif params_mode == '2*R': ## 2*R params
+        sigma = pyro.param("sigma", torch.ones(torch.Size([2, r])) * 0.5, constraint=constraints.unit_interval)
+        sigma_temp = sigma.unsqueeze(-1).repeat(1, 1, c)
+        sigma_temp1 = reshape_torch_array(sigma_temp)
+        aug_sigma = torch.gather(sigma_temp1, 0, codes.long())
+        scaled_sigma = codes + (-1)**codes * 0.3 * aug_sigma
+        temperature = pyro.param("temperature", torch.ones(torch.Size([2, r])) * 0.5, constraint=constraints.unit_interval)
+        temperature_temp = temperature.unsqueeze(-1).repeat(1, 1, c)
+        temperature_temp1 = reshape_torch_array(temperature_temp)
+        aug_temperature = torch.gather(temperature_temp1, 0, codes.long())
+    elif params_mode == '2*C': ## 2*C params
+        sigma = pyro.param("sigma", torch.ones(torch.Size([2, c])) * 0.5, constraint=constraints.unit_interval)
+        sigma_temp = sigma.unsqueeze(-1).repeat(1, 1, r)
+        sigma_temp1 = reshape_torch_array(sigma_temp)
+        aug_sigma = torch.gather(sigma_temp1, 0, codes.long())
+        scaled_sigma = codes + (-1)**codes * 0.3 * aug_sigma
+        temperature = pyro.param("temperature", torch.ones(torch.Size([2, c])) * 0.5, constraint=constraints.unit_interval)
+        temperature_temp = temperature.unsqueeze(-1).repeat(1, 1, r)
+        temperature_temp1 = reshape_torch_array(temperature_temp)
+        aug_temperature = torch.gather(temperature_temp1, 0, codes.long())
+    elif params_mode == '2*R*C': ## 2*R*C params
+        sigma = pyro.param("sigma", torch.ones(torch.Size([2, r * c])) * 0.5, constraint=constraints.unit_interval)
+        aug_sigma = torch.gather(sigma, 0, codes.long())
+        scaled_sigma = codes + (-1)**codes * 0.3 * aug_sigma
+        temperature = pyro.param("temperature", torch.ones(torch.Size([2, r * c])) * 0.5, constraint=constraints.unit_interval)
+        aug_temperature = torch.gather(temperature, 0, codes.long())
+    else:
+        assert False, "%s not supported"%params_mode
+
+    with pyro.plate('data', data.shape[0], batch_size) as batch:
+        z = pyro.sample('z', Categorical(w))
+        pyro.sample('obs', RelaxedBernoulli(temperature=aug_temperature[z], probs=scaled_sigma[z]).to_event(1), obs=data[batch])
 
 
-def e_step(data, w, temperature, sigma, N, K, C, R, codes, params_mode='2*R*C'):
-    class_logprobs = np.ones((N, K))
+# Initialize an auto guide on the model
+auto_guide_constrained_tensor = AutoDelta(poutine.block(model_constrained_tensor, expose=['weights', 'temperature', 'sigma']))
+
+
+def train(svi, num_iter, data, codes, c, r, batch_size, params_mode):
+    """Do the training for SVI model.
+    Args:
+        svi (pyro.infer.SVI): stochastic variational inference model.
+        num_iter (int): Number of iterations for training. Defaults to 200.
+        data (torch.array): Input data formatted as torch array with shape ``[num_spots, r * c]``.
+        codes (torch.array): Codebook formatted as torch array with shape ``[num_barcodes + 1, r * c]``.
+        c (int): Number of channels.
+        r (int): Number of rounds.
+        batch_size (int): Size of batch for training. Defaults to 1000.
+        params_mode (str): Number of model parameters, whether the parameters are shared across
+            channels or rounds. valid options: {'1', '2', '2*R', '2*C', '2*R*C'}.
+        
+    Returns:
+        list: losses.
+
+    """
+    pyro.clear_param_store()
+    losses = []
+    for _ in range(num_iter):
+        loss = svi.step(data, codes, c, r, batch_size, params_mode)
+        losses.append(loss)
+    return losses
+
+
+def e_step(data, codes, w, temperature, sigma, c, r, params_mode='2*R*C'):
+    """Estimate the posterior probability for spot assignment.
+
+    Args:
+        data (torch.array): Input data formatted as torch array with shape ``[num_spots, r * c]``.
+        codes (torch.array): Codebook formatted as torch array with shape ``[num_barcodes + 1, r * c]``.
+        w (torch.array): Weight parameter for each category with shape ``[num_barcodes + 1, r * c]``.
+        temperature (torch.array): Temperature parameter for relaxed bernoulli, shape depends on `params_mode`.
+        sigma (torch.array): Sigma parameter for relaxed bernoulli, shape depends on `params_mode`.
+        c (int): Number of channels.
+        r (int): Number of rounds.
+        params_mode (str): Number of model parameters, whether the parameters are shared across
+            channels or rounds. valid options: {'1', '2', '2*R', '2*C', '2*R*C'}
+
+    Returns:
+        normalized class probability with shape ``[num_spots, num_barcodes + 1]``.
+    """
+    k = codes.shape[0] # num_barcodes + 1
+    class_logprobs = np.ones((data.shape[0], k))
 
     if params_mode == '1': ## one param
         scaled_sigma = codes + (-1)**codes * 0.3 * sigma
-        aug_temperature = temperature.unsqueeze(-1).repeat(K,1)
+        aug_temperature = temperature.unsqueeze(-1).repeat(k, 1)
     elif params_mode == '2': ## two params
         aug_sigma = torch.gather(sigma,0, codes.reshape(-1).long()).reshape(codes.shape)
         scaled_sigma = codes + (-1)**codes * 0.3 * aug_sigma
         aug_temperature = torch.gather(temperature,0, codes.reshape(-1).long()).reshape(codes.shape)
     elif params_mode == '2*R': ## 2*R params
-        sigma_temp = sigma.unsqueeze(-1).repeat(1,1,C)
-        sigma_temp1 = torch_format_1(sigma_temp)
+        sigma_temp = sigma.unsqueeze(-1).repeat(1, 1, c)
+        sigma_temp1 = reshape_torch_array(sigma_temp)
         aug_sigma = torch.gather(sigma_temp1, 0, codes.long())
         scaled_sigma = codes + (-1)**codes * 0.3 * aug_sigma
-        temperature_temp = temperature.unsqueeze(-1).repeat(1,1,C)
-        temperature_temp1 = torch_format_1(temperature_temp)
+        temperature_temp = temperature.unsqueeze(-1).repeat(1, 1, c)
+        temperature_temp1 = reshape_torch_array(temperature_temp)
         aug_temperature = torch.gather(temperature_temp1, 0, codes.long())
     elif params_mode == '2*C': ## 2*C params
-        sigma_temp = sigma.unsqueeze(-1).repeat(1,1,R)
-        sigma_temp1 = torch_format_1(sigma_temp)
+        sigma_temp = sigma.unsqueeze(-1).repeat(1, 1, r)
+        sigma_temp1 = reshape_torch_array(sigma_temp)
         aug_sigma = torch.gather(sigma_temp1, 0, codes.long())
         scaled_sigma = codes + (-1)**codes * 0.3 * aug_sigma
-        temperature_temp = temperature.unsqueeze(-1).repeat(1,1,R)
-        temperature_temp1 = torch_format_1(temperature_temp)
+        temperature_temp = temperature.unsqueeze(-1).repeat(1, 1, r)
+        temperature_temp1 = reshape_torch_array(temperature_temp)
         aug_temperature = torch.gather(temperature_temp1, 0, codes.long())
     elif params_mode == '2*R*C': ## 2*R*C params
         aug_sigma = torch.gather(sigma, 0, codes.long())
@@ -92,140 +199,60 @@ def e_step(data, w, temperature, sigma, N, K, C, R, codes, params_mode='2*R*C'):
     batch_sz = 50000
     for idx in range(len(data) // batch_sz + 1): 
         ind_start, ind_end = idx*batch_sz, torch.min(torch.tensor([(idx+1)*batch_sz, len(data)]))
-        for k in tqdm(range(K)):
-            dist = RelaxedBernoulli(temperature=aug_temperature[k], probs=scaled_sigma[k]).to_event(1)
-            class_logprobs[ind_start:ind_end, k] = (w[k].log() + dist.log_prob(data[ind_start:ind_end])).cpu().numpy()
+        for idx in range(k):
+            dist = RelaxedBernoulli(temperature=aug_temperature[idx], probs=scaled_sigma[idx]).to_event(1)
+            class_logprobs[ind_start:ind_end, idx] = (w[idx].log() + dist.log_prob(data[ind_start:ind_end])).cpu().numpy()
 
     # basically doing a stable_softmax here
-    # class_logprobs = class_logprobs.cpu().numpy()
     numerator = np.exp(class_logprobs - np.max(class_logprobs, axis=1)[:, None])
     class_prob_norm = np.divide(numerator, np.sum(numerator, axis=1)[:, None])
 
     return class_prob_norm
 
 
-@config_enumerate
-def model_constrained_tensor(data, N, D, C, R, K, codes, batch_size=None, weight_initialization=None, params_mode='2*R*C'):
-    w = pyro.param('weights', torch.ones(K) / K, constraint=constraints.simplex)
+def decoding_function(spots, barcodes, num_iter=500, batch_size=15000, set_seed=1, params_mode='2*R*C'):
+    """Main function for the spot decoding.
 
-    if params_mode == '1':
-        ## one param
-        sigma = pyro.param("sigma", torch.ones(torch.Size([1])) * 0.5, constraint=constraints.unit_interval)
-        scaled_sigma = codes + (-1)**codes * 0.3 * sigma
-        temperature = pyro.param("temperature", torch.ones(torch.Size([1])) * 0.5, constraint=constraints.unit_interval)
-        aug_temperature = temperature.unsqueeze(-1).repeat(K,1)
-    elif params_mode == '2': ## two param - one for 0-channel, one for 1-channel
-        sigma = pyro.param("sigma", torch.ones(torch.Size([2])) * 0.5, constraint=constraints.unit_interval)
-        aug_sigma = torch.gather(sigma,0, codes.reshape(-1).long()).reshape(codes.shape)
-        scaled_sigma = codes + (-1)**codes * 0.3 * aug_sigma
-        temperature = pyro.param('temperature', torch.ones(torch.Size([2])) * 0.5, constraint=constraints.unit_interval)
-        aug_temperature = torch.gather(temperature,0, codes.reshape(-1).long()).reshape(codes.shape)
-    elif params_mode == '2*R': ## 2*R params
-        sigma = pyro.param("sigma", torch.ones(torch.Size([2, R])) * 0.5, constraint=constraints.unit_interval)
-        sigma_temp = sigma.unsqueeze(-1).repeat(1,1,C)
-        sigma_temp1 = torch_format_1(sigma_temp)
-        aug_sigma = torch.gather(sigma_temp1, 0, codes.long())
-        scaled_sigma = codes + (-1)**codes * 0.3 * aug_sigma
-        temperature = pyro.param("temperature", torch.ones(torch.Size([2, R])) * 0.5, constraint=constraints.unit_interval)
-        temperature_temp = temperature.unsqueeze(-1).repeat(1,1,C)
-        temperature_temp1 = torch_format_1(temperature_temp)
-        aug_temperature = torch.gather(temperature_temp1, 0, codes.long())
-    elif params_mode == '2*C': ## 2*C params
-        sigma = pyro.param("sigma", torch.ones(torch.Size([2, C])) * 0.5, constraint=constraints.unit_interval)
-        sigma_temp = sigma.unsqueeze(-1).repeat(1,1,R)
-        sigma_temp1 = torch_format_1(sigma_temp)
-        aug_sigma = torch.gather(sigma_temp1, 0, codes.long())
-        scaled_sigma = codes + (-1)**codes * 0.3 * aug_sigma
-        temperature = pyro.param("temperature", torch.ones(torch.Size([2, C])) * 0.5, constraint=constraints.unit_interval)
-        temperature_temp = temperature.unsqueeze(-1).repeat(1,1,R)
-        temperature_temp1 = torch_format_1(temperature_temp)
-        aug_temperature = torch.gather(temperature_temp1, 0, codes.long())
-    elif params_mode == '2*R*C': ## 2*R*C params
-        sigma = pyro.param("sigma", torch.ones(torch.Size([2, D])) * 0.5, constraint=constraints.unit_interval)
-        aug_sigma = torch.gather(sigma, 0, codes.long())
-        scaled_sigma = codes + (-1)**codes * 0.3 * aug_sigma
-        temperature = pyro.param("temperature", torch.ones(torch.Size([2, D])) * 0.5, constraint=constraints.unit_interval)
-        aug_temperature = torch.gather(temperature, 0, codes.long())
-    else:
-        assert False, "%s not supported"%params_mode
+    Args:
+        spots (numpy.array): Input spot intensity array with shape ``[num_spots, c, r]``.
+        barcodes (numpy.array): Input codebook array with shape ``[num_barcodes, c, r]``.
+        num_iter (int): Number of iterations for training. Defaults to 200.
+        batch_size (int): Size of batch for training. Defaults to 1000.
+        set_seed (int): Seed for randomness. Defaults to 1.
+        params_mode (str): Number of model parameters, whether the parameters are shared across
+            channels or rounds. valid options: {'1', '2', '2*R', '2*C', '2*R*C'}.
 
-    with pyro.plate('data', N, batch_size) as batch:
-        z = pyro.sample('z', Categorical(w))
-        pyro.sample('obs', RelaxedBernoulli(temperature=aug_temperature[z], probs=scaled_sigma[z]).to_event(1), obs=data[batch])
-
-auto_guide_constrained_tensor = AutoDelta(poutine.block(model_constrained_tensor, expose=['weights', 'temperature', 'sigma']))
-
-
-def train(svi, num_iterations, data, N, D, C, R, K, codes, batch_size, weight_initialization, params_mode):
-    pyro.clear_param_store()
-    losses = []
-    for j in tqdm(range(num_iterations)):
-        loss = svi.step(data, N, D, C, R, K, codes, batch_size, weight_initialization, params_mode)
-        losses.append(loss)
-    return losses
-
-
-def decoding_function(spots, barcodes_01, num_iter=60, batch_size=15000, set_seed=1, params_mode='2*R*C'):
-    # INPUT:
-    # spots: a numpy array of dim N x C x R (number of spots x coding channels x rounds);
-    # barcodes_01: a numpy array of dim K x C x R (number of barcodes x coding channels x rounds)
-    # OUTPUT:
-    # 'class_probs': posterior probabilities computed via e-step
-    # 'class_ind': indices of different barcode classes (genes / background / infeasible / nan)
-    # 'params': estimated model parameters
-    # 'norm_const': constants used for normalization of spots prior to model fitting
-    # 'params_mode': how many params are allowed - valid options: {'1', '2', '2*R', '2*C', '2*R*C'}
-
+    Returns:
+        results (dict): The decoding results as a dictionary: 'class_probs': posterior 
+            probabilities for each spot and each gene category; 'params': estimated model 
+            parameters.
+    """
     # if cuda available, runs on gpu
     if torch.cuda.is_available():
         torch.set_default_tensor_type('torch.cuda.FloatTensor')
     else:
         torch.set_default_tensor_type("torch.FloatTensor")
             
-    N = spots.shape[0]
-    if N == 0:
-        print('There are no spots to decode.')
-        return
-    C = spots.shape[1]
-    R = spots.shape[2]
-    K = barcodes_01.shape[0]
-    D = C * R
+    num_spots, c, r = spots.shape
     
-    weight_initialization = None
+    data = torch.tensor(spots).float().transpose(1, 2).reshape(spots.shape[0], c * r)
+    codes = torch.tensor(barcodes).float().transpose(1, 2).reshape(barcodes.shape[0], c * r)
 
-    data = torch_format(spots)
-    codes = torch_format(barcodes_01)
-
-    # include background in codebook
-    bkg_ind = codes.shape[0]
-    codes = torch.cat((codes, torch.zeros(1, D)))
-    
-    ind_keep = np.arange(0, N)
-    data_norm = data
-    
-    # model training:
     optim = Adam({'lr': 0.085, 'betas': [0.85, 0.99]})
     svi = SVI(model_constrained_tensor, auto_guide_constrained_tensor, optim, loss=TraceEnum_ELBO(max_plate_nesting=1))
     pyro.set_rng_seed(set_seed)
-    losses = train(svi, num_iter, data_norm[ind_keep, :], len(ind_keep), D, C, R, codes.shape[0], codes, min(len(ind_keep), batch_size), weight_initialization, params_mode)
-    # collect estimated parameters
+    losses = train(svi, num_iter, data, codes, c, r, min(num_spots, batch_size), params_mode)
+    
     w_star = pyro.param('weights').detach()
     temperature_star = pyro.param('temperature').detach()
     sigma_star = pyro.param('sigma').detach()
-    
-    w_star_mod = w_star
 
-
-    class_probs_star = e_step(data_norm, w_star_mod,temperature_star, sigma_star, N, codes.shape[0], C, R,  codes, params_mode)
-    class_probs_star_s = class_probs_star
-    inf_ind_s = None
+    class_probs_star = e_step(data, codes, w_star, temperature_star, sigma_star, c, r,  params_mode)
         
-    class_probs = class_probs_star_s
     if torch.cuda.is_available():
         torch.set_default_tensor_type("torch.FloatTensor")
 
-    class_ind = {'genes': np.arange(K), 'bkg': bkg_ind, 'inf': inf_ind_s }
-    torch_params = {'w_star': w_star_mod.cpu(), 'temperature_star': temperature_star.cpu(), 'sigma_star': sigma_star.cpu(), 'losses': losses}
-    norm_const = {}
-
-    return {'class_probs': class_probs, 'class_ind': class_ind, 'params': torch_params, 'norm_const': norm_const}
+    torch_params = {'w_star': w_star.cpu(), 'temperature_star': temperature_star.cpu(), 'sigma_star': sigma_star.cpu(), 'losses': losses}
+    results = {'class_probs': class_probs_star, 'params': torch_params}
+    
+    return results
