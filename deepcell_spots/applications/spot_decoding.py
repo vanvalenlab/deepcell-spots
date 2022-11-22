@@ -26,17 +26,164 @@
 
 """Spot decoding application"""
 
+from __future__ import absolute_import, division, print_function
+
+import numpy as np
+
+from deepcell.applications import Application
+from deepcell_spots.decoding_functions import decoding_function
+
 
 class SpotDecoding(Application):
     """Initialize a model for spot decoding of multiplex images.
 
+    The ``predict`` method handles inference procedure. It infers the 
+    model parameters and predicts the spot identities.
+
+    Example:
+
+    .. code-block:: python
+
+        from deepcell_spots.applications import SpotDecoding
+
+        # Create the application
+        app = SpotDecoding(df_barcodes, r, c)
+
+        # Decode the spots
+        decoding_dict = app.predict(spots_intensities_vec)
+
+    Args:
+        df_barcodes (pandas.DataFrame): Codebook, one column is gene names ('code_name'),
+            the rest are binary barcodes, encoded using 1 and 0. Index should start at 1.
+            For exmaple, for a (r=10, c=2) codebook, it should look like:
+                Index:
+                    RangeIndex (starting from 1)
+                Columns:
+                    Name: code_name, dtype: object
+                    Name: r0c0, dtype: int64
+                    Name: r0c1, dtype: int64
+                    Name: r1c0, dtype: int64
+                    Name: r1c1, dtype: int64
+                    ...
+                    Name: r9c0, dtype: int64
+                    Name: r9c1, dtype: int64
+        r (int): Number of rounds.
+        c (int): Number of channels.
     """
     
-    dataset_metadata = {
-    }
+    dataset_metadata = {}
+    model_metadata = {}
 
-    model_metadata = {
-    }
-    def __init__(self, ):
-        pass
+    def __init__(self, df_barcodes, r, c):
+        self.df_barcodes = self._add_bkg_unknown_to_barcodes(df_barcodes)
+        self.r = r
+        self.c = c
 
+        super(SpotDecoding, self).__init__(
+            model=None,
+            model_image_shape=[0],
+            model_mpp=None,
+            preprocessing_fn=None,
+            postprocessing_fn=None,
+            format_model_output_fn=None,
+            dataset_metadata=self.dataset_metadata,
+            model_metadata=self.model_metadata)
+   
+
+    def _add_bkg_unknown_to_barcodes(self, df_barcodes):
+        """Add Background and Unknown category to the codebook. The barcode of Background
+        is all zeros and the barcode for Unknown is all -1s.
+
+        Args:
+            df_barcodes (pd.DataFrame): The codebook initialized by users.
+        
+        Returns:
+            pd.DataFrame: The augmented codebook.
+
+        """
+        df_barcodes.loc[df_barcodes.index.max()+1] = ['Background'] + [0]*(df_barcodes.shape[1]-1)
+        df_barcodes.loc[df_barcodes.index.max()+1] = ['Unknown'] + [-1]*(df_barcodes.shape[1]-1)
+        return df_barcodes
+
+
+    def _decoding_output_to_dict(self, out):
+        """convert decoding output to dictionary.
+
+        Args:
+            out (dict): Dictionary with keys: 'class_probs', 'params'.
+
+        Returns:
+            dict: Dictionary with keys: 'probability', 'predicted_id', 'predicted_name'.
+
+        """
+        barcodes_idx2name = dict(zip(1 + np.arange(len(self.df_barcodes)), self.df_barcodes.code_name.values))
+        decoded_dict = {}
+        decoded_dict['probability'] = out['class_probs'].max(axis=1)
+        decoded_dict['predicted_id'] = out['class_probs'].argmax(axis=1) + 1
+        decoded_dict['predicted_name'] = np.array(list(map(barcodes_idx2name.get, decoded_dict['predicted_id'])))
+        return decoded_dict
+
+
+    def _threshold_unknown_by_prob(self, decoded_dict, unknown_index, thres_prob=0.5):
+        """Threshold the decoded spots to identify unknown. If the highest probability
+        if below a certain threshold, the spot will be classfied as Unknown.
+
+        Args:
+            decoded_dict (dict): The decoded dict.
+            unknown_index (int): The index for Unknown category.
+        
+        Returns:
+            dict: similar to input, just replace the low probability
+                ones with Unknown.
+        """
+        decoded_dict['predicted_id'][decoded_dict['probability'] < thres_prob] = unknown_index
+        decoded_dict['predicted_name'][decoded_dict['probability'] < thres_prob] = 'Unknown'
+        return decoded_dict
+
+
+    def _predict(self,
+                spots_intensities_vec,
+                num_iter,
+                batch_size,
+                thres_prob):
+        """Predict the gene assignment of each spot.
+        """
+
+        spots_intensities_reshaped = np.reshape(spots_intensities_vec, (-1, self.r, self.c))
+
+        # convert df_barcodes to an array
+        ch_names = list(self.df_barcodes.columns)
+        ch_names.remove('code_name')
+        unknown_index = self.df_barcodes.index.max()
+        barcodes_array = self.df_barcodes[ch_names].values.reshape(-1,self.r,self.c)[:-1, :,:] # remove Unknown category
+
+        # decode
+        out = decoding_function(spots_intensities_reshaped, barcodes_array, num_iter=num_iter, batch_size=batch_size)
+        decoding_dict = self._decoding_output_to_dict(out)
+        decoding_dict_trunc = self._threshold_unknown_by_prob(decoding_dict, unknown_index, thres_prob=thres_prob)
+        
+        return decoding_dict_trunc
+
+
+    def predict(self,
+                spots_intensities_vec,
+                num_iter=500,
+                batch_size=1000, 
+                thres_prob=0.5):
+        """Predict the gene assignment of each spot.
+
+        Args:
+            spots_intensities_vec (numpy.array): [num_spots, r*c]
+            num_iter (int): Number of iterations for training. Defaults to 500.
+            batch_size (int): Size of batches for training. Defaults to 1000.
+            thres_prob (float): The threshold of unknown category, within [0,1]. Defaults to 0.5.
+        
+        Returns:
+            dict: Dictionary with keys: 'probability', 'predicted_id', 'predicted_name'.
+        """
+        
+        return self._predict(
+                spots_intensities_vec=spots_intensities_vec,
+                num_iter=num_iter,
+                batch_size=batch_size,
+                thres_prob=thres_prob)
