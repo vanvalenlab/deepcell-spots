@@ -209,7 +209,7 @@ class Polaris(object):
                 image_mpp=None,
                 spots_threshold=0.95,
                 spots_clip=False,
-                maxpool_extra_pixel_num=1,
+                maxpool_extra_pixel_num=0,
                 decoding_training_kwargs={}):
         """Generates prediction output consisting of a labeled cell segmentation image,
         detected spot locations, and a dictionary of spot locations assigned to labeled
@@ -230,8 +230,9 @@ class Polaris(object):
                 considered as a spot.
             spots_clip (bool): Determines if pixel values will be clipped by percentile.
                 Defaults to false.
-            maxpool_extra_pixel_num (int): Number of extra pixel for max pooling. Defaults to 1, 
-                meaning a pool with size = 9: (1,0,-1)x(1,0,-1). 0 means no maxpooling.
+            maxpool_extra_pixel_num (int): Number of extra pixel for max pooling. Defaults 
+                to 0, means no max pooling. For any number t, there will be a pool with 
+                shape ``[-t, t] x [-t, t]``.
             decoding_training_kwargs (dict): Including num_iter, batch_size, thres_prob.
         Raises:
             ValueError: Threshold value must be between 0 and 1.
