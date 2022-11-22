@@ -61,6 +61,46 @@ def match_spots_to_cells(labeled_im, coords):
 
     return spot_dict
 
+def match_spots_to_cells_as_vec(labeled_im, coords):
+    """Assigns detected spots to regions of a labeled image.
+
+    Returns a dictionary where keys are labeled regions of input image and
+    values are spot coordinates corresponding with that labeled region.
+
+    Args:
+        labeled_im (array): Image output from segmentation algorithm with
+            dimensions `(1,x,y,1)` where pixels values label regions of the
+            image corresponding with objects of interest
+            (nuclei, cytoplasm, etc.).
+        coords (array): Array of coordinates for spot location with dimensions
+            `(number of spots,2)`.
+
+    Returns:
+        array: Cell id for each spot.
+    """
+    coords = coords.astype(np.int)
+    assigned_cell = labeled_im[0, coords[:, 0], coords[:, 1], 0]
+        
+    return assigned_cell
+
+def match_spots_to_cells_as_vec_batched(segmentation_result, spots_locations):
+    """Assigns detected spots to regions of a labeled image. For the whole batch.
+
+    Args:
+        segmentation_result (list): Each entry is a `(1,x,y,1)` image.
+        spots_locations (list): Each entry is a `(number of spots,2)` array.
+
+    Returns:
+        spot_cell_assignments_vec (numpy.array): Array of cell ids, all batches 
+            concatenated.
+    """
+    spot_cell_assignments = []
+    for i in range(len(spots_locations)):
+        cell_id_list = match_spots_to_cells_as_vec(segmentation_result[i:i + 1],
+                                            spots_locations[i])
+        spot_cell_assignments.append(cell_id_list)
+    spot_cell_assignments_vec = np.concatenate(spot_cell_assignments)
+    return spot_cell_assignments_vec
 
 def process_spot_dict(spot_dict):
     """Processes spot dictionary into an array of coordinates and list of

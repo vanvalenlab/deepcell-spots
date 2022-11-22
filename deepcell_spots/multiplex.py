@@ -366,6 +366,44 @@ def error_correction(barcode, codebook_dict):
     return 'No match'
 
 
+def extract_spots_prob_from_coords_maxpool(image, spots_locations, extra_pixel_num=1):
+    """Perform a max pooling and extract the intensities for each spot.
+    
+    Args:
+        image (numpy.array): Probability maps with shape ``[batch, x, y, channel]``.
+        spots_locations (numpy.array): Coordiantes found by max projection, used as anchor 
+            points for further max pooling operation. Shape ``[num_spots, 2]``.
+        extra_pixel_num (int): Parameter for size of the pool. Defaults to 1, meaning 
+            a pool with size=(1,0,-1)x(1,0,-1)
+
+    Returns:
+        list: Spots intensities, each entry in the list is a numpy.array with shape 
+        ``[num_spots, channel]``.
+    """
+
+    spots_intensities = []
+    for idx_batch in range(len(image)):
+        image_slice = image[idx_batch]
+        coords = spots_locations[idx_batch]
+
+        num_spots = len(coords)
+        img_boundary_x = image_slice.shape[0] - 1
+        img_boundary_y = image_slice.shape[1] - 1
+        
+        intensity_d = np.zeros(((extra_pixel_num*2+1)**2, num_spots, image_slice.shape[-1]))
+        d = -1
+        for dx in np.arange(-extra_pixel_num, extra_pixel_num + 1):
+            for dy in np.arange(-extra_pixel_num, extra_pixel_num + 1):
+                d = d + 1
+                for ind_cr in range(image_slice.shape[-1]):
+                    x_coord = np.maximum(0, np.minimum(img_boundary_x, np.around(coords[:, 0]) + dx)) # (num_spots,)
+                    y_coord = np.maximum(0, np.minimum(img_boundary_y, np.around(coords[:, 1]) + dy)) # (num_spots,)
+
+                    intensity_d[d, :, ind_cr] = image_slice[x_coord, y_coord, ind_cr]
+        intensity = np.max(intensity_d, axis=0) # (num_spots, image_slice.shape[-1])
+        spots_intensities.append(intensity)
+        
+    return spots_intensities
 
 
 
