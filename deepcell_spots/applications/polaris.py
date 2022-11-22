@@ -239,7 +239,8 @@ class Polaris(object):
                 image is defined.
 
         Returns:
-            df_spots (pandas.DataFrame): Columns are x, y, batch_id, cell_id, probability, predicted_id, preicted_name.
+            df_spots (pandas.DataFrame): Columns are x, y, batch_id, cell_id, probability, 
+                predicted_id, preicted_name. Cell_id = 0 means background.
             df_intensities (pandas.DataFrame): Columns are channels and rows are spots.
             segmentation_result (numpy.array): Segmentation mask with shape ``[batch, x, y, 1]``.
         """
