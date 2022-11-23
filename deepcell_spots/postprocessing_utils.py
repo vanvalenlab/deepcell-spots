@@ -52,7 +52,8 @@ def y_annotations_to_point_list(y_pred, threshold=0.95):
     if type(y_pred) is not dict:
         raise TypeError('Input predictions must be a dictionary.')
     if 'classification' not in y_pred.keys() or 'offset_regression' not in y_pred.keys():
-        raise NameError('Input must have keys \'classification\' and \'offset_regression\'')
+        raise NameError(
+            'Input must have keys \'classification\' and \'offset_regression\'')
 
     dot_centers = []
     for ind in range(np.shape(y_pred['classification'])[0]):
@@ -89,7 +90,8 @@ def y_annotations_to_point_list_restrictive(y_pred, threshold=0.95):
     if type(y_pred) is not dict:
         raise TypeError('Input predictions must be a dictionary.')
     if 'classification' not in y_pred.keys() or 'offset_regression' not in y_pred.keys():
-        raise NameError('Input must have keys \'classification\' and \'offset_regression\'')
+        raise NameError(
+            'Input must have keys \'classification\' and \'offset_regression\'')
 
     dot_centers = []
     for ind in range(np.shape(y_pred['classification'])[0]):
@@ -129,7 +131,8 @@ def y_annotations_to_point_list_max(y_pred, threshold=0.95, min_distance=2):
     if type(y_pred) is not dict:
         raise TypeError('Input predictions must be a dictionary.')
     if 'classification' not in y_pred.keys() or 'offset_regression' not in y_pred.keys():
-        raise NameError('Input must have keys \'classification\' and \'offset_regression\'')
+        raise NameError(
+            'Input must have keys \'classification\' and \'offset_regression\'')
 
     dot_centers = []
     for ind in range(np.shape(y_pred['classification'])[0]):
@@ -192,7 +195,8 @@ def y_annotations_to_point_list_cc(y_pred, threshold=0.95):
     if type(y_pred) is not dict:
         raise TypeError('Input predictions must be a dictionary.')
     if 'classification' not in y_pred.keys() or 'offset_regression' not in y_pred.keys():
-        raise NameError('Input must have keys \'classification\' and \'offset_regression\'')
+        raise NameError(
+            'Input must have keys \'classification\' and \'offset_regression\'')
 
     dot_centers = []
     for ind in range(np.shape(y_pred['classification'])[0]):

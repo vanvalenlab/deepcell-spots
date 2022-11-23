@@ -85,14 +85,14 @@ class Polaris(object):
         # Expand image dimensions to rank 4
         spots_im = np.expand_dims(spots_im, axis=[0,-1])
         cyto_im = np.expand_dims(cyto_im, axis=[0,-1])
-        
+
         ####################################################################
         # Singleplex case:
         app = Polaris(image_type='singplex')
         df_spots, df_intensities, segmentation_result = app.predict(
                              spots_image=spots_im,
                              segmentation_image=cyto_im)
-        
+
         ####################################################################
         # Multiplex case:
         r = 10
@@ -143,8 +143,9 @@ class Polaris(object):
                  decoding_kwargs={}):
 
         self.spots_app = SpotDetection(model=spots_model)
-        self.spots_app.postprocessing_fn = None # Disable postprocessing_fn to return the full images
-        
+        # Disable postprocessing_fn to return the full images
+        self.spots_app.postprocessing_fn = None
+
         valid_image_types = ['singplex', 'multiplex']
         if image_type not in valid_image_types:
             raise ValueError('Invalid image type supplied: {}. '
@@ -161,18 +162,21 @@ class Polaris(object):
             else:
                 self.decoding_app = SpotDecoding(**decoding_kwargs)
 
-        valid_compartments = ['cytoplasm', 'nucleus', 'mesmer', 'no segmentation']
+        valid_compartments = ['cytoplasm',
+                              'nucleus', 'mesmer', 'no segmentation']
         if segmentation_type not in valid_compartments:
             raise ValueError('Invalid compartment supplied: {}. '
                              'Must be one of {}'.format(segmentation_type,
                                                         valid_compartments))
 
         if segmentation_type == 'cytoplasm':
-            self.segmentation_app = CytoplasmSegmentation(model=segmentation_model)
+            self.segmentation_app = CytoplasmSegmentation(
+                model=segmentation_model)
             self.segmentation_app.preprocessing_fn = histogram_normalization
             self.segmentation_app.postprocessing_fn = deep_watershed
         elif segmentation_type == 'nucleus':
-            self.segmentation_app = NuclearSegmentation(model=segmentation_model)
+            self.segmentation_app = NuclearSegmentation(
+                model=segmentation_model)
         elif segmentation_type == 'mesmer':
             self.segmentation_app = Mesmer()
         else:
@@ -193,14 +197,15 @@ class Polaris(object):
         Returns:
             numpy.array: Output probability map with shape ``[batch, x, y, channel]``.
         """
-        
+
         output_image = np.zeros_like(spots_image, dtype=np.float32)
         for idx_channel in range(spots_image.shape[-1]):
             output_image[..., idx_channel] = self.spots_app.predict(
                 image=spots_image[..., idx_channel][..., None],
-                threshold=spots_threshold, #TODO: threshold is disabled, but must feed a float [0,1] number
+                # TODO: threshold is disabled, but must feed a float [0,1] number
+                threshold=spots_threshold,
                 clip=spots_clip
-            )['classification'][...,1]
+            )['classification'][..., 1]
         return output_image
 
     def predict(self,
@@ -249,16 +254,18 @@ class Polaris(object):
             raise ValueError('Threshold of %s was input. Threshold value must be '
                              'between 0 and 1.'.format())
 
-        output_image = self._predict_spots_image(spots_image, spots_threshold, spots_clip)
-    
+        output_image = self._predict_spots_image(
+            spots_image, spots_threshold, spots_clip)
+
         max_proj_images = np.max(output_image, axis=-1)
-        spots_locations = max_cp_array_to_point_list_max(max_proj_images, 
-            threshold=spots_threshold, min_distance=1)
-        
-        spots_intensities = extract_spots_prob_from_coords_maxpool(output_image, spots_locations, extra_pixel_num=maxpool_extra_pixel_num)
+        spots_locations = max_cp_array_to_point_list_max(max_proj_images,
+                                                         threshold=spots_threshold, min_distance=1)
+
+        spots_intensities = extract_spots_prob_from_coords_maxpool(
+            output_image, spots_locations, extra_pixel_num=maxpool_extra_pixel_num)
         spots_intensities_vec = np.concatenate(spots_intensities)
-        spots_locations_vec = np.concatenate([np.concatenate([item, [[idx_batch]]*len(item)], axis=1) \
-            for idx_batch, item in enumerate(spots_locations)])
+        spots_locations_vec = np.concatenate([np.concatenate([item, [[idx_batch]]*len(item)], axis=1)
+                                              for idx_batch, item in enumerate(spots_locations)])
 
         if segmentation_image is not None:
             if not self.segmentation_app:
@@ -267,17 +274,20 @@ class Polaris(object):
             else:
                 segmentation_result = self.segmentation_app.predict(segmentation_image,
                                                                     image_mpp=image_mpp)
-                spots_cell_assignments_vec = match_spots_to_cells_as_vec_batched(segmentation_result, spots_locations)
+                spots_cell_assignments_vec = match_spots_to_cells_as_vec_batched(
+                    segmentation_result, spots_locations)
         else:
             segmentation_result = None
             spots_cell_assignments_vec = None
-            
-        if self.decoding_app is not None:
-            decoding_result = self.decoding_app.predict(spots_intensities_vec, **decoding_training_kwargs)
-        else:
-            decoding_result = {'probability': None, 'predicted_id': None, 'predicted_name': None}
 
-        df_spots = output_to_df(spots_locations_vec, spots_cell_assignments_vec, decoding_result)
+        if self.decoding_app is not None:
+            decoding_result = self.decoding_app.predict(
+                spots_intensities_vec, **decoding_training_kwargs)
+        else:
+            decoding_result = {'probability': None,
+                               'predicted_id': None, 'predicted_name': None}
+
+        df_spots = output_to_df(spots_locations_vec,
+                                spots_cell_assignments_vec, decoding_result)
         df_intensities = pd.DataFrame(spots_intensities_vec)
         return df_spots, df_intensities, segmentation_result
-

@@ -70,7 +70,7 @@ class SpotDecoding(Application):
         r (int): Number of rounds.
         c (int): Number of channels.
     """
-    
+
     dataset_metadata = {}
     model_metadata = {}
 
@@ -88,7 +88,6 @@ class SpotDecoding(Application):
             format_model_output_fn=None,
             dataset_metadata=self.dataset_metadata,
             model_metadata=self.model_metadata)
-   
 
     def _add_bkg_unknown_to_barcodes(self, df_barcodes):
         """Add Background and Unknown category to the codebook. The barcode of Background
@@ -96,16 +95,17 @@ class SpotDecoding(Application):
 
         Args:
             df_barcodes (pd.DataFrame): The codebook initialized by users.
-        
+
         Returns:
             pd.DataFrame: The augmented codebook.
 
         """
         df_barcodes_aug = df_barcodes.copy()
-        df_barcodes_aug.loc[df_barcodes_aug.index.max()+1] = ['Background'] + [0]*(df_barcodes_aug.shape[1]-1)
-        df_barcodes_aug.loc[df_barcodes_aug.index.max()+1] = ['Unknown'] + [-1]*(df_barcodes_aug.shape[1]-1)
+        df_barcodes_aug.loc[df_barcodes_aug.index.max(
+        )+1] = ['Background'] + [0]*(df_barcodes_aug.shape[1]-1)
+        df_barcodes_aug.loc[df_barcodes_aug.index.max(
+        )+1] = ['Unknown'] + [-1]*(df_barcodes_aug.shape[1]-1)
         return df_barcodes_aug
-
 
     def _decoding_output_to_dict(self, out):
         """convert decoding output to dictionary.
@@ -117,13 +117,14 @@ class SpotDecoding(Application):
             dict: Dictionary with keys: 'probability', 'predicted_id', 'predicted_name'.
 
         """
-        barcodes_idx2name = dict(zip(1 + np.arange(len(self.df_barcodes)), self.df_barcodes.code_name.values))
+        barcodes_idx2name = dict(
+            zip(1 + np.arange(len(self.df_barcodes)), self.df_barcodes.code_name.values))
         decoded_dict = {}
         decoded_dict['probability'] = out['class_probs'].max(axis=1)
         decoded_dict['predicted_id'] = out['class_probs'].argmax(axis=1) + 1
-        decoded_dict['predicted_name'] = np.array(list(map(barcodes_idx2name.get, decoded_dict['predicted_id'])))
+        decoded_dict['predicted_name'] = np.array(
+            list(map(barcodes_idx2name.get, decoded_dict['predicted_id'])))
         return decoded_dict
-
 
     def _threshold_unknown_by_prob(self, decoded_dict, unknown_index, thres_prob=0.5):
         """Threshold the decoded spots to identify unknown. If the highest probability
@@ -132,44 +133,48 @@ class SpotDecoding(Application):
         Args:
             decoded_dict (dict): The decoded dict.
             unknown_index (int): The index for Unknown category.
-        
+
         Returns:
             dict: similar to input, just replace the low probability
                 ones with Unknown.
         """
-        decoded_dict['predicted_id'][decoded_dict['probability'] < thres_prob] = unknown_index
-        decoded_dict['predicted_name'][decoded_dict['probability'] < thres_prob] = 'Unknown'
+        decoded_dict['predicted_id'][decoded_dict['probability']
+                                     < thres_prob] = unknown_index
+        decoded_dict['predicted_name'][decoded_dict['probability']
+                                       < thres_prob] = 'Unknown'
         return decoded_dict
 
-
     def _predict(self,
-                spots_intensities_vec,
-                num_iter,
-                batch_size,
-                thres_prob):
+                 spots_intensities_vec,
+                 num_iter,
+                 batch_size,
+                 thres_prob):
         """Predict the gene assignment of each spot.
         """
 
-        spots_intensities_reshaped = np.reshape(spots_intensities_vec, (-1, self.r, self.c))
+        spots_intensities_reshaped = np.reshape(
+            spots_intensities_vec, (-1, self.r, self.c))
 
         # convert df_barcodes to an array
         ch_names = list(self.df_barcodes.columns)
         ch_names.remove('code_name')
         unknown_index = self.df_barcodes.index.max()
-        barcodes_array = self.df_barcodes[ch_names].values.reshape(-1,self.r,self.c)[:-1, :,:] # remove Unknown category
+        barcodes_array = self.df_barcodes[ch_names].values.reshape(
+            -1, self.r, self.c)[:-1, :, :]  # remove Unknown category
 
         # decode
-        out = decoding_function(spots_intensities_reshaped, barcodes_array, num_iter=num_iter, batch_size=batch_size)
+        out = decoding_function(
+            spots_intensities_reshaped, barcodes_array, num_iter=num_iter, batch_size=batch_size)
         decoding_dict = self._decoding_output_to_dict(out)
-        decoding_dict_trunc = self._threshold_unknown_by_prob(decoding_dict, unknown_index, thres_prob=thres_prob)
-        
-        return decoding_dict_trunc
+        decoding_dict_trunc = self._threshold_unknown_by_prob(
+            decoding_dict, unknown_index, thres_prob=thres_prob)
 
+        return decoding_dict_trunc
 
     def predict(self,
                 spots_intensities_vec,
                 num_iter=500,
-                batch_size=1000, 
+                batch_size=1000,
                 thres_prob=0.5):
         """Predict the gene assignment of each spot.
 
@@ -178,13 +183,13 @@ class SpotDecoding(Application):
             num_iter (int): Number of iterations for training. Defaults to 500.
             batch_size (int): Size of batches for training. Defaults to 1000.
             thres_prob (float): The threshold of unknown category, within [0,1]. Defaults to 0.5.
-        
+
         Returns:
             dict: Dictionary with keys: 'probability', 'predicted_id', 'predicted_name'.
         """
-        
+
         return self._predict(
-                spots_intensities_vec=spots_intensities_vec,
-                num_iter=num_iter,
-                batch_size=batch_size,
-                thres_prob=thres_prob)
+            spots_intensities_vec=spots_intensities_vec,
+            num_iter=num_iter,
+            batch_size=batch_size,
+            thres_prob=thres_prob)

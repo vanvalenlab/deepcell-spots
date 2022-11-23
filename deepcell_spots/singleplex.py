@@ -61,6 +61,7 @@ def match_spots_to_cells(labeled_im, coords):
 
     return spot_dict
 
+
 def match_spots_to_cells_as_vec(labeled_im, coords):
     """Assigns detected spots to regions of a labeled image.
 
@@ -80,8 +81,9 @@ def match_spots_to_cells_as_vec(labeled_im, coords):
     """
     coords = coords.astype(np.int)
     assigned_cell = labeled_im[0, coords[:, 0], coords[:, 1], 0]
-        
+
     return assigned_cell
+
 
 def match_spots_to_cells_as_vec_batched(segmentation_result, spots_locations):
     """Assigns detected spots to regions of a labeled image. For the whole batch.
@@ -97,10 +99,11 @@ def match_spots_to_cells_as_vec_batched(segmentation_result, spots_locations):
     spot_cell_assignments = []
     for i in range(len(spots_locations)):
         cell_id_list = match_spots_to_cells_as_vec(segmentation_result[i:i + 1],
-                                            spots_locations[i])
+                                                   spots_locations[i])
         spot_cell_assignments.append(cell_id_list)
     spot_cell_assignments_vec = np.concatenate(spot_cell_assignments)
     return spot_cell_assignments_vec
+
 
 def process_spot_dict(spot_dict):
     """Processes spot dictionary into an array of coordinates and list of
