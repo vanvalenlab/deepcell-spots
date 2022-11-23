@@ -264,8 +264,8 @@ class Polaris(object):
         spots_intensities = extract_spots_prob_from_coords_maxpool(
             output_image, spots_locations, extra_pixel_num=maxpool_extra_pixel_num)
         spots_intensities_vec = np.concatenate(spots_intensities)
-        spots_locations_vec = np.concatenate([np.concatenate([item, [[idx_batch]] * len(item)], axis=1)
-                                              for idx_batch, item in enumerate(spots_locations)])
+        spots_locations_vec = np.concatenate([np.concatenate([item, [[idx_batch]] * len(item)],
+                                                             axis=1) for idx_batch, item in enumerate(spots_locations)])
 
         if segmentation_image is not None:
             if not self.segmentation_app:

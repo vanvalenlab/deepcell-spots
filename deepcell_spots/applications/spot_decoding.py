@@ -138,10 +138,8 @@ class SpotDecoding(Application):
             dict: similar to input, just replace the low probability
                 ones with Unknown.
         """
-        decoded_dict['predicted_id'][decoded_dict['probability']
-                                     < thres_prob] = unknown_index
-        decoded_dict['predicted_name'][decoded_dict['probability']
-                                       < thres_prob] = 'Unknown'
+        decoded_dict['predicted_id'][decoded_dict['probability'] < thres_prob] = unknown_index
+        decoded_dict['predicted_name'][decoded_dict['probability'] < thres_prob] = 'Unknown'
         return decoded_dict
 
     def _predict(self,

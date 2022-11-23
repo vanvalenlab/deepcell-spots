@@ -60,12 +60,12 @@ def model_constrained_tensor(
         r,
         batch_size=None,
         params_mode='2*R*C'):
-    """Model definition: relaxed bernoulli, paramters are shared across all genes, but might 
+    """Model definition: relaxed bernoulli, paramters are shared across all genes, but might
     differ across channels or rounds.
 
     Args:
         data (torch.array): Input data formatted as torch array with shape ``[num_spots, r * c]``.
-        codes (torch.array): Codebook formatted as torch array with shape 
+        codes (torch.array): Codebook formatted as torch array with shape
             ``[num_barcodes + 1, r * c]``.
         c (int): Number of channels.
         r (int): Number of rounds.
@@ -158,7 +158,7 @@ def train(svi, num_iter, data, codes, c, r, batch_size, params_mode):
         svi (pyro.infer.SVI): stochastic variational inference model.
         num_iter (int): Number of iterations for training. Defaults to 200.
         data (torch.array): Input data formatted as torch array with shape ``[num_spots, r * c]``.
-        codes (torch.array): Codebook formatted as torch array with shape 
+        codes (torch.array): Codebook formatted as torch array with shape
             ``[num_barcodes + 1, r * c]``.
         c (int): Number of channels.
         r (int): Number of rounds.
@@ -183,9 +183,9 @@ def e_step(data, codes, w, temperature, sigma, c, r, params_mode='2*R*C'):
 
     Args:
         data (torch.array): Input data formatted as torch array with shape ``[num_spots, r * c]``.
-        codes (torch.array): Codebook formatted as torch array with shape 
+        codes (torch.array): Codebook formatted as torch array with shape
             ``[num_barcodes + 1, r * c]``.
-        w (torch.array): Weight parameter for each category with shape 
+        w (torch.array): Weight parameter for each category with shape
             ``[num_barcodes + 1, r * c]``.
         temperature (torch.array): Temperature parameter for relaxed bernoulli, shape depends on
              `params_mode`.
