@@ -37,7 +37,7 @@ from deepcell_spots.decoding_functions import decoding_function
 class SpotDecoding(Application):
     """Initialize a model for spot decoding of multiplex images.
 
-    The ``predict`` method handles inference procedure. It infers the 
+    The ``predict`` method handles inference procedure. It infers the
     model parameters and predicts the spot identities.
 
     Example:
@@ -102,9 +102,9 @@ class SpotDecoding(Application):
         """
         df_barcodes_aug = df_barcodes.copy()
         df_barcodes_aug.loc[df_barcodes_aug.index.max(
-        )+1] = ['Background'] + [0]*(df_barcodes_aug.shape[1]-1)
+        ) + 1] = ['Background'] + [0] * (df_barcodes_aug.shape[1] - 1)
         df_barcodes_aug.loc[df_barcodes_aug.index.max(
-        )+1] = ['Unknown'] + [-1]*(df_barcodes_aug.shape[1]-1)
+        ) + 1] = ['Unknown'] + [-1] * (df_barcodes_aug.shape[1] - 1)
         return df_barcodes_aug
 
     def _decoding_output_to_dict(self, out):

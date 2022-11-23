@@ -122,7 +122,7 @@ def cluster_points(spots_to_cells_dict, cell_id, threshold=1.5, match_method='mi
             row_vals = cluster_df.iloc[ii].values[1:]
             # Drops NaNs
             row_vals = np.array(
-                [item for item in row_vals if type(item) == np.ndarray])
+                [item for item in row_vals if isinstance(item, np.ndarray)])
             new_centroid = [np.mean(row_vals[:, 0]), np.mean(row_vals[:, 1])]
             update_centroids.append(new_centroid)
 
@@ -198,7 +198,7 @@ def gene_counts(spots_to_cells_dict, codebook, threshold=1.5,
         for i, row in enumerate(cluster_results):
             barcodes.append([])
             for item in row:
-                if type(item) == np.ndarray:
+                if isinstance(item, np.ndarray):
                     barcodes[i].append(1)
                 else:
                     barcodes[i].append(0)
@@ -213,7 +213,7 @@ def gene_counts(spots_to_cells_dict, codebook, threshold=1.5,
         for barcode in filter_barcodes:
             try:
                 gene = codebook_dict[str(barcode)]
-                if type(temp_gene_counts_df.at[0, gene]) == int:
+                if isinstance(temp_gene_counts_df.at[0, gene], int):
                     temp_gene_counts_df.at[0, gene] += 1
                 else:
                     temp_gene_counts_df.at[0, gene] = 1
@@ -225,7 +225,7 @@ def gene_counts(spots_to_cells_dict, codebook, threshold=1.5,
                     if corrected_gene == 'No match':
                         continue
                     else:
-                        if type(temp_gene_counts_df.at[0, corrected_gene]) == int:
+                        if isinstance(temp_gene_counts_df.at[0, corrected_gene], int):
                             temp_gene_counts_df.at[0, corrected_gene] += 1
                         else:
                             temp_gene_counts_df.at[0, corrected_gene] = 1
@@ -326,7 +326,7 @@ def gene_counts_DBSCAN(spots_to_cells_dict, codebook, threshold, error_corr=True
 
             try:
                 gene = codebook_dict[barcode_str]
-                if type(temp_gene_counts_df.at[0, gene]) == int:
+                if isinstance(temp_gene_counts_df.at[0, gene], int):
                     temp_gene_counts_df.at[0, gene] += 1
                 else:
                     temp_gene_counts_df.at[0, gene] = 1
@@ -338,7 +338,7 @@ def gene_counts_DBSCAN(spots_to_cells_dict, codebook, threshold, error_corr=True
                     if corrected_gene == 'No match':
                         continue
                     else:
-                        if type(temp_gene_counts_df.at[0, corrected_gene]) == int:
+                        if isinstance(temp_gene_counts_df.at[0, corrected_gene], int):
                             temp_gene_counts_df.at[0, corrected_gene] += 1
                         else:
                             temp_gene_counts_df.at[0, corrected_gene] = 1
@@ -381,13 +381,13 @@ def extract_spots_prob_from_coords_maxpool(image, spots_locations, extra_pixel_n
 
     Args:
         image (numpy.array): Probability maps with shape ``[batch, x, y, channel]``.
-        spots_locations (numpy.array): Coordiantes found by max projection, used as anchor 
+        spots_locations (numpy.array): Coordiantes found by max projection, used as anchor
             points for further max pooling operation. Shape ``[num_spots, 2]``.
-        extra_pixel_num (int): Parameter for size of the pool. Defaults to 1, meaning 
+        extra_pixel_num (int): Parameter for size of the pool. Defaults to 1, meaning
             a pool with size=(1,0,-1)x(1,0,-1)
 
     Returns:
-        list: Spots intensities, each entry in the list is a numpy.array with shape 
+        list: Spots intensities, each entry in the list is a numpy.array with shape
         ``[num_spots, channel]``.
     """
 
@@ -401,7 +401,7 @@ def extract_spots_prob_from_coords_maxpool(image, spots_locations, extra_pixel_n
         img_boundary_y = image_slice.shape[1] - 1
 
         intensity_d = np.zeros(
-            ((extra_pixel_num*2+1)**2, num_spots, image_slice.shape[-1]))
+            ((extra_pixel_num * 2 + 1)**2, num_spots, image_slice.shape[-1]))
         d = -1
         for dx in np.arange(-extra_pixel_num, extra_pixel_num + 1):
             for dy in np.arange(-extra_pixel_num, extra_pixel_num + 1):

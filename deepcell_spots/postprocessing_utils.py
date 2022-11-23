@@ -49,7 +49,7 @@ def y_annotations_to_point_list(y_pred, threshold=0.95):
     Returns:
         array: spot center coordinates of the format ``[[y0, x0], [y1, x1],...]``
     """
-    if type(y_pred) is not dict:
+    if not isinstance(y_pred, dict):
         raise TypeError('Input predictions must be a dictionary.')
     if 'classification' not in y_pred.keys() or 'offset_regression' not in y_pred.keys():
         raise NameError(
@@ -87,7 +87,7 @@ def y_annotations_to_point_list_restrictive(y_pred, threshold=0.95):
     Returns:
         array: spot center coordinates of the format ``[[y0, x0], [y1, x1],...]``.
     """
-    if type(y_pred) is not dict:
+    if not isinstance(y_pred, dict):
         raise TypeError('Input predictions must be a dictionary.')
     if 'classification' not in y_pred.keys() or 'offset_regression' not in y_pred.keys():
         raise NameError(
@@ -128,7 +128,7 @@ def y_annotations_to_point_list_max(y_pred, threshold=0.95, min_distance=2):
     Returns:
         array: spot center coordinates of the format [[y0, x0], [y1, x1],...]
     """
-    if type(y_pred) is not dict:
+    if not isinstance(y_pred, dict):
         raise TypeError('Input predictions must be a dictionary.')
     if 'classification' not in y_pred.keys() or 'offset_regression' not in y_pred.keys():
         raise NameError(
@@ -192,7 +192,7 @@ def y_annotations_to_point_list_cc(y_pred, threshold=0.95):
     Returns:
         array: spot center coordinates of the format ``[[y0, x0], [y1, x1],...]``
     """
-    if type(y_pred) is not dict:
+    if not isinstance(y_pred, dict):
         raise TypeError('Input predictions must be a dictionary.')
     if 'classification' not in y_pred.keys() or 'offset_regression' not in y_pred.keys():
         raise NameError(

@@ -46,12 +46,12 @@ def output_to_df(spots_locations_vec, cell_id_list, decoding_result):
     Formats model output from lists and arrays to dataframe.
 
     Args:
-        spots_locations_vec (numpy.array): An array of spots coordinates with 
+        spots_locations_vec (numpy.array): An array of spots coordinates with
             shape ``[num_spots, 2]``.
         cell_id_list (numpy.array): An array of assigned cell id for each spot
             with shape ``[num_spots,]``.
-        decoding_result (dict): Keys include: 'probability', 'predicted_id', 
-            'predicted_name'. 
+        decoding_result (dict): Keys include: 'probability', 'predicted_id',
+            'predicted_name'.
 
     Returns:
         pandas.DataFrame: A dataframe combines all input information.
@@ -98,16 +98,16 @@ class Polaris(object):
         r = 10
         c = 2
         df_barcodes = pd.read_csv('barcodes.csv', index_col=0)
-        app = Polaris(image_type='singplex', 
-                      decoding_kwargs={'r': r, 
-                                       'c': c, 
+        app = Polaris(image_type='singplex',
+                      decoding_kwargs={'r': r,
+                                       'c': c,
                                        'df_barcodes': df_barcodes})
         df_spots, df_intensities, segmentation_result = app.predict(
                              spots_image=spots_im,
                              segmentation_image=cyto_im)
 
     Args:
-        image_type (str): The type of the image. Valid values are 
+        image_type (str): The type of the image. Valid values are
             'singleplex' and 'multiplex'. Defaults to 'singleplex'.
         segmentation_model (tf.keras.Model): The model to load.
             If ``None``, a pre-trained model will be downloaded.
@@ -235,8 +235,8 @@ class Polaris(object):
                 considered as a spot.
             spots_clip (bool): Determines if pixel values will be clipped by percentile.
                 Defaults to false.
-            maxpool_extra_pixel_num (int): Number of extra pixel for max pooling. Defaults 
-                to 0, means no max pooling. For any number t, there will be a pool with 
+            maxpool_extra_pixel_num (int): Number of extra pixel for max pooling. Defaults
+                to 0, means no max pooling. For any number t, there will be a pool with
                 shape ``[-t, t] x [-t, t]``.
             decoding_training_kwargs (dict): Including num_iter, batch_size, thres_prob.
         Raises:
@@ -245,7 +245,7 @@ class Polaris(object):
                 image is defined.
 
         Returns:
-            df_spots (pandas.DataFrame): Columns are x, y, batch_id, cell_id, probability, 
+            df_spots (pandas.DataFrame): Columns are x, y, batch_id, cell_id, probability,
                 predicted_id, preicted_name. Cell_id = 0 means background.
             df_intensities (pandas.DataFrame): Columns are channels and rows are spots.
             segmentation_result (numpy.array): Segmentation mask with shape ``[batch, x, y, 1]``.
@@ -264,7 +264,7 @@ class Polaris(object):
         spots_intensities = extract_spots_prob_from_coords_maxpool(
             output_image, spots_locations, extra_pixel_num=maxpool_extra_pixel_num)
         spots_intensities_vec = np.concatenate(spots_intensities)
-        spots_locations_vec = np.concatenate([np.concatenate([item, [[idx_batch]]*len(item)], axis=1)
+        spots_locations_vec = np.concatenate([np.concatenate([item, [[idx_batch]] * len(item)], axis=1)
                                               for idx_batch, item in enumerate(spots_locations)])
 
         if segmentation_image is not None:

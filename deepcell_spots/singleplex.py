@@ -93,7 +93,7 @@ def match_spots_to_cells_as_vec_batched(segmentation_result, spots_locations):
         spots_locations (list): Each entry is a `(number of spots,2)` array.
 
     Returns:
-        spot_cell_assignments_vec (numpy.array): Array of cell ids, all batches 
+        spot_cell_assignments_vec (numpy.array): Array of cell ids, all batches
             concatenated.
     """
     spot_cell_assignments = []

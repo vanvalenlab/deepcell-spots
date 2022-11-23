@@ -53,12 +53,20 @@ def reshape_torch_array(torch_array):
 
 
 @config_enumerate
-def model_constrained_tensor(data, codes, c, r, batch_size=None, params_mode='2*R*C'):
-    """Model definition: relaxed bernoulli, paramters are shared across all genes, but might differ across channels or rounds.
+def model_constrained_tensor(
+        data,
+        codes,
+        c,
+        r,
+        batch_size=None,
+        params_mode='2*R*C'):
+    """Model definition: relaxed bernoulli, paramters are shared across all genes, but might 
+    differ across channels or rounds.
 
     Args:
         data (torch.array): Input data formatted as torch array with shape ``[num_spots, r * c]``.
-        codes (torch.array): Codebook formatted as torch array with shape ``[num_barcodes + 1, r * c]``.
+        codes (torch.array): Codebook formatted as torch array with shape 
+            ``[num_barcodes + 1, r * c]``.
         c (int): Number of channels.
         r (int): Number of rounds.
         batch_size (int): Size of batch for training. Defaults to 1000.
@@ -131,8 +139,12 @@ def model_constrained_tensor(data, codes, c, r, batch_size=None, params_mode='2*
 
     with pyro.plate('data', data.shape[0], batch_size) as batch:
         z = pyro.sample('z', Categorical(w))
-        pyro.sample('obs', RelaxedBernoulli(
-            temperature=aug_temperature[z], probs=scaled_sigma[z]).to_event(1), obs=data[batch])
+        pyro.sample(
+            'obs',
+            RelaxedBernoulli(
+                temperature=aug_temperature[z],
+                probs=scaled_sigma[z]).to_event(1),
+            obs=data[batch])
 
 
 # Initialize an auto guide on the model
@@ -146,7 +158,8 @@ def train(svi, num_iter, data, codes, c, r, batch_size, params_mode):
         svi (pyro.infer.SVI): stochastic variational inference model.
         num_iter (int): Number of iterations for training. Defaults to 200.
         data (torch.array): Input data formatted as torch array with shape ``[num_spots, r * c]``.
-        codes (torch.array): Codebook formatted as torch array with shape ``[num_barcodes + 1, r * c]``.
+        codes (torch.array): Codebook formatted as torch array with shape 
+            ``[num_barcodes + 1, r * c]``.
         c (int): Number of channels.
         r (int): Number of rounds.
         batch_size (int): Size of batch for training. Defaults to 1000.
@@ -170,9 +183,12 @@ def e_step(data, codes, w, temperature, sigma, c, r, params_mode='2*R*C'):
 
     Args:
         data (torch.array): Input data formatted as torch array with shape ``[num_spots, r * c]``.
-        codes (torch.array): Codebook formatted as torch array with shape ``[num_barcodes + 1, r * c]``.
-        w (torch.array): Weight parameter for each category with shape ``[num_barcodes + 1, r * c]``.
-        temperature (torch.array): Temperature parameter for relaxed bernoulli, shape depends on `params_mode`.
+        codes (torch.array): Codebook formatted as torch array with shape 
+            ``[num_barcodes + 1, r * c]``.
+        w (torch.array): Weight parameter for each category with shape 
+            ``[num_barcodes + 1, r * c]``.
+        temperature (torch.array): Temperature parameter for relaxed bernoulli, shape depends on
+             `params_mode`.
         sigma (torch.array): Sigma parameter for relaxed bernoulli, shape depends on `params_mode`.
         c (int): Number of channels.
         r (int): Number of rounds.
@@ -220,10 +236,12 @@ def e_step(data, codes, w, temperature, sigma, c, r, params_mode='2*R*C'):
     batch_sz = 50000
     for idx in range(len(data) // batch_sz + 1):
         ind_start, ind_end = idx * \
-            batch_sz, torch.min(torch.tensor([(idx+1)*batch_sz, len(data)]))
+            batch_sz, torch.min(torch.tensor(
+                [(idx + 1) * batch_sz, len(data)]))
         for idx in range(k):
             dist = RelaxedBernoulli(
-                temperature=aug_temperature[idx], probs=scaled_sigma[idx]).to_event(1)
+                temperature=aug_temperature[idx],
+                probs=scaled_sigma[idx]).to_event(1)
             class_logprobs[ind_start:ind_end, idx] = (
                 w[idx].log() + dist.log_prob(data[ind_start:ind_end])).cpu().numpy()
 
@@ -235,7 +253,13 @@ def e_step(data, codes, w, temperature, sigma, c, r, params_mode='2*R*C'):
     return class_prob_norm
 
 
-def decoding_function(spots, barcodes, num_iter=500, batch_size=15000, set_seed=1, params_mode='2*R*C'):
+def decoding_function(
+        spots,
+        barcodes,
+        num_iter=500,
+        batch_size=15000,
+        set_seed=1,
+        params_mode='2*R*C'):
     """Main function for the spot decoding.
 
     Args:
@@ -248,8 +272,8 @@ def decoding_function(spots, barcodes, num_iter=500, batch_size=15000, set_seed=
             channels or rounds. valid options: {'1', '2', '2*R', '2*C', '2*R*C'}.
 
     Returns:
-        results (dict): The decoding results as a dictionary: 'class_probs': posterior 
-            probabilities for each spot and each gene category; 'params': estimated model 
+        results (dict): The decoding results as a dictionary: 'class_probs': posterior
+            probabilities for each spot and each gene category; 'params': estimated model
             parameters.
     """
     # if cuda available, runs on gpu
@@ -277,13 +301,16 @@ def decoding_function(spots, barcodes, num_iter=500, batch_size=15000, set_seed=
     sigma_star = pyro.param('sigma').detach()
 
     class_probs_star = e_step(
-        data, codes, w_star, temperature_star, sigma_star, c, r,  params_mode)
+        data, codes, w_star, temperature_star, sigma_star, c, r, params_mode)
 
     if torch.cuda.is_available():
         torch.set_default_tensor_type("torch.FloatTensor")
 
-    torch_params = {'w_star': w_star.cpu(), 'temperature_star': temperature_star.cpu(
-    ), 'sigma_star': sigma_star.cpu(), 'losses': losses}
+    torch_params = {
+        'w_star': w_star.cpu(),
+        'temperature_star': temperature_star.cpu(),
+        'sigma_star': sigma_star.cpu(),
+        'losses': losses}
     results = {'class_probs': class_probs_star, 'params': torch_params}
 
     return results
