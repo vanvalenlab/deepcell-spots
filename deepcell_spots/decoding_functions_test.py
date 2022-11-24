@@ -24,28 +24,24 @@
 # limitations under the License.
 # ==============================================================================
 
-"""Tests for analysis of multiplex FISH images"""
+"""Tests for decoding functions"""
 
 import numpy as np
 from tensorflow.python.platform import test
 
-from deepcell_spots.multiplex import (
-    multiplex_match_spots_to_cells, 
-    extract_spots_prob_from_coords_maxpool)
+from decoding_functions import (
+    reshape_torch_array,
+    model_constrained_tensor,
+    train,
+    e_step,
+    decoding_function
+)
 
+class TestDecodingFunc(test.TestCase):
+    def test_train(self):
+        pass
 
-class TestImageAlignment(test.TestCase):
-    def test_multiplex_match_spots_to_cells(self):
-        coords_dict = {0: [[[0, 0], [1, 1]]]}
-        cytoplasm_pred = np.zeros((1, 10, 10, 1))
-
-        spots_dict = multiplex_match_spots_to_cells(coords_dict, cytoplasm_pred)
-
-        print(spots_dict)
-        self.assertEqual(list(spots_dict.keys()), [0])
-        self.assertEqual(spots_dict[0], {0.0: [[0, 0], [1, 1]]})
-
-    def test_extract_spots_prob_from_coords_maxpool(self):
+    def test_decoding_function(self):
         pass
 
 

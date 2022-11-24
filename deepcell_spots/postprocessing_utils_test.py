@@ -31,7 +31,8 @@ from tensorflow.python.platform import test
 
 from deepcell_spots.postprocessing_utils import (
     y_annotations_to_point_list, y_annotations_to_point_list_cc,
-    y_annotations_to_point_list_max, y_annotations_to_point_list_restrictive)
+    y_annotations_to_point_list_max, y_annotations_to_point_list_restrictive,
+    max_cp_array_to_point_list_max)
 
 
 class TestPostProcUtils(test.TestCase):
@@ -181,6 +182,11 @@ class TestPostProcUtils(test.TestCase):
             for ii in range(len(coords[i])):
                 for dim in range(2):
                     self.assertEqual(coords[i][ii][dim], 2)
+
+
+    def test_max_cp_array_to_point_list_max(self):
+        pass
+
 
 
 if __name__ == '__main__':

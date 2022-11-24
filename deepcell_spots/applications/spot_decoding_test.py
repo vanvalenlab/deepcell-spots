@@ -23,31 +23,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+"""Tests for SpotDecoding application"""
 
-"""Tests for analysis of multiplex FISH images"""
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 
 import numpy as np
 from tensorflow.python.platform import test
 
-from deepcell_spots.multiplex import (
-    multiplex_match_spots_to_cells, 
-    extract_spots_prob_from_coords_maxpool)
+from deepcell_spots.applications import SpotDecoding
 
 
-class TestImageAlignment(test.TestCase):
-    def test_multiplex_match_spots_to_cells(self):
-        coords_dict = {0: [[[0, 0], [1, 1]]]}
-        cytoplasm_pred = np.zeros((1, 10, 10, 1))
+class TestSpotDecoding(test.TestCase):
 
-        spots_dict = multiplex_match_spots_to_cells(coords_dict, cytoplasm_pred)
-
-        print(spots_dict)
-        self.assertEqual(list(spots_dict.keys()), [0])
-        self.assertEqual(spots_dict[0], {0.0: [[0, 0], [1, 1]]})
-
-    def test_extract_spots_prob_from_coords_maxpool(self):
+    def test_spot_decoding_app(self):
         pass
-
-
-if __name__ == '__main__':
-    test.main()
