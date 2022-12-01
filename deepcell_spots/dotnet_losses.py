@@ -26,10 +26,6 @@
 
 """Custom loss functions for DeepCell spots"""
 
-# loss:
-# focal loss for classification of pixels
-# L1 loss for regression of the point coordinates
-
 import tensorflow as tf
 from deepcell import losses
 from tensorflow.keras import backend as K
@@ -69,7 +65,6 @@ def smooth_l1(y_true, y_pred, sigma=3.0):
 
 class DotNetLosses(object):
     def __init__(self,
-                 alpha=0.25,
                  gamma=2.0,
                  sigma=3.0,
                  n_classes=2,
@@ -77,7 +72,6 @@ class DotNetLosses(object):
                  d_pixels=1,
                  mu=0,
                  beta=0):
-        self.alpha = alpha
         self.gamma = gamma
         self.sigma = sigma
         self.n_classes = n_classes
@@ -97,10 +91,6 @@ class DotNetLosses(object):
             y_pred: tensor of shape `(batch, Ly, Lx, 2)`.
                 `Ly`, `Lx` are the dimensions of a single image.
                 Dimension 3 contains `delta_y` and `delta_x`.
-            d_pixels (int): the number of pixels on each side of a point containing
-                pixels over which to calculate the regression loss for the offset
-                image (0 = calculate for point containing pixels only,
-                1 = calculate for 8-nearest neighbors, ...).
 
         Returns:
             float: the normalized smooth  L1 loss over all the input pixels with
@@ -109,6 +99,7 @@ class DotNetLosses(object):
         """
         # get class parameter
         d_pixels = self.d_pixels
+        sigma = self.sigma
 
         # separate x and y offset
         y_offset_true = y_true[..., 0]
@@ -129,7 +120,7 @@ class DotNetLosses(object):
             K.less_equal(-d, x_offset_true), K.less(x_offset_true, d))
         near_pt_indices = tf.where(tf.math.logical_and(near_pt_y, near_pt_x))
         # Classification of half-integer coordinates is inconsistent with the generator. This is
-        # negligile for random positions
+        # negligible for random positions
         # The generator uses python's round which is banker's rounding (to nearest even number)
 
         y_offset_true_cp = tf.gather_nd(y_offset_true, near_pt_indices)
@@ -140,12 +131,11 @@ class DotNetLosses(object):
 
         # use smooth l1 loss on the offsets
         pixelwise_loss_y = smooth_l1(
-            y_offset_true_cp, y_offset_pred_cp, sigma=self.sigma)
+            y_offset_true_cp, y_offset_pred_cp, sigma=sigma)
         pixelwise_loss_x = smooth_l1(
-            x_offset_true_cp, x_offset_pred_cp, sigma=self.sigma)
+            x_offset_true_cp, x_offset_pred_cp, sigma=sigma)
 
         # compute the normalizer: the number of positive pixels
-        # can change line below to use the shape of near_pt_indices instead of re-calculating
         normalizer = K.maximum(1, K.shape(near_pt_indices)[0])
         normalizer = K.cast(normalizer, dtype=K.floatx())
 
@@ -164,13 +154,17 @@ class DotNetLosses(object):
         Returns:
             float: focal / weighted categorical cross entropy loss
         """
-        if self.focal:
+        focal = self.focal
+        gamma = self.gamma
+        n_classes = self.n_classes
+
+        if focal:
             loss = losses.weighted_focal_loss(
-                y_true, y_pred, gamma=self.gamma, n_classes=self.n_classes)
+                y_true, y_pred, gamma=gamma, n_classes=n_classes)
 
         else:
             loss = losses.weighted_categorical_crossentropy(
-                y_true, y_pred, n_classes=self.n_classes)
+                y_true, y_pred, n_classes=n_classes)
             loss = K.mean(loss)
 
         return loss
@@ -183,22 +177,24 @@ class DotNetLosses(object):
                 one hot encoded pixel classification.
             y_pred: numpy array of size `(batch, Ly, Lx, 2)`
                 one hot encoded pixel classification.
-            mu (float): weight of regularization term.
 
         Returns:
             float: focal / weighted categorical cross entropy loss
         """
         # get class parameters
+        focal = self.focal
         mu = self.mu
         beta = self.beta
+        gamma = self.gamma
+        n_classes = self.n_classes
 
-        if self.focal:
+        if focal:
             loss = losses.weighted_focal_loss(
-                y_true, y_pred, gamma=self.gamma, n_classes=self.n_classes)
+                y_true, y_pred, gamma=gamma, n_classes=n_classes)
 
         else:
             loss = losses.weighted_categorical_crossentropy(
-                y_true, y_pred, n_classes=self.n_classes)
+                y_true, y_pred, n_classes=n_classes)
             loss = K.mean(loss)
 
         # L2 penalize a difference in total number of spots in each image of the batch

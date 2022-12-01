@@ -27,8 +27,6 @@
 """Tests for loss functions for DeepCell spots"""
 
 import numpy as np
-
-import tensorflow as tf
 from tensorflow import keras
 from tensorflow.python.platform import test
 
