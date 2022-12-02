@@ -163,21 +163,18 @@ class Polaris(object):
             else:
                 self.decoding_app = SpotDecoding(**decoding_kwargs)
 
-        valid_compartments = ['cytoplasm',
-                              'nucleus', 'mesmer', 'no segmentation']
+        valid_compartments = ['cytoplasm', 'nucleus', 'mesmer', 'no segmentation']
         if segmentation_type not in valid_compartments:
             raise ValueError('Invalid compartment supplied: {}. '
                              'Must be one of {}'.format(segmentation_type,
                                                         valid_compartments))
 
         if segmentation_type == 'cytoplasm':
-            self.segmentation_app = CytoplasmSegmentation(
-                model=segmentation_model)
+            self.segmentation_app = CytoplasmSegmentation(model=segmentation_model)
             self.segmentation_app.preprocessing_fn = histogram_normalization
             self.segmentation_app.postprocessing_fn = deep_watershed
         elif segmentation_type == 'nucleus':
-            self.segmentation_app = NuclearSegmentation(
-                model=segmentation_model)
+            self.segmentation_app = NuclearSegmentation(model=segmentation_model)
         elif segmentation_type == 'mesmer':
             self.segmentation_app = Mesmer()
         else:
@@ -255,8 +252,7 @@ class Polaris(object):
             raise ValueError('Threshold of %s was input. Threshold value must be '
                              'between 0 and 1.'.format())
 
-        output_image = self._predict_spots_image(
-            spots_image, spots_threshold, spots_clip)
+        output_image = self._predict_spots_image(spots_image, spots_threshold, spots_clip)
 
         max_proj_images = np.max(output_image, axis=-1)
         spots_locations = max_cp_array_to_point_list_max(max_proj_images,
@@ -289,7 +285,6 @@ class Polaris(object):
             decoding_result = {'probability': None,
                                'predicted_id': None, 'predicted_name': None}
 
-        df_spots = output_to_df(spots_locations_vec,
-                                spots_cell_assignments_vec, decoding_result)
+        df_spots = output_to_df(spots_locations_vec, spots_cell_assignments_vec, decoding_result)
         df_intensities = pd.DataFrame(spots_intensities_vec)
         return df_spots, df_intensities, segmentation_result

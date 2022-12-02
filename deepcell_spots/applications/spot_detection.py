@@ -145,8 +145,7 @@ class SpotDetection(Application):
             images stored as list if no formatting function is specified.
         """
         if self.format_model_output_fn is not None:
-            formatted_images = self.format_model_output_fn(
-                output_images, self.model.output_names)
+            formatted_images = self.format_model_output_fn(output_images, self.model.output_names)
             return formatted_images
         else:
             return output_images
@@ -232,8 +231,7 @@ class SpotDetection(Application):
         )
 
         # Postprocess predictions to create label image
-        predicted_spots = self._postprocess(
-            output_images, **postprocess_kwargs)
+        predicted_spots = self._postprocess(output_images, **postprocess_kwargs)
 
         return predicted_spots
 

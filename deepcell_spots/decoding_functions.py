@@ -77,8 +77,7 @@ def model_constrained_tensor(
         None
     """
     k = codes.shape[0]
-    w = pyro.param('weights', torch.ones(k) / k,
-                   constraint=constraints.simplex)
+    w = pyro.param('weights', torch.ones(k) / k, constraint=constraints.simplex)
 
     if params_mode == '1':
         # one param
@@ -185,15 +184,14 @@ def e_step(data, codes, w, temperature, sigma, c, r, params_mode='2*R*C'):
         data (torch.array): Input data formatted as torch array with shape ``[num_spots, r * c]``.
         codes (torch.array): Codebook formatted as torch array with shape
             ``[num_barcodes + 1, r * c]``.
-        w (torch.array): Weight parameter for each category with shape
-            ``[num_barcodes + 1, r * c]``.
+        w (torch.array): Weight parameter with shape ``[num_barcodes + 1, r * c]``.
         temperature (torch.array): Temperature parameter for relaxed bernoulli, shape depends on
              `params_mode`.
         sigma (torch.array): Sigma parameter for relaxed bernoulli, shape depends on `params_mode`.
         c (int): Number of channels.
         r (int): Number of rounds.
         params_mode (str): Number of model parameters, whether the parameters are shared across
-            channels or rounds. valid options: {'1', '2', '2*R', '2*C', '2*R*C'}
+            channels or rounds. Valid options: {'1', '2', '2*R', '2*C', '2*R*C'}.
 
     Returns:
         normalized class probability with shape ``[num_spots, num_barcodes + 1]``.
@@ -235,9 +233,8 @@ def e_step(data, codes, w, temperature, sigma, c, r, params_mode='2*R*C'):
 
     batch_sz = 50000
     for idx in range(len(data) // batch_sz + 1):
-        ind_start, ind_end = idx * \
-            batch_sz, torch.min(torch.tensor(
-                [(idx + 1) * batch_sz, len(data)]))
+        ind_start = idx * batch_sz, 
+        ind_end = torch.min(torch.tensor([(idx + 1) * batch_sz, len(data)]))
         for idx in range(k):
             dist = RelaxedBernoulli(
                 temperature=aug_temperature[idx],
@@ -246,8 +243,7 @@ def e_step(data, codes, w, temperature, sigma, c, r, params_mode='2*R*C'):
                 w[idx].log() + dist.log_prob(data[ind_start:ind_end])).cpu().numpy()
 
     # basically doing a stable_softmax here
-    numerator = np.exp(
-        class_logprobs - np.max(class_logprobs, axis=1)[:, None])
+    numerator = np.exp(class_logprobs - np.max(class_logprobs, axis=1)[:, None])
     class_prob_norm = np.divide(numerator, np.sum(numerator, axis=1)[:, None])
 
     return class_prob_norm
@@ -284,10 +280,8 @@ def decoding_function(
 
     num_spots, c, r = spots.shape
 
-    data = torch.tensor(spots).float().transpose(
-        1, 2).reshape(spots.shape[0], c * r)
-    codes = torch.tensor(barcodes).float().transpose(
-        1, 2).reshape(barcodes.shape[0], c * r)
+    data = torch.tensor(spots).float().transpose(1, 2).reshape(spots.shape[0], c * r)
+    codes = torch.tensor(barcodes).float().transpose(1, 2).reshape(barcodes.shape[0], c * r)
 
     optim = Adam({'lr': 0.085, 'betas': [0.85, 0.99]})
     svi = SVI(model_constrained_tensor, auto_guide_constrained_tensor,

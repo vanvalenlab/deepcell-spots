@@ -121,8 +121,7 @@ def cluster_points(spots_to_cells_dict, cell_id, threshold=1.5, match_method='mi
             # Exclude current centroid
             row_vals = cluster_df.iloc[ii].values[1:]
             # Drops NaNs
-            row_vals = np.array(
-                [item for item in row_vals if isinstance(item, np.ndarray)])
+            row_vals = np.array([item for item in row_vals if isinstance(item, np.ndarray)])
             new_centroid = [np.mean(row_vals[:, 0]), np.mean(row_vals[:, 1])]
             update_centroids.append(new_centroid)
 
@@ -180,11 +179,9 @@ def gene_counts(spots_to_cells_dict, codebook, threshold=1.5,
 
     codebook_dict = {}
     for i in range(len(codebook)):
-        codebook_dict[str(list(codebook.loc[i].values[1:-1]))
-                      ] = codebook.loc[i].values[0]
+        codebook_dict[str(list(codebook.loc[i].values[1:-1]))] = codebook.loc[i].values[0]
 
-    gene_counts_df = pd.DataFrame(
-        columns=['cellID'] + list(codebook_dict.values()))
+    gene_counts_df = pd.DataFrame(columns=['cellID'] + list(codebook_dict.values()))
 
     cell_id_list = list(spots_to_cells_dict[col_names[0]].keys())
     for i_cell, cell_id in enumerate(tqdm(cell_id_list)):
@@ -206,8 +203,7 @@ def gene_counts(spots_to_cells_dict, codebook, threshold=1.5,
         filter_barcodes = [item for item in barcodes
                            if sum(item) == 4 or sum(item) == 3 or sum(item) == 5]
 
-        temp_gene_counts_df = pd.DataFrame(
-            columns=['cellID'] + list(codebook_dict.values()))
+        temp_gene_counts_df = pd.DataFrame(columns=['cellID'] + list(codebook_dict.values()))
         temp_gene_counts_df['cellID'] = [cell_id]
 
         for barcode in filter_barcodes:
@@ -265,12 +261,10 @@ def gene_counts_DBSCAN(spots_to_cells_dict, codebook, threshold, error_corr=True
     # Codebook data frame to dictionary
     codebook_dict = {}
     for i in range(len(codebook)):
-        codebook_dict[str(list(codebook.loc[i].values[1:-1]))
-                      ] = codebook.loc[i].values[0]
+        codebook_dict[str(list(codebook.loc[i].values[1:-1]))] = codebook.loc[i].values[0]
     col_names = list(spots_to_cells_dict.keys())
 
-    gene_counts_df = pd.DataFrame(
-        columns=['cellID'] + list(codebook_dict.values()))
+    gene_counts_df = pd.DataFrame(columns=['cellID'] + list(codebook_dict.values()))
 
     # Iterate through cells
     cell_id_list = list(spots_to_cells_dict[col_names[0]].keys())
@@ -284,8 +278,7 @@ def gene_counts_DBSCAN(spots_to_cells_dict, codebook, threshold, error_corr=True
 
         # Flatten across rounds
         num_spots_list = [len(item) for item in cell_coords]
-        running_total = [sum(num_spots_list[:(i + 1)])
-                         for i in range(len(num_spots_list))]
+        running_total = [sum(num_spots_list[:(i + 1)]) for i in range(len(num_spots_list))]
         cell_coords_flat = np.vstack(cell_coords)
 
         # Cluster spots
@@ -294,8 +287,7 @@ def gene_counts_DBSCAN(spots_to_cells_dict, codebook, threshold, error_corr=True
         labels = clustering.labels_
 
         # Data frame with gene counts for this cell
-        temp_gene_counts_df = pd.DataFrame(
-            columns=['cellID'] + list(codebook_dict.values()))
+        temp_gene_counts_df = pd.DataFrame(columns=['cellID'] + list(codebook_dict.values()))
         temp_gene_counts_df['cellID'] = [cell_id]
 
         # Iterate through clusters
@@ -333,8 +325,7 @@ def gene_counts_DBSCAN(spots_to_cells_dict, codebook, threshold, error_corr=True
 
             except KeyError:
                 if error_corr:
-                    corrected_gene = error_correction(
-                        barcode_str, codebook_dict)
+                    corrected_gene = error_correction(barcode_str, codebook_dict)
                     if corrected_gene == 'No match':
                         continue
                     else:
@@ -412,9 +403,8 @@ def extract_spots_prob_from_coords_maxpool(image, spots_locations, extra_pixel_n
                     y_coord = np.maximum(0, np.minimum(
                         img_boundary_y, np.around(coords[:, 1]) + dy))  # (num_spots,)
 
-                    intensity_d[d, :, ind_cr] = image_slice[x_coord,
-                                                            y_coord, ind_cr]
-        # (num_spots, image_slice.shape[-1])
+                    intensity_d[d, :, ind_cr] = image_slice[x_coord, y_coord, ind_cr]
+        
         intensity = np.max(intensity_d, axis=0)
         spots_intensities.append(intensity)
 

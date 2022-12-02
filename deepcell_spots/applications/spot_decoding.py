@@ -150,15 +150,13 @@ class SpotDecoding(Application):
         """Predict the gene assignment of each spot.
         """
 
-        spots_intensities_reshaped = np.reshape(
-            spots_intensities_vec, (-1, self.r, self.c))
+        spots_intensities_reshaped = np.reshape(spots_intensities_vec, (-1, self.r, self.c))
 
         # convert df_barcodes to an array
         ch_names = list(self.df_barcodes.columns)
         ch_names.remove('code_name')
         unknown_index = self.df_barcodes.index.max()
-        barcodes_array = self.df_barcodes[ch_names].values.reshape(
-            -1, self.r, self.c)[:-1, :, :]  # remove Unknown category
+        barcodes_array = self.df_barcodes[ch_names].values.reshape(-1, self.r, self.c)[:-1, :, :]
 
         # decode
         out = decoding_function(
