@@ -30,19 +30,17 @@ import numpy as np
 from tensorflow.python.platform import test
 
 from decoding_functions import (
-    reshape_torch_array,
-    model_constrained_tensor,
-    train,
-    e_step,
     decoding_function
 )
 
 class TestDecodingFunc(test.TestCase):
-    def test_train(self):
-        pass
-
     def test_decoding_function(self):
-        pass
+        spots = np.randn(100, 2, 3)
+        barcodes = np.array([[0,1,0,1,0], [1,0,1,0,1]]).rehape(-1,2,3)
+        results = decoding_function(spots, barcodes, num_iter=20, batch_size=100)
+        self.assertIsInstance(results, dict)
+        self.assertEqual(results['class_probs'].shape, (100,))
+        self.assertIsInstance(results['params'], dict)
 
 
 if __name__ == '__main__':

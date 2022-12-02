@@ -185,7 +185,16 @@ class TestPostProcUtils(test.TestCase):
 
 
     def test_max_cp_array_to_point_list_max(self):
-        pass
+        num_images = 1
+        image_dim = 10
+        max_cp_array = np.zeros((num_images, image_dim, image_dim))
+        threshold = 0.9
+        min_distance = 2
+        dot_centers = max_cp_array_to_point_list_max(max_cp_array, threshold, min_distance)
+        for i in range(len(dot_centers)):
+            for dim in range(2):
+                self.assertEqual(dot_centers[i][dim], 1)
+
 
 
 

@@ -64,7 +64,13 @@ class TestSingleplex(test.TestCase):
         self.assertEqual(spot_dict, defaultdict(list, {1.0: [[0, 0], [1, 1]], 0: [[7, 7]]}))
 
     def test_match_spots_to_cells_as_vec(self):
-        pass
+        labeled_im = np.zeros((1, 10, 10, 1))
+        coords = np.array([[0, 0], [1, 1]])
+
+        assigned_cell = match_spots_to_cells_as_vec(labeled_im, coords)
+
+        self.assertAllEqual(assigned_cell, [0,0])
+
 
 
 if __name__ == '__main__':

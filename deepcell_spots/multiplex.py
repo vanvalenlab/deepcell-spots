@@ -382,6 +382,10 @@ def extract_spots_prob_from_coords_maxpool(image, spots_locations, extra_pixel_n
         ``[num_spots, channel]``.
     """
 
+    if extra_pixel_num < 0:
+        raise ValueError('extra_pixel_num should be a positive integer (zero included), but got {}'.format(extra_pixel_num))
+
+
     spots_intensities = []
     for idx_batch in range(len(image)):
         image_slice = image[idx_batch]

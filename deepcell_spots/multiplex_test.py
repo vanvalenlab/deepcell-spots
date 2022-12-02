@@ -46,7 +46,14 @@ class TestImageAlignment(test.TestCase):
         self.assertEqual(spots_dict[0], {0.0: [[0, 0], [1, 1]]})
 
     def test_extract_spots_prob_from_coords_maxpool(self):
-        pass
+        image = np.rand(10, 100, 100, 20)
+        spots_locations = np.random.randint(0, 100, (20, 2))
+
+        with self.assertRaises(ValueError):
+            extract_spots_prob_from_coords_maxpool(image, spots_locations, extra_pixel_num=-1)
+
+        with self.assertRaises(ValueError):
+            extract_spots_prob_from_coords_maxpool(image, spots_locations, extra_pixel_num=0.5)
 
 
 if __name__ == '__main__':
