@@ -29,7 +29,7 @@
 import numpy as np
 from tensorflow.python.platform import test
 
-from decoding_functions import (
+from deepcell_spots.decoding_functions import (
     decoding_function
 )
 
