@@ -47,7 +47,7 @@ class TestSpotDecoding(test.TestCase):
         ['code6', 0,1,0,0,1,0],
         ['code7', 1,0,1,0,0,0]], 
         columns=['code_name', 'r0c0', 'r0c1', 'r0c2', 'r1c0', 'r1c1', 'r1c2'],
-        index=[range(7)+1])
+        index=[np.arange(7)+1])
         app = SpotDecoding(df_barcodes=df_barcodes, r=2, c=3)
 
         spots_intensities_vec = np.randn(100, 6)
@@ -60,7 +60,7 @@ class TestSpotDecoding(test.TestCase):
         df_barcodes = pd.DataFrame([['code1', 0,0,0,0,0,0],
         ['code2', 1,1,1,1,1,1]], 
         columns=['code_name', 'r0c0', 'r0c1', 'r0c2', 'r1c0', 'r1c1', 'r1c2'],
-        index=[range(2)+1])
+        index=[np.arange(2)+1])
         app = SpotDecoding(df_barcodes=df_barcodes, r=2, c=3)
 
         spots_intensities_vec = np.ones((100, 6)) *0.99
