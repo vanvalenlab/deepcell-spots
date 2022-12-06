@@ -29,14 +29,13 @@
 import numpy as np
 from tensorflow.python.platform import test
 
-from deepcell_spots.decoding_functions import (
-    decoding_function
-)
+from deepcell_spots.decoding_functions import decoding_function
+
 
 class TestDecodingFunc(test.TestCase):
     def test_decoding_function(self):
-        spots = np.randn(100, 2, 3)
-        barcodes = np.array([[0,1,0,1,0], [1,0,1,0,1]]).rehape(-1,2,3)
+        spots = np.random.rand(100, 2, 3)
+        barcodes = np.array([[0, 0, 1, 0, 1, 0], [1, 1, 0, 1, 0, 1]]).reshape(2, 2, 3)
         results = decoding_function(spots, barcodes, num_iter=20, batch_size=100)
         self.assertIsInstance(results, dict)
         self.assertEqual(results['class_probs'].shape, (100,))

@@ -27,13 +27,11 @@
 import numpy as np
 import pandas as pd
 from scipy.spatial import distance
-from skimage.feature import peak_local_max
 from sklearn.cluster import DBSCAN
 from tqdm import tqdm
 
 from deepcell_spots.singleplex import match_spots_to_cells
-from deepcell_spots.point_metrics import (match_points_min_dist,
-                                          match_points_mutual_nearest_neighbor)
+from deepcell_spots.point_metrics import match_points_min_dist, match_points_mutual_nearest_neighbor
 
 
 def multiplex_match_spots_to_cells(coords_dict, cytoplasm_pred):
@@ -62,7 +60,7 @@ def multiplex_match_spots_to_cells(coords_dict, cytoplasm_pred):
         matched_spots_dict = match_spots_to_cells(cytoplasm_pred, coords[i])
         spots_to_cells_dict[keys[i]] = matched_spots_dict
 
-    return (spots_to_cells_dict)
+    return spots_to_cells_dict
 
 
 def cluster_points(spots_to_cells_dict, cell_id, threshold=1.5, match_method='min_dist'):
@@ -140,11 +138,12 @@ def cluster_points(spots_to_cells_dict, cell_id, threshold=1.5, match_method='mi
         cluster_df = pd.concat([cluster_df, temp_df])
         cluster_df = cluster_df.reset_index(drop=True)
 
-    return (cluster_df)
+    return cluster_df
 
 
-def gene_counts(spots_to_cells_dict, codebook, threshold=1.5,
-                match_method='min_dist', error_corr=True):
+def gene_counts(
+    spots_to_cells_dict, codebook, threshold=1.5, match_method="min_dist", error_corr=True
+):
     """Deprecated. Function no longer maintained.
 
     Assigns combinatorial barcodes corresponding to gene identities.
@@ -186,8 +185,9 @@ def gene_counts(spots_to_cells_dict, codebook, threshold=1.5,
     cell_id_list = list(spots_to_cells_dict[col_names[0]].keys())
     for i_cell, cell_id in enumerate(tqdm(cell_id_list)):
 
-        cluster_df = cluster_points(spots_to_cells_dict, cell_id, threshold,
-                                    match_method=match_method)
+        cluster_df = cluster_points(
+            spots_to_cells_dict, cell_id, threshold, match_method=match_method
+        )
 
         cluster_results = np.array(list(cluster_df.values))[:, 1:]
 
@@ -200,8 +200,9 @@ def gene_counts(spots_to_cells_dict, codebook, threshold=1.5,
                 else:
                     barcodes[i].append(0)
 
-        filter_barcodes = [item for item in barcodes
-                           if sum(item) == 4 or sum(item) == 3 or sum(item) == 5]
+        filter_barcodes = [
+            item for item in barcodes if sum(item) == 4 or sum(item) == 3 or sum(item) == 5
+        ]
 
         temp_gene_counts_df = pd.DataFrame(columns=['cellID'] + list(codebook_dict.values()))
         temp_gene_counts_df['cellID'] = [cell_id]
@@ -216,9 +217,8 @@ def gene_counts(spots_to_cells_dict, codebook, threshold=1.5,
 
             except KeyError:
                 if error_corr:
-                    corrected_gene = error_correction(
-                        str(barcode), codebook_dict)
-                    if corrected_gene == 'No match':
+                    corrected_gene = error_correction(str(barcode), codebook_dict)
+                    if corrected_gene == "No match":
                         continue
                     else:
                         if isinstance(temp_gene_counts_df.at[0, corrected_gene], int):
@@ -230,7 +230,7 @@ def gene_counts(spots_to_cells_dict, codebook, threshold=1.5,
 
         gene_counts_df = pd.concat([gene_counts_df, temp_gene_counts_df])
 
-    return (gene_counts_df)
+    return gene_counts_df
 
 
 def gene_counts_DBSCAN(spots_to_cells_dict, codebook, threshold, error_corr=True):
@@ -278,7 +278,7 @@ def gene_counts_DBSCAN(spots_to_cells_dict, codebook, threshold, error_corr=True
 
         # Flatten across rounds
         num_spots_list = [len(item) for item in cell_coords]
-        running_total = [sum(num_spots_list[:(i + 1)]) for i in range(len(num_spots_list))]
+        running_total = [sum(num_spots_list[: (i + 1)]) for i in range(len(num_spots_list))]
         cell_coords_flat = np.vstack(cell_coords)
 
         # Cluster spots
@@ -383,8 +383,12 @@ def extract_spots_prob_from_coords_maxpool(image, spots_locations, extra_pixel_n
     """
 
     if extra_pixel_num < 0:
-        raise ValueError('extra_pixel_num should be a positive integer (zero included), but got {}'.format(extra_pixel_num))
-
+        raise ValueError(
+            "extra_pixel_num should be a positive integer \
+            (zero included), but got {}".format(
+                extra_pixel_num
+            )
+        )
 
     spots_intensities = []
     for idx_batch in range(len(image)):
@@ -395,20 +399,21 @@ def extract_spots_prob_from_coords_maxpool(image, spots_locations, extra_pixel_n
         img_boundary_x = image_slice.shape[0] - 1
         img_boundary_y = image_slice.shape[1] - 1
 
-        intensity_d = np.zeros(
-            ((extra_pixel_num * 2 + 1)**2, num_spots, image_slice.shape[-1]))
+        intensity_d = np.zeros(((extra_pixel_num * 2 + 1) ** 2, num_spots, image_slice.shape[-1]))
         d = -1
         for dx in np.arange(-extra_pixel_num, extra_pixel_num + 1):
             for dy in np.arange(-extra_pixel_num, extra_pixel_num + 1):
                 d = d + 1
                 for ind_cr in range(image_slice.shape[-1]):
-                    x_coord = np.maximum(0, np.minimum(
-                        img_boundary_x, np.around(coords[:, 0]) + dx))  # (num_spots,)
-                    y_coord = np.maximum(0, np.minimum(
-                        img_boundary_y, np.around(coords[:, 1]) + dy))  # (num_spots,)
+                    x_coord = np.maximum(
+                        0, np.minimum(img_boundary_x, np.around(coords[:, 0]) + dx)
+                    )  # (num_spots,)
+                    y_coord = np.maximum(
+                        0, np.minimum(img_boundary_y, np.around(coords[:, 1]) + dy)
+                    )  # (num_spots,)
 
                     intensity_d[d, :, ind_cr] = image_slice[x_coord, y_coord, ind_cr]
-        
+
         intensity = np.max(intensity_d, axis=0)
         spots_intensities.append(intensity)
 

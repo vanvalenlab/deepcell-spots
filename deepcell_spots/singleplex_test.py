@@ -69,7 +69,7 @@ class TestSingleplex(test.TestCase):
 
         assigned_cell = match_spots_to_cells_as_vec(labeled_im, coords)
 
-        self.assertAllEqual(assigned_cell, [0,0])
+        self.assertAllEqual(assigned_cell, [0, 0])
 
 
 

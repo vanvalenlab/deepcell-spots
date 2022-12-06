@@ -30,9 +30,12 @@ import numpy as np
 from tensorflow.python.platform import test
 
 from deepcell_spots.postprocessing_utils import (
-    y_annotations_to_point_list, y_annotations_to_point_list_cc,
-    y_annotations_to_point_list_max, y_annotations_to_point_list_restrictive,
-    max_cp_array_to_point_list_max)
+    y_annotations_to_point_list,
+    y_annotations_to_point_list_cc,
+    y_annotations_to_point_list_max,
+    y_annotations_to_point_list_restrictive,
+    max_cp_array_to_point_list_max,
+)
 
 
 class TestPostProcUtils(test.TestCase):
@@ -59,8 +62,7 @@ class TestPostProcUtils(test.TestCase):
         keys = ['offset_regression', 'classification']
         y_pred = {key: np.zeros((num_images, image_dim, image_dim, 2)) for key in keys}
         y_pred[keys[1]][:, 1, 1, 1] = np.ones(num_images)
-        y_pred[keys[0]] = np.ones(
-            (num_images, image_dim, image_dim, 2))
+        y_pred[keys[0]] = np.ones((num_images, image_dim, image_dim, 2))
         threshold = 0.9
         coords = y_annotations_to_point_list(y_pred, threshold)
 
@@ -183,19 +185,17 @@ class TestPostProcUtils(test.TestCase):
                 for dim in range(2):
                     self.assertEqual(coords[i][ii][dim], 2)
 
-
     def test_max_cp_array_to_point_list_max(self):
         num_images = 1
         image_dim = 10
         max_cp_array = np.zeros((num_images, image_dim, image_dim))
+        max_cp_array[0,5,5] = 1
         threshold = 0.9
         min_distance = 2
         dot_centers = max_cp_array_to_point_list_max(max_cp_array, threshold, min_distance)
         for i in range(len(dot_centers)):
             for dim in range(2):
-                self.assertEqual(dot_centers[i][dim], 1)
-
-
+                self.assertEqual(dot_centers[i][dim], 5)
 
 
 if __name__ == '__main__':

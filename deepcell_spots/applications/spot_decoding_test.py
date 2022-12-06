@@ -37,40 +37,47 @@ from deepcell_spots.applications import SpotDecoding
 
 
 class TestSpotDecoding(test.TestCase):
-
     def test_spot_decoding_app(self):
-        df_barcodes = pd.DataFrame([['code1', 1,1,0,0,0,0],
-        ['code2', 0,0,1,1,0,0],
-        ['code3', 0,0,0,0,1,1],
-        ['code4', 1,0,0,0,1,0],
-        ['code5', 0,0,1,0,0,1],
-        ['code6', 0,1,0,0,1,0],
-        ['code7', 1,0,1,0,0,0]], 
-        columns=['code_name', 'r0c0', 'r0c1', 'r0c2', 'r1c0', 'r1c1', 'r1c2'],
-        index=[np.arange(7)+1])
+        df_barcodes = pd.DataFrame(
+            [
+                ["code1", 1, 1, 0, 0, 0, 0],
+                ["code2", 0, 0, 1, 1, 0, 0],
+                ["code3", 0, 0, 0, 0, 1, 1],
+                ["code4", 1, 0, 0, 0, 1, 0],
+                ["code5", 0, 0, 1, 0, 0, 1],
+                ["code6", 0, 1, 0, 0, 1, 0],
+                ["code7", 1, 0, 1, 0, 0, 0],
+            ],
+            columns=["code_name", "r0c0", "r0c1", "r0c2", "r1c0", "r1c1", "r1c2"],
+            index=[np.arange(7) + 1],
+        )
         app = SpotDecoding(df_barcodes=df_barcodes, r=2, c=3)
 
-        spots_intensities_vec = np.randn(100, 6)
-        decoding_dict_trunc = app.predict(spots_intensities_vec=spots_intensities_vec, num_iter=20, batch_size=100)
-        self.assertEqual(decoding_dict_trunc['probability'].shape, (100,))
-        self.assertEqual(decoding_dict_trunc['predicted_id'].shape, (100,))
-        self.assertEqual(decoding_dict_trunc['predicted_name'].shape, (100,))
+        spots_intensities_vec = np.random.rand(100, 6)
+        decoding_dict_trunc = app.predict(
+            spots_intensities_vec=spots_intensities_vec, num_iter=20, batch_size=100
+        )
+        self.assertEqual(decoding_dict_trunc["probability"].shape, (100,))
+        self.assertEqual(decoding_dict_trunc["predicted_id"].shape, (100,))
+        self.assertEqual(decoding_dict_trunc["predicted_name"].shape, (100,))
 
-
-        df_barcodes = pd.DataFrame([['code1', 0,0,0,0,0,0],
-        ['code2', 1,1,1,1,1,1]], 
-        columns=['code_name', 'r0c0', 'r0c1', 'r0c2', 'r1c0', 'r1c1', 'r1c2'],
-        index=[np.arange(2)+1])
+        df_barcodes = pd.DataFrame(
+            [["code1", 0, 0, 0, 0, 0, 0], ["code2", 1, 1, 1, 1, 1, 1]],
+            columns=["code_name", "r0c0", "r0c1", "r0c2", "r1c0", "r1c1", "r1c2"],
+            index=[np.arange(2) + 1],
+        )
         app = SpotDecoding(df_barcodes=df_barcodes, r=2, c=3)
 
-        spots_intensities_vec = np.ones((100, 6)) *0.99
-        decoding_dict_trunc = app.predict(spots_intensities_vec=spots_intensities_vec, num_iter=20, batch_size=100)
-        self.assertEqual(decoding_dict_trunc['predicted_id'], np.ones((100,)))
-        self.assertEqual(decoding_dict_trunc['predicted_name'].shape, np.array(['code2']*100))
+        spots_intensities_vec = np.ones((100, 6)) * 0.99
+        decoding_dict_trunc = app.predict(
+            spots_intensities_vec=spots_intensities_vec, num_iter=20, batch_size=100
+        )
+        self.assertEqual(decoding_dict_trunc["predicted_id"], np.ones((100,)))
+        self.assertEqual(decoding_dict_trunc["predicted_name"].shape, np.array(["code2"] * 100))
 
-
-        spots_intensities_vec = np.ones((100, 6)) *0.01
-        decoding_dict_trunc = app.predict(spots_intensities_vec=spots_intensities_vec, num_iter=20, batch_size=100)
-        self.assertEqual(decoding_dict_trunc['predicted_id'], np.zeros((100,)))
-        self.assertEqual(decoding_dict_trunc['predicted_name'].shape, np.array(['code1']*100))
-
+        spots_intensities_vec = np.ones((100, 6)) * 0.01
+        decoding_dict_trunc = app.predict(
+            spots_intensities_vec=spots_intensities_vec, num_iter=20, batch_size=100
+        )
+        self.assertEqual(decoding_dict_trunc["predicted_id"], np.zeros((100,)))
+        self.assertEqual(decoding_dict_trunc["predicted_name"].shape, np.array(["code1"] * 100))
