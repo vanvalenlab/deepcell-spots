@@ -233,7 +233,7 @@ def e_step(data, codes, w, temperature, sigma, c, r, params_mode='2*R*C'):
 
     batch_sz = 50000
     for idx in range(len(data) // batch_sz + 1):
-        ind_start = idx * batch_sz,
+        ind_start = idx * batch_sz
         ind_end = torch.min(torch.tensor([(idx + 1) * batch_sz, len(data)]))
         for idx in range(k):
             dist = RelaxedBernoulli(
