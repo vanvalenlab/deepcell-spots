@@ -37,6 +37,7 @@ from deepcell_spots.applications import SpotDetection, SpotDecoding
 from deepcell_spots.singleplex import match_spots_to_cells_as_vec_batched
 from deepcell_toolbox.processing import histogram_normalization
 from deepcell_toolbox.deep_watershed import deep_watershed
+from deepcell_spots.preprocessing_utils import min_max_normalize
 from deepcell_spots.postprocessing_utils import max_cp_array_to_point_list_max
 from deepcell_spots.multiplex import extract_spots_prob_from_coords_maxpool
 
@@ -254,12 +255,13 @@ class Polaris(object):
 
         output_image = self._predict_spots_image(spots_image, spots_threshold, spots_clip)
 
-        max_proj_images = np.max(output_image, axis=-1)
+        clipped_output_image = np.clip(output_image, 0, 1)
+        max_proj_images = np.max(clipped_output_image, axis=-1)
         spots_locations = max_cp_array_to_point_list_max(max_proj_images,
                                                          threshold=spots_threshold, min_distance=1)
 
         spots_intensities = extract_spots_prob_from_coords_maxpool(
-            output_image, spots_locations, extra_pixel_num=maxpool_extra_pixel_num)
+            clipped_output_image, spots_locations, extra_pixel_num=maxpool_extra_pixel_num)
         spots_intensities_vec = np.concatenate(spots_intensities)
         spots_locations_vec = np.concatenate([np.concatenate(
             [item, [[idx_batch]] * len(item)], axis=1)
