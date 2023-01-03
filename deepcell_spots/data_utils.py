@@ -162,7 +162,7 @@ def slice_annotated_image(X, y, reshape_size, overlap=0):
                 counter += 1
 
     print('Sliced data from {} to {}'.format(X.shape, new_X.shape))
-    return new_X, new_y
+    return new_X, np.array(new_y)
 
 
 def get_data(file_name, test_size=.2, seed=0, allow_pickle=False):
