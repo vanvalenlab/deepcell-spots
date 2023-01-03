@@ -161,7 +161,8 @@ def max_cp_array_to_point_list_max(max_cp_array, threshold=0.95, min_distance=2)
         min_distance (float): The minimum distance between detected spots in pixels.
 
     Returns:
-        array: Spot center coordinates of the format [[y0, x0], [y1, x1],...].
+        array: Spot center coordinates, list (num_images,) with each entry shape
+        (num_spots, 2).
     """
     dot_centers = []
     for ind in range(np.shape(max_cp_array)[0]):
@@ -170,7 +171,7 @@ def max_cp_array_to_point_list_max(max_cp_array, threshold=0.95, min_distance=2)
                                         threshold_abs=threshold)
         dot_centers.append(dot_pixel_inds)
 
-    return np.array(dot_centers)
+    return dot_centers
 
 
 def y_annotations_to_point_list_cc(y_pred, threshold=0.95):

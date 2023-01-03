@@ -53,7 +53,7 @@ class TestImageAlignment(test.TestCase):
         with self.assertRaises(ValueError):
             extract_spots_prob_from_coords_maxpool(image, spots_locations, extra_pixel_num=-1)
 
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TypeError):
             extract_spots_prob_from_coords_maxpool(image, spots_locations, extra_pixel_num=0.5)
 
 

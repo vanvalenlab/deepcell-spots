@@ -31,8 +31,12 @@ from collections import defaultdict
 import numpy as np
 from tensorflow.python.platform import test
 
-from deepcell_spots.singleplex import (match_spots_to_cells, process_spot_dict,
-                                       remove_nuc_spots_from_cyto, match_spots_to_cells_as_vec)
+from deepcell_spots.singleplex import (
+    match_spots_to_cells,
+    process_spot_dict,
+    remove_nuc_spots_from_cyto,
+    match_spots_to_cells_as_vec,
+)
 
 
 class TestSingleplex(test.TestCase):
@@ -58,8 +62,7 @@ class TestSingleplex(test.TestCase):
         labeled_im_cyto = np.ones((1, 10, 10, 1))
 
         coords = [[0, 0], [1, 1], [7, 7]]
-        spot_dict = remove_nuc_spots_from_cyto(labeled_im_nuc,
-                                               labeled_im_cyto, coords)
+        spot_dict = remove_nuc_spots_from_cyto(labeled_im_nuc, labeled_im_cyto, coords)
 
         self.assertEqual(spot_dict, defaultdict(list, {1.0: [[0, 0], [1, 1]], 0: [[7, 7]]}))
 
@@ -72,6 +75,5 @@ class TestSingleplex(test.TestCase):
         self.assertAllEqual(assigned_cell, [0, 0])
 
 
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     test.main()

@@ -79,7 +79,7 @@ def match_spots_to_cells_as_vec(labeled_im, coords):
     Returns:
         array: Cell id for each spot.
     """
-    coords = coords.astype(np.int)
+    coords = coords.astype(int)
     assigned_cell = labeled_im[0, coords[:, 0], coords[:, 1], 0]
 
     return assigned_cell

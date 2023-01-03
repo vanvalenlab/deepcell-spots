@@ -80,7 +80,7 @@ setup(
         ],
     },
     packages=find_packages(),
-    python_requires='>=3.7, <3.10',
+    python_requires='>=3.7, <=3.9.15',
     classifiers=[
         'Intended Audience :: Developers',
         'Intended Audience :: Science/Research',
@@ -89,7 +89,7 @@ setup(
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
-        'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.9.15',
         'Topic :: Scientific/Engineering',
         'Topic :: Scientific/Engineering :: Artificial Intelligence',
         'Topic :: Scientific/Engineering :: Bio-Informatics',
