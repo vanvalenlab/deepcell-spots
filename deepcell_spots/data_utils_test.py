@@ -159,87 +159,86 @@ class TestDataUtils(test.TestCase):
     #     self.assertEqual(np.shape(stitch_X),
     #                     (np.shape(X)[0]/num_slices_x/num_slices_y,img_w*num_slices_x,img_h*num_slices_y,1))
 
-    # FUNCTION DID NOT PASS TEST
-    # def test_slice_annotated_image(self):
-    #     # test square image with square, divisible reshape size
-    #     img_w, img_h = 30, 30
-    #     num_images = 10
-    #     X = np.random.random((num_images, img_w, img_h, 1))
-    #     # ten images with ten spots each
-    #     y = np.random.random((num_images, 10, 2))
-    #     slice_size = [5, 5]
-    #     num_slices_x = np.ceil(img_w / slice_size[0])
-    #     num_slices_y = np.ceil(img_h / slice_size[1])
-    #     slice_X, slice_y = slice_annotated_image(X, y, slice_size)
+    def test_slice_annotated_image(self):
+        # test square image with square, divisible reshape size
+        img_w, img_h = 30, 30
+        num_images = 10
+        X = np.random.random((num_images, img_w, img_h, 1))
+        # ten images with ten spots each
+        y = np.random.random((num_images, 10, 2))
+        slice_size = [5, 5]
+        num_slices_x = np.ceil(img_w / slice_size[0])
+        num_slices_y = np.ceil(img_h / slice_size[1])
+        slice_X, slice_y = slice_annotated_image(X, y, slice_size)
 
-    #     self.assertEqual(np.shape(slice_X), (num_images * num_slices_x * num_slices_y,
-    #                                          slice_size[0], slice_size[1], 1))
-    #     self.assertEqual(np.shape(slice_y), num_images *
-    #                      num_slices_x * num_slices_y)
+        self.assertEqual(np.shape(slice_X), (num_images * num_slices_x * num_slices_y,
+                                             slice_size[0], slice_size[1], 1))
+        self.assertEqual(np.shape(slice_y), num_images *
+                         num_slices_x * num_slices_y)
 
-    #     # test square image with square, indivisible reshape size
-    #     img_w, img_h = 30, 30
-    #     num_images = 10
-    #     X = np.random.random((10, img_w, img_h, 1))
-    #     # ten images with ten spots each
-    #     y = np.random.random((num_images, 10, 2))
-    #     slice_size = [8, 8]
-    #     num_slices_x = np.ceil(
-    #         img_w / slice_size[0]).astype(int)  # used as an index
-    #     num_slices_y = np.ceil(img_h / slice_size[1])
-    #     slice_X, slice_y = slice_annotated_image(X, y, slice_size)
+        # test square image with square, indivisible reshape size
+        img_w, img_h = 30, 30
+        num_images = 10
+        X = np.random.random((10, img_w, img_h, 1))
+        # ten images with ten spots each
+        y = np.random.random((num_images, 10, 2))
+        slice_size = [8, 8]
+        num_slices_x = np.ceil(
+            img_w / slice_size[0]).astype(int)  # used as an index
+        num_slices_y = np.ceil(img_h / slice_size[1])
+        slice_X, slice_y = slice_annotated_image(X, y, slice_size)
 
-    #     self.assertEqual(np.shape(slice_X), (10 * num_slices_x * num_slices_y,
-    #                                          slice_size[0], slice_size[1], 1))
-    #     self.assertEqual(np.shape(slice_y), num_images *
-    #                      num_slices_x * num_slices_y)
-    #     self.assertEqual((slice_X[num_slices_x - 1::num_slices_x, :,
-    #                               -1 * slice_size[0] * num_slices_x:]).all(),
-    #                      (slice_X[num_slices_x::num_slices_x, :,
-    #                               :slice_size[0] * num_slices_x]).all())
+        self.assertEqual(np.shape(slice_X), (10 * num_slices_x * num_slices_y,
+                                             slice_size[0], slice_size[1], 1))
+        self.assertEqual(np.shape(slice_y), num_images *
+                         num_slices_x * num_slices_y)
+        self.assertEqual((slice_X[num_slices_x - 1::num_slices_x, :,
+                                  -1 * slice_size[0] * num_slices_x:]).all(),
+                         (slice_X[num_slices_x::num_slices_x, :,
+                                  :slice_size[0] * num_slices_x]).all())
 
-    #     # test no channel dimension
-    #     img_w, img_h = 30, 30
-    #     num_images = 10
-    #     X = np.random.random((num_images, img_w, img_h))
-    #     # ten images with ten spots each
-    #     y = np.random.random((num_images, 10, 2))
-    #     slice_size = [5, 5]
-    #     num_slices_x = np.ceil(img_w / slice_size[0])
-    #     num_slices_y = np.ceil(img_h / slice_size[1])
-    #     with self.assertRaises(IndexError):
-    #         _, _ = slice_annotated_image(X, y, slice_size)
+        # test no channel dimension
+        img_w, img_h = 30, 30
+        num_images = 10
+        X = np.random.random((num_images, img_w, img_h))
+        # ten images with ten spots each
+        y = np.random.random((num_images, 10, 2))
+        slice_size = [5, 5]
+        num_slices_x = np.ceil(img_w / slice_size[0])
+        num_slices_y = np.ceil(img_h / slice_size[1])
+        with self.assertRaises(IndexError):
+            _, _ = slice_annotated_image(X, y, slice_size)
 
-    #     # test insufficient slice dimensions
-    #     img_w, img_h = 30, 30
-    #     num_images = 10
-    #     X = np.random.random((num_images, img_w, img_h))
-    #     # ten images with ten spots each
-    #     y = np.random.random((num_images, 10, 2))
-    #     slice_size = 5
-    #     num_slices_x = np.ceil(img_w / slice_size)
-    #     num_slices_y = np.ceil(img_h / slice_size)
-    #     with self.assertRaises(TypeError):
-    #         _, _ = slice_annotated_image(X, y, slice_size)
+        # test insufficient slice dimensions
+        img_w, img_h = 30, 30
+        num_images = 10
+        X = np.random.random((num_images, img_w, img_h))
+        # ten images with ten spots each
+        y = np.random.random((num_images, 10, 2))
+        slice_size = 5
+        num_slices_x = np.ceil(img_w / slice_size)
+        num_slices_y = np.ceil(img_h / slice_size)
+        with self.assertRaises(TypeError):
+            _, _ = slice_annotated_image(X, y, slice_size)
 
-    #     # test overlap argument, divisible
-    #     img_w, img_h = 25, 25
-    #     num_images = 10
-    #     X = np.random.random((num_images, img_w, img_h, 1))
-    #     # ten images with ten spots each
-    #     y = np.random.random((num_images, 10, 2))
-    #     slice_size = [5, 5]
-    #     overlap = 1
-    #     num_slices_x = np.ceil(
-    #         img_w / slice_size[0]) + np.floor(img_w / slice_size[0]**2)
-    #     num_slices_y = np.ceil(
-    #         img_h / slice_size[1]) + np.floor(img_w / slice_size[0]**2)
-    #     slice_X, slice_y = slice_annotated_image(X, y, slice_size, overlap=1)
+        # test overlap argument, divisible
+        img_w, img_h = 25, 25
+        num_images = 10
+        X = np.random.random((num_images, img_w, img_h, 1))
+        # ten images with ten spots each
+        y = np.random.random((num_images, 10, 2))
+        slice_size = [5, 5]
+        overlap = 1
+        num_slices_x = np.ceil(
+            img_w / slice_size[0]) + np.floor(img_w / slice_size[0]**2)
+        num_slices_y = np.ceil(
+            img_h / slice_size[1]) + np.floor(img_w / slice_size[0]**2)
+        slice_X, slice_y = slice_annotated_image(X, y, slice_size, overlap=1)
 
-    #     self.assertEqual(np.shape(slice_X),
-    #                      (10 * num_slices_x * num_slices_y, 5, 5, overlap))
-    #     self.assertEqual(np.shape(slice_y), num_images *
-    #                      num_slices_x * num_slices_y)
+        self.assertEqual(np.shape(slice_X),
+                         (10 * num_slices_x * num_slices_y, 5, 5, overlap))
+        self.assertEqual(np.shape(slice_y), num_images *
+                         num_slices_x * num_slices_y)
 
     def test_get_data(self):
         test_size = .1
