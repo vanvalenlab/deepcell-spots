@@ -191,7 +191,7 @@ class TestPostProcUtils(test.TestCase):
         threshold = 0.9
         min_distance = 2
         dot_centers = max_cp_array_to_point_list_max(max_cp_array, threshold, min_distance)
-        
+
         self.assertEqual(dot_centers[0][0][0], 5)
         self.assertEqual(dot_centers[0][0][1], 5)
 
