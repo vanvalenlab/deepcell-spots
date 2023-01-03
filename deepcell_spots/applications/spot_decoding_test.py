@@ -68,7 +68,7 @@ class TestSpotDecoding(test.TestCase):
         )
         app2 = SpotDecoding(df_barcodes=df_barcodes2, r=2, c=3)
 
-        spots_intensities_vec21 = np.ones((100, 6)) * 0.99
+        spots_intensities_vec21 = np.ones((100, 6))
         decoding_dict_trunc21 = app2.predict(
             spots_intensities_vec=spots_intensities_vec21, num_iter=20, batch_size=100
         )
@@ -77,7 +77,7 @@ class TestSpotDecoding(test.TestCase):
         )
         self.assertListEqual(decoding_dict_trunc21["predicted_name"].tolist(), ["code2"] * 100)
 
-        spots_intensities_vec22 = np.ones((100, 6)) * 0.01
+        spots_intensities_vec22 = np.zeros((100, 6))
         decoding_dict_trunc22 = app2.predict(
             spots_intensities_vec=spots_intensities_vec22, num_iter=20, batch_size=100
         )
