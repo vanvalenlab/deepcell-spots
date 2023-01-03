@@ -38,7 +38,7 @@ from deepcell_spots.applications import SpotDecoding
 
 class TestSpotDecoding(test.TestCase):
     def test_spot_decoding_app(self):
-        df_barcodes = pd.DataFrame(
+        df_barcodes1 = pd.DataFrame(
             [
                 ["code1", 1, 1, 0, 0, 0, 0],
                 ["code2", 0, 0, 1, 1, 0, 0],
@@ -51,37 +51,37 @@ class TestSpotDecoding(test.TestCase):
             columns=["code_name", "r0c0", "r0c1", "r0c2", "r1c0", "r1c1", "r1c2"],
             index=np.arange(7) + 1,
         )
-        app = SpotDecoding(df_barcodes=df_barcodes, r=2, c=3)
+        app1 = SpotDecoding(df_barcodes=df_barcodes1, r=2, c=3)
 
-        spots_intensities_vec = np.random.rand(100, 6)
-        decoding_dict_trunc = app.predict(
-            spots_intensities_vec=spots_intensities_vec, num_iter=20, batch_size=100
+        spots_intensities_vec1 = np.random.rand(100, 6)
+        decoding_dict_trunc1 = app1.predict(
+            spots_intensities_vec=spots_intensities_vec1, num_iter=20, batch_size=100
         )
-        self.assertEqual(decoding_dict_trunc["probability"].shape, (100,))
-        self.assertEqual(decoding_dict_trunc["predicted_id"].shape, (100,))
-        self.assertEqual(decoding_dict_trunc["predicted_name"].shape, (100,))
+        self.assertEqual(decoding_dict_trunc1["probability"].shape, (100,))
+        self.assertEqual(decoding_dict_trunc1["predicted_id"].shape, (100,))
+        self.assertEqual(decoding_dict_trunc1["predicted_name"].shape, (100,))
 
-        df_barcodes = pd.DataFrame(
+        df_barcodes2 = pd.DataFrame(
             [["code1", 0, 0, 0, 0, 0, 0], ["code2", 1, 1, 1, 1, 1, 1]],
             columns=["code_name", "r0c0", "r0c1", "r0c2", "r1c0", "r1c1", "r1c2"],
             index=np.arange(2) + 1,
         )
-        app = SpotDecoding(df_barcodes=df_barcodes, r=2, c=3)
+        app2 = SpotDecoding(df_barcodes=df_barcodes2, r=2, c=3)
 
-        spots_intensities_vec = np.ones((100, 6)) * 0.99
-        decoding_dict_trunc = app.predict(
-            spots_intensities_vec=spots_intensities_vec, num_iter=20, batch_size=100
+        spots_intensities_vec21 = np.ones((100, 6)) * 0.99
+        decoding_dict_trunc21 = app2.predict(
+            spots_intensities_vec=spots_intensities_vec21, num_iter=20, batch_size=100
         )
         self.assertListEqual(
-            decoding_dict_trunc["predicted_id"].tolist(), (2 * np.ones((100,))).tolist()
+            decoding_dict_trunc21["predicted_id"].tolist(), (2 * np.ones((100,))).tolist()
         )
-        self.assertListEqual(decoding_dict_trunc["predicted_name"].tolist(), ["code2"] * 100)
+        self.assertListEqual(decoding_dict_trunc21["predicted_name"].tolist(), ["code2"] * 100)
 
-        spots_intensities_vec = np.ones((100, 6)) * 0.01
-        decoding_dict_trunc = app.predict(
-            spots_intensities_vec=spots_intensities_vec, num_iter=20, batch_size=100
+        spots_intensities_vec22 = np.ones((100, 6)) * 0.01
+        decoding_dict_trunc22 = app2.predict(
+            spots_intensities_vec=spots_intensities_vec22, num_iter=20, batch_size=100
         )
         self.assertListEqual(
-            decoding_dict_trunc["predicted_id"].tolist(), np.ones((100,)).tolist()
+            decoding_dict_trunc22["predicted_id"].tolist(), np.ones((100,)).tolist()
         )
-        self.assertListEqual(decoding_dict_trunc["predicted_name"].tolist(), ["code1"] * 100)
+        self.assertListEqual(decoding_dict_trunc22["predicted_name"].tolist(), ["code1"] * 100)
