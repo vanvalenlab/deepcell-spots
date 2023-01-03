@@ -64,7 +64,7 @@ class TestSpotDecoding(test.TestCase):
         df_barcodes = pd.DataFrame(
             [["code1", 0, 0, 0, 0, 0, 0], ["code2", 1, 1, 1, 1, 1, 1]],
             columns=["code_name", "r0c0", "r0c1", "r0c2", "r1c0", "r1c1", "r1c2"],
-            index=[np.arange(2) + 1],
+            index=np.arange(2) + 1,
         )
         app = SpotDecoding(df_barcodes=df_barcodes, r=2, c=3)
 
