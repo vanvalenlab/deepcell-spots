@@ -72,12 +72,12 @@ class TestSpotDecoding(test.TestCase):
         decoding_dict_trunc = app.predict(
             spots_intensities_vec=spots_intensities_vec, num_iter=20, batch_size=100
         )
-        self.assertListEqual(decoding_dict_trunc["predicted_id"].tolist(), np.ones((100,).tolist()))
+        self.assertListEqual(decoding_dict_trunc["predicted_id"].tolist(), np.ones((100,)).tolist())
         self.assertListEqual(decoding_dict_trunc["predicted_name"].tolist(), ["code2"] * 100)
 
         spots_intensities_vec = np.ones((100, 6)) * 0.01
         decoding_dict_trunc = app.predict(
             spots_intensities_vec=spots_intensities_vec, num_iter=20, batch_size=100
         )
-        self.assertListEqual(decoding_dict_trunc["predicted_id"].tolist(), np.zeros((100,).tolist()))
+        self.assertListEqual(decoding_dict_trunc["predicted_id"].tolist(), np.zeros((100,)).tolist())
         self.assertListEqual(decoding_dict_trunc["predicted_name"].tolist(), ["code1"] * 100)
