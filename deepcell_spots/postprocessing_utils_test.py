@@ -191,7 +191,7 @@ class TestPostProcUtils(test.TestCase):
         dot_centers = max_cp_array_to_point_list_max(max_cp_array, threshold, min_distance)
         for i in range(len(dot_centers)):
             for dim in range(2):
-                self.assertEqual(dot_centers[i][dim], 5)
+                self.assertEqual(dot_centers[i][dim], [5, 5])
 
 
 if __name__ == "__main__":
