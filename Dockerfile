@@ -23,5 +23,8 @@ RUN sed -i "/tensorflow>/d" /opt/deepcell-spots/requirements.txt && \
 # Copy the rest of the package code and its scripts
 COPY deepcell_spots /opt/deepcell-spots/deepcell_spots
 
+# Install deepcell spots via setup.py
+RUN pip install /opt/deepcell-spots
+
 # Copy over deepcell notebooks
 COPY notebooks/ /notebooks/
