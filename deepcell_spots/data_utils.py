@@ -58,9 +58,9 @@ def slice_image(X, reshape_size, overlap=0):
     L_y = reshape_size[1]  # y length of each slice
 
     # number of slices along x axis
-    n_x = np.int(np.ceil((image_size_x - 2 * L_x + overlap) / (L_x - overlap)) + 2)
+    n_x = np.int_(np.ceil((image_size_x - 2 * L_x + overlap) / (L_x - overlap)) + 2)
     # number of slices along y axis
-    n_y = np.int(np.ceil((image_size_y - 2 * L_y + overlap) / (L_y - overlap)) + 2)
+    n_y = np.int_(np.ceil((image_size_y - 2 * L_y + overlap) / (L_y - overlap)) + 2)
 
     new_batch_size = X.shape[0] * n_x * n_y  # number of images in output
 
@@ -122,10 +122,10 @@ def slice_annotated_image(X, y, reshape_size, overlap=0):
     L_x = reshape_size[1]  # x length of each slice
 
     # number of slices along y axis
-    n_y = np.int(
+    n_y = np.int_(
         np.ceil((image_size_y - 2 * L_y + overlap) / (L_y - overlap)) + 2)
     # number of slices along x axis
-    n_x = np.int(
+    n_x = np.int_(
         np.ceil((image_size_x - 2 * L_x + overlap) / (L_x - overlap)) + 2)
 
     new_batch_size = X.shape[0] * n_y * n_x  # number of images in output
@@ -133,7 +133,7 @@ def slice_annotated_image(X, y, reshape_size, overlap=0):
     new_X_shape = (new_batch_size, L_y, L_x, X.shape[3])
     new_X = np.zeros(new_X_shape, dtype=K.floatx())
 
-    new_y = [None] * new_batch_size
+    new_y = np.array([None] * new_batch_size, dtype=object)
 
     counter = 0
     for b in range(X.shape[0]):

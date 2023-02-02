@@ -330,7 +330,7 @@ def cluster_coords(coords_df, threshold=1.5):
 
         A = define_edges(image_df, threshold=threshold)
 
-        G = nx.from_numpy_matrix(A)
+        G = nx.from_numpy_array(A)
         G_labeled = label_graph_ann(G, image_df)
 
         clusters = list(nx.connected_components(G_labeled))
