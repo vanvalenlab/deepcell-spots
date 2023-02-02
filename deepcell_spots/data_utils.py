@@ -133,7 +133,7 @@ def slice_annotated_image(X, y, reshape_size, overlap=0):
     new_X_shape = (new_batch_size, L_y, L_x, X.shape[3])
     new_X = np.zeros(new_X_shape, dtype=K.floatx())
 
-    new_y = [None] * new_batch_size
+    new_y = np.array([None] * new_batch_size, dtype=object)
 
     counter = 0
     for b in range(X.shape[0]):

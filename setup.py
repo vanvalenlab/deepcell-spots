@@ -74,9 +74,8 @@ setup(
     ],
     extras_require={
         'tests': [
-            'pytest<6',
+            'pytest',
             'pytest-cov',
-            'pytest-pep8',
         ],
     },
     packages=find_packages(),

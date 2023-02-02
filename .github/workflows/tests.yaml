@@ -40,12 +40,12 @@ jobs:
     - name: Install Dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.txt --use-deprecated=legacy-resolver
-        pip install -r requirements-test.txt --use-deprecated=legacy-resolver
+        python -m pip install -r requirements.txt -r requirements-test.txt
+        python -m pip install .
 
     - name: PyTest
       run: |
-        pytest --pep8 --cov deepcell_spots
+        pytest --cov deepcell_spots
 
     - name: Coveralls
       if: env.COVERALLS_REPO_TOKEN != null
