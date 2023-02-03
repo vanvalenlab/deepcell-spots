@@ -68,6 +68,14 @@ def subpixel_distance_transform(point_list, image_shape, dy=1, dx=1):
     # index in point_list of point nearest to pixel
     nearest_point = np.full(image_shape, np.nan)
 
+    # signed y distance to nearest point
+    delta_y = np.full(image_shape, image_shape[1]).astype(np.float32)
+    # signed x distance to nearest point
+    delta_x = np.full(image_shape, image_shape[0]).astype(np.float32)
+
+    if len(point_list) == 0:
+        return delta_y, delta_x, nearest_point
+
     # dictionary to be filled s.t.: pixel_to_contained_point_ind[(i,j)] = k if point_list[k]
     # is a point contained in pixel i,j of the image
     pixel_to_contained_point_ind = {}
@@ -81,11 +89,6 @@ def subpixel_distance_transform(point_list, image_shape, dy=1, dx=1):
 
     edt, inds = distance_transform_edt(
         contains_point, return_indices=True, sampling=[dy, dx])
-
-    # signed y distance to nearest point
-    delta_y = np.full(image_shape, np.inf)
-    # signed x distance to nearest point
-    delta_x = np.full(image_shape, np.inf)
 
     Ly, Lx = image_shape
     for j in range(0, Lx):
