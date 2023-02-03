@@ -69,9 +69,9 @@ def subpixel_distance_transform(point_list, image_shape, dy=1, dx=1):
     nearest_point = np.full(image_shape, np.nan)
 
     # signed y distance to nearest point
-    delta_y = np.full(image_shape, image_shape[1]).astype(np.float32)
+    delta_y = np.full(image_shape, fill_value=image_shape[1], dtype=np.float32)
     # signed x distance to nearest point
-    delta_x = np.full(image_shape, image_shape[0]).astype(np.float32)
+    delta_x = np.full(image_shape, fill_value=image_shape[0], dtype=np.float32)
 
     if len(point_list) == 0:
         return delta_y, delta_x, nearest_point
