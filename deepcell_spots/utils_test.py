@@ -56,6 +56,20 @@ class TestUtils(test.TestCase):
         self.assertEqual(np.shape(delta_x), image_shape)
         self.assertEqual(np.shape(nearest_point), image_shape)
 
+        # test image with no points
+        point_list = np.random.random((0, 2))
+        image_shape = (30, 30)
+        delta_y, delta_x, nearest_point = subpixel_distance_transform(
+            point_list, image_shape)
+
+        self.assertEqual(np.shape(delta_y), image_shape)
+        self.assertEqual(np.shape(delta_x), image_shape)
+        self.assertEqual(np.shape(nearest_point), image_shape)
+
+        self.assertAllEqual(delta_y, np.full(image_shape, image_shape[1]).astype(float))
+        self.assertAllEqual(delta_x, np.full(image_shape, image_shape[0]).astype(float))
+        self.assertAllEqual(nearest_point, np.full(image_shape, np.nan))
+
     def test_generate_transformation_matrix(self):
         transform_parameters = {
             'theta': 0,
