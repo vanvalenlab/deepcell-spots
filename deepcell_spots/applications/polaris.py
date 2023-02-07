@@ -86,7 +86,7 @@ class Polaris(object):
 
         ####################################################################
         # Singleplex case:
-        app = Polaris(image_type='singplex')
+        app = Polaris(image_type='singleplex')
         df_spots, df_intensities, segmentation_result = app.predict(
                              spots_image=spots_im,
                              segmentation_image=cyto_im)
@@ -96,7 +96,7 @@ class Polaris(object):
         rounds = 10
         channels = 2
         df_barcodes = pd.read_csv('barcodes.csv', index_col=0)
-        app = Polaris(image_type='singplex',
+        app = Polaris(image_type='singleplex',
                       decoding_kwargs={'rounds': rounds,
                                        'channels': channels,
                                        'df_barcodes': df_barcodes})
@@ -136,7 +136,7 @@ class Polaris(object):
     """
 
     def __init__(self,
-                 image_type='singplex',
+                 image_type='singleplex',
                  segmentation_model=None,
                  segmentation_type='cytoplasm',
                  spots_model=None,
@@ -146,14 +146,14 @@ class Polaris(object):
         # Disable postprocessing_fn to return the full images
         self.spots_app.postprocessing_fn = None
 
-        valid_image_types = ['singplex', 'multiplex']
+        valid_image_types = ['singleplex', 'multiplex']
         if image_type not in valid_image_types:
             raise ValueError('Invalid image type supplied: {}. '
                              'Must be one of {}'.format(image_type,
                                                         valid_image_types))
 
         self.image_type = image_type
-        if self.image_type == 'singplex':
+        if self.image_type == 'singleplex':
             self.decoding_app = None
         elif self.image_type == 'multiplex':
             if not decoding_kwargs:
