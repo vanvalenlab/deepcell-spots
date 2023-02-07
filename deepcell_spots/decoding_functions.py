@@ -48,8 +48,7 @@ def reshape_torch_array(torch_array):
     Returns:
         torch.array: Reshaped array.
     """
-    D = torch_array.shape[1] * torch_array.shape[2]
-    return torch_array.transpose(1, 2).reshape(torch_array.shape[0], D)
+    return torch_array.transpose(1, 2).reshape(torch_array.shape[0], -1)
 
 
 @config_enumerate
