@@ -122,7 +122,8 @@ class Polaris(object):
             df_barcodes (pandas.DataFrame): Codebook, one column is gene names ('code_name'),
                 the rest are binary barcodes, encoded using 1 and 0. Index should start at 1.
                 For exmaple, for a (r=10, c=2) codebook, it should look the following (see
-                `notebooks/Multiplex FISH Analysis.ipynb` for examples):
+                `notebooks/Multiplex FISH Analysis.ipynb` for examples)::
+
                     Index:
                         RangeIndex (starting from 1)
                     Columns:
