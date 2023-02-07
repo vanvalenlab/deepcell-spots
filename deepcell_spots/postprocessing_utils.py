@@ -49,7 +49,7 @@ def y_annotations_to_point_list(y_pred, threshold=0.95):
     Returns:
         array: spot center coordinates of the format ``[[y0, x0], [y1, x1],...]``
     """
-    if type(y_pred) is not dict:
+    if not isinstance(y_pred, dict):
         raise TypeError('Input predictions must be a dictionary.')
     if 'classification' not in y_pred.keys() or 'offset_regression' not in y_pred.keys():
         raise NameError('Input must have keys \'classification\' and \'offset_regression\'')
@@ -86,7 +86,7 @@ def y_annotations_to_point_list_restrictive(y_pred, threshold=0.95):
     Returns:
         array: spot center coordinates of the format ``[[y0, x0], [y1, x1],...]``.
     """
-    if type(y_pred) is not dict:
+    if not isinstance(y_pred, dict):
         raise TypeError('Input predictions must be a dictionary.')
     if 'classification' not in y_pred.keys() or 'offset_regression' not in y_pred.keys():
         raise NameError('Input must have keys \'classification\' and \'offset_regression\'')
@@ -126,7 +126,7 @@ def y_annotations_to_point_list_max(y_pred, threshold=0.95, min_distance=2):
     Returns:
         array: spot center coordinates of the format [[y0, x0], [y1, x1],...]
     """
-    if type(y_pred) is not dict:
+    if not isinstance(y_pred, dict):
         raise TypeError('Input predictions must be a dictionary.')
     if 'classification' not in y_pred.keys() or 'offset_regression' not in y_pred.keys():
         raise NameError('Input must have keys \'classification\' and \'offset_regression\'')
@@ -147,6 +147,33 @@ def y_annotations_to_point_list_max(y_pred, threshold=0.95, min_distance=2):
     return np.array(dot_centers)
 
 
+def max_cp_array_to_point_list_max(max_cp_array, threshold=0.95, min_distance=2):
+    """Convert raw prediction to a predicted point list using
+    ``skimage.feature.peak_local_max`` to determine local maxima in classification
+    prediction image, and their corresponding regression values will be used to
+    create a final spot position prediction which will be added to the output spot
+    center coordinates list. This is performed on the max projected cp_array.
+
+    Args:
+        max_cp_array (array): (batch, x, y)
+        threshold (float): A number in ``[0, 1]``. Pixels with classification
+            score > `threshold` are considered as containing a spot center.
+        min_distance (float): The minimum distance between detected spots in pixels.
+
+    Returns:
+        array: Spot center coordinates, list (num_images,) with each entry shape
+        (num_spots, 2).
+    """
+    dot_centers = []
+    for ind in range(np.shape(max_cp_array)[0]):
+        dot_pixel_inds = peak_local_max(max_cp_array[ind, ...],
+                                        min_distance=min_distance,
+                                        threshold_abs=threshold)
+        dot_centers.append(dot_pixel_inds)
+
+    return dot_centers
+
+
 def y_annotations_to_point_list_cc(y_pred, threshold=0.95):
     """Convert raw prediction to a predicted point list: classification of
     connected component as containing dot > `threshold`, , and their corresponding
@@ -163,7 +190,7 @@ def y_annotations_to_point_list_cc(y_pred, threshold=0.95):
     Returns:
         array: spot center coordinates of the format ``[[y0, x0], [y1, x1],...]``
     """
-    if type(y_pred) is not dict:
+    if not isinstance(y_pred, dict):
         raise TypeError('Input predictions must be a dictionary.')
     if 'classification' not in y_pred.keys() or 'offset_regression' not in y_pred.keys():
         raise NameError('Input must have keys \'classification\' and \'offset_regression\'')

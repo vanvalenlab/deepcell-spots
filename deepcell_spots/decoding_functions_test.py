@@ -24,8 +24,24 @@
 # limitations under the License.
 # ==============================================================================
 
-"""Applications for pre-trained spot detection models"""
+"""Tests for decoding functions"""
 
-from deepcell_spots.applications.spot_detection import SpotDetection
-from deepcell_spots.applications.spot_decoding import SpotDecoding
-from deepcell_spots.applications.polaris import Polaris
+import numpy as np
+from tensorflow.python.platform import test
+
+from deepcell_spots.decoding_functions import decoding_function
+
+
+class TestDecodingFunc(test.TestCase):
+    def test_decoding_function(self):
+        # number of samples = 100, rounds = 2, channels = 3, barcodes = 2
+        spots = np.random.rand(100, 2, 3)
+        barcodes = np.array([[0, 0, 1, 0, 1, 0], [1, 1, 0, 1, 0, 1]]).reshape(2, 2, 3)
+        results = decoding_function(spots, barcodes, num_iter=20, batch_size=100)
+        self.assertIsInstance(results, dict)
+        self.assertEqual(results["class_probs"].shape, (100, 2))
+        self.assertIsInstance(results["params"], dict)
+
+
+if __name__ == "__main__":
+    test.main()

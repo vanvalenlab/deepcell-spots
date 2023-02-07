@@ -110,7 +110,7 @@ def generate_transformation_matrix(transform_parameters, image_shape, img_row_ax
     generate the transformation matrix and offset which ``apply_affine_transform``
     generates and passes to ``scipy.ndimage.interpolation.affine_transform``:
 
-    .. code-block:: python
+    Example::
 
         ndimage.interpolation.affine_transform(
                 x_channel,

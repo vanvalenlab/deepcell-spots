@@ -29,7 +29,10 @@
 import numpy as np
 from tensorflow.python.platform import test
 
-from deepcell_spots.multiplex import multiplex_match_spots_to_cells
+from deepcell_spots.multiplex import (
+    multiplex_match_spots_to_cells,
+    extract_spots_prob_from_coords_maxpool,
+)
 
 
 class TestImageAlignment(test.TestCase):
@@ -43,7 +46,15 @@ class TestImageAlignment(test.TestCase):
         self.assertEqual(list(spots_dict.keys()), [0])
         self.assertEqual(spots_dict[0], {0.0: [[0, 0], [1, 1]]})
 
-    # def test_cluster_points(self):
+    def test_extract_spots_prob_from_coords_maxpool(self):
+        image = np.random.rand(10, 100, 100, 20)
+        spots_locations = np.random.randint(0, 100, (20, 2))
+
+        with self.assertRaises(ValueError):
+            extract_spots_prob_from_coords_maxpool(image, spots_locations, extra_pixel_num=-1)
+
+        with self.assertRaises(TypeError):
+            extract_spots_prob_from_coords_maxpool(image, spots_locations, extra_pixel_num=0.5)
 
 
 if __name__ == '__main__':
