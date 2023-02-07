@@ -66,6 +66,7 @@ class SpotDecoding(Application):
                     ...
                     Name: r9c0, dtype: int64
                     Name: r9c1, dtype: int64
+
         r (int): Number of rounds.
         c (int): Number of channels.
     """
