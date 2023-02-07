@@ -71,9 +71,7 @@ class Polaris(object):
     The ``predict`` method calls the predict method of each
     application.
 
-    Example:
-
-    .. code-block:: python
+    Example::
 
         from skimage.io import imread
         from deepcell_spots.applications import Polaris

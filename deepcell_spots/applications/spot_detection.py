@@ -65,9 +65,7 @@ class SpotDetection(Application):
     The ``predict`` method handles prep and post processing steps
     to return a list of spot locations.
 
-    Example:
-
-    .. code-block:: python
+    Example::
 
         from skimage.io import imread
         from deepcell_spots.applications import SpotDetection
