@@ -1,7 +1,7 @@
 # Use vanvalenlab/deepcell-tf as the base image
 # Change the build arg to edit the deepcell version.
 # Only supporting python3.
-ARG DEEPCELL_VERSION=0.12.0-gpu
+ARG DEEPCELL_VERSION=0.12.4-gpu
 
 FROM vanvalenlab/deepcell-tf:${DEEPCELL_VERSION}
 
