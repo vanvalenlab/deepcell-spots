@@ -51,7 +51,7 @@ class TestSpotDecoding(test.TestCase):
             columns=["code_name", "r0c0", "r0c1", "r0c2", "r1c0", "r1c1", "r1c2"],
             index=np.arange(7) + 1,
         )
-        app1 = SpotDecoding(df_barcodes=df_barcodes1, r=2, c=3)
+        app1 = SpotDecoding(df_barcodes=df_barcodes1, rounds=2, channels=3)
 
         spots_intensities_vec1 = np.random.rand(100, 6)
         decoding_dict_trunc1 = app1.predict(
@@ -66,7 +66,7 @@ class TestSpotDecoding(test.TestCase):
             columns=["code_name", "r0c0", "r0c1", "r0c2", "r1c0", "r1c1", "r1c2"],
             index=np.arange(2) + 1,
         )
-        app2 = SpotDecoding(df_barcodes=df_barcodes2, r=2, c=3)
+        app2 = SpotDecoding(df_barcodes=df_barcodes2, rounds=2, channels=3)
 
         spots_intensities_vec21 = np.ones((100, 6))
         decoding_dict_trunc21 = app2.predict(

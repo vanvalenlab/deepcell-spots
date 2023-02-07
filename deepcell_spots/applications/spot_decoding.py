@@ -102,8 +102,8 @@ class SpotDecoding(Application):
         """
         df_barcodes_aug = df_barcodes.copy()
         barcode_len = df_barcodes_aug.shape[1] - 1
-        df_barcodes_aug.loc[len(df_barcodes_aug)] = ['Background'] + [0] * (barcode_len)
-        df_barcodes_aug.loc[len(df_barcodes_aug)] = ['Unknown'] + [-1] * (barcode_len)
+        df_barcodes_aug.loc[len(df_barcodes_aug)+1] = ['Background'] + [0] * (barcode_len)
+        df_barcodes_aug.loc[len(df_barcodes_aug)+1] = ['Unknown'] + [-1] * (barcode_len)
         return df_barcodes_aug
 
     def _decoding_output_to_dict(self, out):
