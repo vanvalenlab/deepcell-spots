@@ -24,6 +24,7 @@
 # limitations under the License.
 # ==============================================================================
 
+import warnings
 import numpy as np
 import pandas as pd
 from scipy.spatial import distance
@@ -51,6 +52,9 @@ def multiplex_match_spots_to_cells(coords_dict, cytoplasm_pred):
             and values are detected spots associated with that cell label,
             there is one item in list for each image in coords_dict.
     """
+    warnings.warn("Deprecated. Function no longer maintained.",
+                  DeprecationWarning, stacklevel=2)
+
     coords = [item[0] for item in coords_dict.values()]
     keys = list(coords_dict.keys())
 
@@ -82,6 +86,9 @@ def cluster_points(spots_to_cells_dict, cell_id, threshold=1.5, match_method='mi
             Options are `'min_dist'` and `'mutual_nearest_neighbor'`.
             Defaults to `'min_dist'`.
     """
+    warnings.warn("Deprecated. Function no longer maintained.",
+                  DeprecationWarning, stacklevel=2)
+
     col_names = list(spots_to_cells_dict.keys())
 
     # Get up data frame of clustered points
@@ -172,6 +179,9 @@ def gene_counts(
     Returns:
         pandas.DateFrame: ``DataFrame`` containing gene counts for each cell.
     """
+    warnings.warn("Deprecated. Function no longer maintained.",
+                  DeprecationWarning, stacklevel=2)
+
     gene_count_per_cell = {}
     # codebook = codebook[['name']+col_names]
     col_names = list(spots_to_cells_dict.keys())
@@ -258,6 +268,9 @@ def gene_counts_DBSCAN(spots_to_cells_dict, codebook, threshold, error_corr=True
     Returns:
         pandas.DateFrame: ``DataFrame`` containing gene counts for each cell.
     """
+    warnings.warn("Deprecated. Function no longer maintained.",
+                  DeprecationWarning, stacklevel=2)
+
     # Codebook data frame to dictionary
     codebook_dict = {}
     for i in range(len(codebook)):
@@ -356,6 +369,9 @@ def error_correction(barcode, codebook_dict):
         codebook_dict (dict): Codebook converted into a dictionary where the
             keys are the binary barcode and the values are the gene names.
     """
+    warnings.warn("Deprecated. Function no longer maintained.",
+                  DeprecationWarning, stacklevel=2)
+
     for key in codebook_dict.keys():
         codebook_barcode = np.array(key.strip('][').split(', ')).astype(int)
 
