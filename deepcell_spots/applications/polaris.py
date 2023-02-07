@@ -198,7 +198,7 @@ class Polaris(object):
         output_image = np.zeros_like(spots_image, dtype=np.float32)
         for idx_channel in range(spots_image.shape[-1]):
             output_image[..., idx_channel] = self.spots_app.predict(
-                image=spots_image[..., idx_channel][..., None],
+                image=spots_image[..., idx_channel:idx_channel+1],
                 # TODO: threshold is disabled, but must feed a float [0,1] number
                 threshold=spots_threshold,
                 clip=spots_clip
