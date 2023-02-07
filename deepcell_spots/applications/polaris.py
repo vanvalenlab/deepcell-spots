@@ -208,7 +208,7 @@ class Polaris(object):
                 segmentation_image=None,
                 image_mpp=None,
                 threshold=0.95,
-                clip=False,
+                clip=True,
                 maxpool_extra_pixel_num=0,
                 decoding_training_kwargs=None):
         """Generates prediction output consisting of a labeled cell segmentation image,

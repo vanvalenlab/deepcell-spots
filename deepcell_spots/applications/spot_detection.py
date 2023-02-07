@@ -240,7 +240,7 @@ class SpotDetection(Application):
                 preprocess_kwargs=None,
                 postprocess_kwargs=None,
                 threshold=0.95,
-                clip=False):
+                clip=True):
         """Generates a list of coordinate spot locations of the input
         running prediction with appropriate pre and post processing
         functions.
