@@ -93,12 +93,12 @@ class Polaris(object):
 
         ####################################################################
         # Multiplex case:
-        r = 10
-        c = 2
+        rounds = 10
+        channels = 2
         df_barcodes = pd.read_csv('barcodes.csv', index_col=0)
         app = Polaris(image_type='singplex',
-                      decoding_kwargs={'r': r,
-                                       'c': c,
+                      decoding_kwargs={'rounds': rounds,
+                                       'channels': channels,
                                        'df_barcodes': df_barcodes})
         df_spots, df_intensities, segmentation_result = app.predict(
                              spots_image=spots_im,
@@ -116,11 +116,11 @@ class Polaris(object):
         spots_model (tf.keras.Model): The model to load.
             If ``None``, a pre-trained model will be downloaded.
         decoding_kwargs (dict): Keyword arguments to pass to the decoding method.
-            df_barcodes, r, c. Defaults to empty, no decoding is performed.
+            df_barcodes, rounds, channels. Defaults to empty, no decoding is performed.
             df_barcodes (pandas.DataFrame): Codebook, one column is gene names ('code_name'),
                 the rest are binary barcodes, encoded using 1 and 0. Index should start at 1.
-                For exmaple, for a (r=10, c=2) codebook, it should look the following (see
-                `notebooks/Multiplex FISH Analysis.ipynb` for examples)::
+                For exmaple, for a (rounds=10, channels=2) codebook, it should look the following
+                (see `notebooks/Multiplex FISH Analysis.ipynb` for examples)::
 
                     Index:
                         RangeIndex (starting from 1)

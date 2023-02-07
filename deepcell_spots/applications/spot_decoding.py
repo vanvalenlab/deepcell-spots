@@ -45,7 +45,7 @@ class SpotDecoding(Application):
         from deepcell_spots.applications import SpotDecoding
 
         # Create the application
-        app = SpotDecoding(df_barcodes, r, c)
+        app = SpotDecoding(df_barcodes, rounds, channels)
 
         # Decode the spots
         decoding_dict = app.predict(spots_intensities_vec)
@@ -53,7 +53,7 @@ class SpotDecoding(Application):
     Args:
         df_barcodes (pandas.DataFrame): Codebook, one column is gene names ('code_name'),
             the rest are binary barcodes, encoded using 1 and 0. Index should start at 1.
-            For exmaple, for a (r=10, c=2) codebook, it should look like::
+            For exmaple, for a (rounds=10, channels=2) codebook, it should look like::
             
                 Index:
                     RangeIndex (starting from 1)
@@ -67,17 +67,17 @@ class SpotDecoding(Application):
                     Name: r9c0, dtype: int64
                     Name: r9c1, dtype: int64
 
-        r (int): Number of rounds.
-        c (int): Number of channels.
+        rounds (int): Number of rounds.
+        channels (int): Number of channels.
     """
 
     dataset_metadata = {}
     model_metadata = {}
 
-    def __init__(self, df_barcodes, r, c):
+    def __init__(self, df_barcodes, rounds, channels):
         self.df_barcodes = self._add_bkg_unknown_to_barcodes(df_barcodes)
-        self.r = r
-        self.c = c
+        self.rounds = rounds
+        self.channels = channels
 
         super(SpotDecoding, self).__init__(
             model=None,
@@ -150,13 +150,15 @@ class SpotDecoding(Application):
         """Predict the gene assignment of each spot.
         """
 
-        spots_intensities_reshaped = np.reshape(spots_intensities_vec, (-1, self.r, self.c))
+        spots_intensities_reshaped = np.reshape(spots_intensities_vec,
+                                                (-1, self.rounds, self.channels))
 
         # convert df_barcodes to an array
         ch_names = list(self.df_barcodes.columns)
         ch_names.remove('code_name')
         unknown_index = self.df_barcodes.index.max()
-        barcodes_array = self.df_barcodes[ch_names].values.reshape(-1, self.r, self.c)[:-1, :, :]
+        barcodes_array = self.df_barcodes[ch_names].values.reshape(-1, self.rounds,
+                                                                   self.channels)[:-1, :, :]
 
         # decode
         out = decoding_function(
