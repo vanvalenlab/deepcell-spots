@@ -53,7 +53,8 @@ class SpotDecoding(Application):
     Args:
         df_barcodes (pandas.DataFrame): Codebook, one column is gene names ('code_name'),
             the rest are binary barcodes, encoded using 1 and 0. Index should start at 1.
-            For exmaple, for a (r=10, c=2) codebook, it should look like:
+            For exmaple, for a (r=10, c=2) codebook, it should look like::
+            
                 Index:
                     RangeIndex (starting from 1)
                 Columns:
