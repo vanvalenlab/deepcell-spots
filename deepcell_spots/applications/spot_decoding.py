@@ -40,9 +40,7 @@ class SpotDecoding(Application):
     The ``predict`` method handles inference procedure. It infers the
     model parameters and predicts the spot identities.
 
-    Example:
-
-    .. code-block:: python
+    Example::
 
         from deepcell_spots.applications import SpotDecoding
 
