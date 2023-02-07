@@ -140,7 +140,7 @@ class Polaris(object):
                  segmentation_model=None,
                  segmentation_type='cytoplasm',
                  spots_model=None,
-                 decoding_kwargs={}):
+                 decoding_kwargs=None):
 
         self.spots_app = SpotDetection(model=spots_model)
         # Disable postprocessing_fn to return the full images
@@ -212,7 +212,7 @@ class Polaris(object):
                 spots_threshold=0.95,
                 spots_clip=False,
                 maxpool_extra_pixel_num=0,
-                decoding_training_kwargs={}):
+                decoding_training_kwargs=None):
         """Generates prediction output consisting of a labeled cell segmentation image,
         detected spot locations, and a dictionary of spot locations assigned to labeled
         cells of the input.
