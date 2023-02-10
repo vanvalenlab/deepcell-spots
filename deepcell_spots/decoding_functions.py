@@ -68,7 +68,7 @@ def model_constrained_tensor(
             ``[num_barcodes + 1, r * c]``.
         c (int): Number of channels.
         r (int): Number of rounds.
-        batch_size (int): Size of batch for training. Defaults to 1000.
+        batch_size (int): Size of batch for training.
         params_mode (str): Number of model parameters, whether the parameters are shared across
             channels or rounds. valid options: {'1', '2', '2*R', '2*C', '2*R*C'}.
 
@@ -154,13 +154,13 @@ def train(svi, num_iter, data, codes, c, r, batch_size, params_mode):
     """Do the training for SVI model.
     Args:
         svi (pyro.infer.SVI): stochastic variational inference model.
-        num_iter (int): Number of iterations for training. Defaults to 200.
+        num_iter (int): Number of iterations for training.
         data (torch.array): Input data formatted as torch array with shape ``[num_spots, r * c]``.
         codes (torch.array): Codebook formatted as torch array with shape
             ``[num_barcodes + 1, r * c]``.
         c (int): Number of channels.
         r (int): Number of rounds.
-        batch_size (int): Size of batch for training. Defaults to 1000.
+        batch_size (int): Size of batch for training.
         params_mode (str): Number of model parameters, whether the parameters are shared across
             channels or rounds. valid options: {'1', '2', '2*R', '2*C', '2*R*C'}.
 
@@ -260,11 +260,12 @@ def decoding_function(
     Args:
         spots (numpy.array): Input spot intensity array with shape ``[num_spots, c, r]``.
         barcodes (numpy.array): Input codebook array with shape ``[num_barcodes, c, r]``.
-        num_iter (int): Number of iterations for training. Defaults to 200.
-        batch_size (int): Size of batch for training. Defaults to 1000.
+        num_iter (int): Number of iterations for training. Defaults to 500.
+        batch_size (int): Size of batch for training. Defaults to 15000.
         set_seed (int): Seed for randomness. Defaults to 1.
         params_mode (str): Number of model parameters, whether the parameters are shared across
-            channels or rounds. valid options: {'1', '2', '2*R', '2*C', '2*R*C'}.
+            channels or rounds. Valid options: {'1', '2', '2*R', '2*C', '2*R*C'}. Defaults to
+            '2*R*C'. 
 
     Returns:
         results (dict): The decoding results as a dictionary: 'class_probs': posterior
