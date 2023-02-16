@@ -163,8 +163,20 @@ class DotNetLosses(object):
                 y_true, y_pred, gamma=gamma, n_classes=n_classes)
 
         else:
-            loss = losses.weighted_categorical_crossentropy(
-                y_true, y_pred, n_classes=n_classes)
+            y_pred = tf.convert_to_tensor(y_pred[...,1])
+            y_true = K.cast(y_true[...,1], y_pred.dtype)
+            n_classes = K.cast(n_classes, y_pred.dtype)
+            axis = 3
+            reduce_axis = [x for x in list(range(K.ndim(y_pred))) if x != axis]
+            total_sum = K.sum(y_true)
+            class_sum = K.sum(y_true, axis=reduce_axis, keepdims=True)
+            class_weights = 1.0 / n_classes * tf.divide(total_sum, class_sum + 1.)
+            # print(class_weights)
+            loss = tf.nn.weighted_cross_entropy_with_logits(
+                labels=y_true, logits=y_pred, pos_weight=class_weights[0][0][0]
+            )
+            # loss = losses.weighted_categorical_crossentropy(
+            #     y_true, y_pred, n_classes=n_classes)
             loss = K.mean(loss)
 
         return loss
