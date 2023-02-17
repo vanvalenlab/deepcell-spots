@@ -190,7 +190,7 @@ class Polaris(object):
             threshold (float): Probability threshold for a pixel to be
                 considered as a spot.
             clip (bool): Determines if pixel values will be clipped by percentile.
-                Defaults to false.
+                Defaults to True.
 
         Returns:
             numpy.array: Output probability map with shape ``[batch, x, y, channel]``.
@@ -230,7 +230,7 @@ class Polaris(object):
             threshold (float): Probability threshold for a pixel to be
                 considered as a spot.
             clip (bool): Determines if pixel values will be clipped by percentile.
-                Defaults to false.
+                Defaults to True.
             maxpool_extra_pixel_num (int): Number of extra pixel for max pooling. Defaults
                 to 0, means no max pooling. For any number t, there will be a pool with
                 shape ``[-t, t] x [-t, t]``.

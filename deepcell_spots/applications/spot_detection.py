@@ -260,8 +260,9 @@ class SpotDetection(Application):
             postprocess_kwargs (dict): Keyword arguments to pass to the
                 post-processing function.
             threshold (float): Probability threshold for a pixel to be
-                                considered as a spot.
+                considered as a spot.
             clip (bool): Determines if pixel values will be clipped by percentile.
+                Defaults to True.
 
         Raises:
             ValueError: Input data must match required rank of the application,
