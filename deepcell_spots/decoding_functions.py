@@ -30,7 +30,8 @@ import numpy as np
 import torch
 from tqdm import tqdm
 import pyro
-from pyro.distributions import RelaxedBernoulli, Categorical, constraints
+from pyro.distributions import (RelaxedBernoulli, Categorical, constraints,
+                                MultivariateNormal)
 from pyro.optim import Adam
 from pyro.infer import SVI, TraceEnum_ELBO, config_enumerate
 from pyro import poutine
@@ -51,32 +52,71 @@ def reshape_torch_array(torch_array):
     return torch_array.transpose(1, 2).reshape(torch_array.shape[0], -1)
 
 
-@config_enumerate
-def model_constrained_tensor(
-        data,
-        codes,
-        c,
-        r,
-        batch_size=None,
-        params_mode='2*R*C'):
-    """Model definition: relaxed bernoulli, paramters are shared across all genes, but might
-    differ across channels or rounds.
-
+def normalize_spot_values(data):
+    """Normalizes spot intensity data array such that log of data has a mean of zero and standard
+    deviation of one.
+    
     Args:
         data (torch.array): Input data formatted as torch array with shape ``[num_spots, r * c]``.
-        codes (torch.array): Codebook formatted as torch array with shape
-            ``[num_barcodes + 1, r * c]``.
-        c (int): Number of channels.
-        r (int): Number of rounds.
-        batch_size (int): Size of batch for training.
-        params_mode (str): Number of model parameters, whether the parameters are shared across
-            channels or rounds. valid options: {'1', '2', '2*R', '2*C', '2*R*C'}.
-
+    
     Returns:
-        None
+        torch.array: Normalized data array.
     """
+    # TODO: add clipping functionality
+
+    s = torch.tensor(np.percentile(data.cpu().numpy(), 60, axis=0))
+    max_s = torch.tensor(np.percentile(data.cpu().numpy(), 99.9, axis=0))
+    min_s = torch.min(data, dim=0).values
+    log_add = (s ** 2 - max_s * min_s) / (max_s + min_s - 2 * s)
+    log_add = torch.max(-torch.min(data, dim=0).values + 1e-10,
+                        other=log_add.float())
+    data_log = torch.log10(data + log_add)
+    data_log_mean = data_log.mean(dim=0, keepdim=True)
+    data_log_std = data_log.std(dim=0, keepdim=True)
+    data_norm = (data_log - data_log_mean) / data_log_std  # column-wise normalization
+
+    return data_norm
+
+
+def kronecker_product(a, b):
+    """Matrix multiplication with two matrices of arbitrary size.
+
+    Args:
+        a (torch.array): Matrix of arbitrary size.
+        b (torch.array): Matrix of arbitrary size.
+    
+    Returns:
+        torch.array: Kronecker product of ``a`` and ``b``.
+    """
+    a_height, a_width = a.size()
+    b_height, b_width = b.size()
+    out_height = a_height * b_height
+    out_width = a_width * b_width
+    tiled_b = b.repeat(a_height, a_width)
+    expanded_tr = (a.unsqueeze(2).unsqueeze(3).repeat(1, b_height, b_width, 1).view(out_height, out_width))
+
+    return expanded_a * tiled_b
+
+
+def chol_sigma_from_vec(sigma_vec, dim):
+    L = torch.zeros(dim, dim)
+    L[torch.tril(torch.ones(dim, dim)) == 1] = sigma_vec
+
+    return torch.mm(L, torch.t(L))
+
+
+def mat_sqrt(A, D):
+    try:
+        U, S, V = torch.svd(A + 1e-3 * A.mean() * torch.rand(D, D))
+    except:
+        U, S, V = torch.svd(A + 1e-2 * A.mean() * torch.rand(D, D))
+    S_sqrt = torch.sqrt(S)
+
+    return torch.mm(torch.mm(U, torch.diag(S_sqrt)), V.t())
+
+
+def instantiate_rb_params(r, c, codes, params_mode):
     k = codes.shape[0]
-    w = pyro.param('weights', torch.ones(k) / k, constraint=constraints.simplex)
 
     if params_mode == '1':
         # one param
@@ -132,26 +172,86 @@ def model_constrained_tensor(
         temperature = pyro.param("temperature", torch.ones(
             torch.Size([2, r * c])) * 0.5, constraint=constraints.unit_interval)
         aug_temperature = torch.gather(temperature, 0, codes.long())
+
+    return scaled_sigma, aug_temperature
+
+
+def instantiate_gaussian_params(r, c, codes):
+    d = c * r
+
+    # using tensor sigma
+    sigma_c_v = pyro.param('sigma_c_v', torch.eye(c)[np.tril_indices(c, 0)])
+    sigma_c = chol_sigma_from_vec(sigma_c_v, c)
+    sigma_r_v = pyro.param('sigma_r_v', torch.eye(d)[np.tril_indices(r, 0)])
+    sigma_r = chol_sigma_from_vec(sigma_r_v, r)
+    sigma = kronecker_product(sigma_r, sigma_c)
+
+    codes_tr_v = pyro.param('codes_tr_v', 3 * torch.ones(1, d), constraint=constraints.greater_than(1.))
+    codes_tr_consts_v = pyro.param('codes_tr_consts_v', -1 * torch.ones(1, d))
+
+    theta = torch.matmul(codes * codes_tr_v + codes_tr_consts_v, mat_sqrt(sigma, d))
+
+    return theta, sigma
+
+
+@config_enumerate
+def model_constrained_tensor(
+        data,
+        codes,
+        c,
+        r,
+        batch_size=None,
+        params_mode='2*R*C'):
+    """Model definition: relaxed bernoulli, paramters are shared across all genes, but might
+    differ across channels or rounds.
+
+    Args:
+        data (torch.array): Input data formatted as torch array with shape ``[num_spots, r * c]``.
+        codes (torch.array): Codebook formatted as torch array with shape
+            ``[num_barcodes + 1, r * c]``.
+        c (int): Number of channels.
+        r (int): Number of rounds.
+        batch_size (int): Size of batch for training.
+        params_mode (str): Number of model parameters, whether the parameters are shared across
+            channels or rounds. valid options: ['1', '2', '2*R', '2*C', '2*R*C'].
+
+    Returns:
+        None
+    """
+    k = codes.shape[0]
+    w = pyro.param('weights', torch.ones(k) / k, constraint=constraints.simplex)
+
+    if params_mode in ['1', '2', '2*R', '2*C', '2*R*C']:
+        scaled_sigma, aug_temperature = instantiate_rb_params(r, c, codes, params_mode)
+
+        with pyro.plate('data', data.shape[0], batch_size) as batch:
+            z = pyro.sample('z', Categorical(w))
+            pyro.sample(
+                'obs',
+                RelaxedBernoulli(
+                    temperature=aug_temperature[z],
+                    probs=scaled_sigma[z]).to_event(1),
+                obs=data[batch])
+
+    elif params_mode == 'Gaussian':
+        theta, sigma = instantiate_gaussian_params(r, c, codes)
+
+        with pyro.plate('data', data.shape[0], batch_size) as batch:
+            z = pyro.sample('z', Categorical(w))
+            pyro.sample(
+                'obs',
+                MultivariateNormal(
+                    loc=theta[z],
+                    covariance_matrix=sigma),
+                obs=data[batch])
+
     else:
         assert False, "%s not supported" % params_mode
-
-    with pyro.plate('data', data.shape[0], batch_size) as batch:
-        z = pyro.sample('z', Categorical(w))
-        pyro.sample(
-            'obs',
-            RelaxedBernoulli(
-                temperature=aug_temperature[z],
-                probs=scaled_sigma[z]).to_event(1),
-            obs=data[batch])
-
-
-# Initialize an auto guide on the model
-auto_guide_constrained_tensor = AutoDelta(poutine.block(
-    model_constrained_tensor, expose=['weights', 'temperature', 'sigma']))
 
 
 def train(svi, num_iter, data, codes, c, r, batch_size, params_mode):
     """Do the training for SVI model.
+
     Args:
         svi (pyro.infer.SVI): stochastic variational inference model.
         num_iter (int): Number of iterations for training.
@@ -176,17 +276,18 @@ def train(svi, num_iter, data, codes, c, r, batch_size, params_mode):
     return losses
 
 
-def e_step(data, codes, w, temperature, sigma, c, r, params_mode='2*R*C'):
-    """Estimate the posterior probability for spot assignment.
+def rb_e_step(data, codes, w, temperature, sigma, c, r, params_mode='2*R*C'):
+    """Estimate the posterior probability for spot assignment from a mixture of Relaxed
+    Bernoulli distributions.
 
     Args:
         data (torch.array): Input data formatted as torch array with shape ``[num_spots, r * c]``.
         codes (torch.array): Codebook formatted as torch array with shape
             ``[num_barcodes + 1, r * c]``.
         w (torch.array): Weight parameter with shape ``[num_barcodes + 1, r * c]``.
-        temperature (torch.array): Temperature parameter for relaxed bernoulli, shape depends on
+        temperature (torch.array): Temperature parameter for Relaxed Bernoulli, shape depends on
              `params_mode`.
-        sigma (torch.array): Sigma parameter for relaxed bernoulli, shape depends on `params_mode`.
+        sigma (torch.array): Sigma parameter for Relaxed Bernoulli, shape depends on `params_mode`.
         c (int): Number of channels.
         r (int): Number of rounds.
         params_mode (str): Number of model parameters, whether the parameters are shared across
@@ -248,13 +349,39 @@ def e_step(data, codes, w, temperature, sigma, c, r, params_mode='2*R*C'):
     return class_prob_norm
 
 
-def decoding_function(
-        spots,
-        barcodes,
-        num_iter=500,
-        batch_size=15000,
-        set_seed=1,
-        params_mode='2*R*C'):
+def gaussian_e_step(data, w, theta, sigma, K):
+    """Estimate the posterior probability for spot assignment from a mixture of Relaxed
+    Bernoulli distributions.
+
+    Args:
+        data (torch.array): Input data formatted as torch array with shape ``[num_spots, r * c]``.
+        w (torch.array): Weight parameter with shape ``[num_barcodes + 1, r * c]``.
+        theta (torch.array): Mean parameter for Gaussian distribution.
+        sigma (torch.array): Covariance parameter for Gaussian distribution.
+        K (torch.array): Number of rounds * number of channels.
+
+    Returns:
+        normalized class probability with shape ``[num_spots, num_barcodes + 1]``.
+
+    """
+    n = data.shape[0]
+    class_probs = torch.ones(n, K)
+    for k in range(K):
+        dist = MultivariateNormal(theta[k], sigma)
+        class_probs[:, k] = w[k] * torch.exp(dist.log_prob(data))
+
+    class_prob_norm = class_probs.div(torch.sum(class_probs, dim=1, keepdim=True))
+    class_prob_norm = class_prob_norm.cpu().numpy()
+
+    return class_prob_norm
+
+
+def decoding_function(spots,
+                      barcodes,
+                      num_iter=500,
+                      batch_size=15000,
+                      set_seed=1,
+                      params_mode='2*R*C'):
     """Main function for the spot decoding.
 
     Args:
@@ -264,7 +391,7 @@ def decoding_function(
         batch_size (int): Size of batch for training. Defaults to 15000.
         set_seed (int): Seed for randomness. Defaults to 1.
         params_mode (str): Number of model parameters, whether the parameters are shared across
-            channels or rounds. Valid options: {'1', '2', '2*R', '2*C', '2*R*C'}. Defaults to
+            channels or rounds. Valid options: ['1', '2', '2*R', '2*C', '2*R*C']. Defaults to
             '2*R*C'. 
 
     Returns:
@@ -278,33 +405,88 @@ def decoding_function(
     else:
         torch.set_default_tensor_type("torch.FloatTensor")
 
+    valid_params_modes = ['1', '2', '2*R', '2*C', '2*R*C', 'Gaussian']
+    if params_mode not in valid_params_modes:
+            raise ValueError('Invalid params_mode supplied: {}. '
+                             'Must be one of {}'.format(params_mode,
+                                                        valid_params_modes))
+
     num_spots, c, r = spots.shape
 
-    data = torch.tensor(spots).float().transpose(1, 2).reshape(spots.shape[0], c * r)
-    codes = torch.tensor(barcodes).float().transpose(1, 2).reshape(barcodes.shape[0], c * r)
+    data = reshape_torch_array(torch.tensor(spots).float())
+    codes = reshape_torch_array(torch.tensor(barcodes).float())
+
+    if params_mode=='Gaussian':
+        data = normalize_spot_values(data)
+        auto_guide_constrained_tensor = AutoDelta(poutine.block(model_constrained_tensor,
+                                                  expose=['weights',
+                                                          'codes_tr_v',
+                                                          'codes_tr_consts_v',
+                                                          'sigma_c_v',
+                                                          'sigma_r_v']))
+
+    else:
+        auto_guide_constrained_tensor = AutoDelta(poutine.block(model_constrained_tensor,
+                                                  expose=['weights',
+                                                          'temperature',
+                                                          'sigma']))
 
     optim = Adam({'lr': 0.085, 'betas': [0.85, 0.99]})
     svi = SVI(model_constrained_tensor, auto_guide_constrained_tensor,
               optim, loss=TraceEnum_ELBO(max_plate_nesting=1))
     pyro.set_rng_seed(set_seed)
+
     losses = train(svi, num_iter, data, codes, c, r,
                    min(num_spots, batch_size), params_mode)
 
-    w_star = pyro.param('weights').detach()
-    temperature_star = pyro.param('temperature').detach()
-    sigma_star = pyro.param('sigma').detach()
+    if params_mode=='Gaussian':
+        w_star = pyro.param('weights').detach()
 
-    class_probs_star = e_step(
-        data, codes, w_star, temperature_star, sigma_star, c, r, params_mode)
+        sigma_c_v_star = pyro.param('sigma_ch_v').detach()
+        sigma_r_v_star = pyro.param('sigma_ro_v').detach()
+        sigma_r_star = chol_sigma_from_vec(sigma_r_v_star, r)
+        sigma_c_star = chol_sigma_from_vec(sigma_c_v_star, c)
+        sigma_star = kronecker_product(sigma_r_star, sigma_c_star)
 
-    if torch.cuda.is_available():
-        torch.set_default_tensor_type("torch.FloatTensor")
+        codes_tr_v_star = pyro.param('codes_tr_v').detach()
+        codes_tr_consts_v_star = pyro.param('codes_tr_consts_v').detach()
+        theta_star = torch.matmul(codes * codes_tr_v_star + codes_tr_consts_v_star, mat_sqrt(sigma_star, r * c))
 
-    torch_params = {
-        'w_star': w_star.cpu(),
-        'temperature_star': temperature_star.cpu(),
-        'sigma_star': sigma_star.cpu(),
-        'losses': losses}
+        class_probs_star = gaussian_e_step(data, w_star, theta_star, sigma_star, K=codes.shape[0])
+
+        if torch.cuda.is_available():
+            torch.set_default_tensor_type("torch.FloatTensor")
+
+        torch_params = {
+            'w_star': w_star.cpu(),
+            'sigma_star': sigma_star.cpu(),
+            'sigma_r_star': sigma_r_star.cpu(),
+            'sigma_c_star': sigma_c_star.cpu(),
+            'theta_star': theta_star.cpu(),
+            'codes_tr_consts_v_star': codes_tr_consts_v_star.cpu(),
+            'codes_tr_v_star': codes_tr_v_star.cpu(),
+            'losses': losses
+        }
+    
+    else:
+
+        w_star = pyro.param('weights').detach()
+        temperature_star = pyro.param('temperature').detach()
+        sigma_star = pyro.param('sigma').detach()
+
+        class_probs_star = rb_e_step(
+            data, codes, w_star, temperature_star, sigma_star, c, r, params_mode)
+
+        if torch.cuda.is_available():
+            torch.set_default_tensor_type("torch.FloatTensor")
+
+        torch_params = {
+            'w_star': w_star.cpu(),
+            'temperature_star': temperature_star.cpu(),
+            'sigma_star': sigma_star.cpu(),
+            'losses': losses
+        }
+
     results = {'class_probs': class_probs_star, 'params': torch_params}
 
     return results
