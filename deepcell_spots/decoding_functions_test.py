@@ -58,6 +58,7 @@ class TestDecodingFunc(test.TestCase):
         data = torch.zeros(n, r*c)
         norm_data = normalize_spot_values(data)
         self.assertEqual(data.shape, norm_data.shape)
+        pyro.get_param_store().clear()
 
     def test_kronecker_product(self):
         dim = 3
@@ -152,8 +153,9 @@ class TestDecodingFunc(test.TestCase):
         params_mode = '2'
         class_prob_norm = rb_e_step(data, codes, w, temperature, sigma, c, r, params_mode)
         self.assertAllEqual(class_prob_norm.shape, torch.Size([n, k]))
-        self.assertAllGreater(class_prob_norm, 0)
-        self.assertAllLess(class_prob_norm, 1)
+        self.assertAllInRange(class_prob_norm, 0, 1,
+                              open_lower_bound=True,
+                              open_upper_bound=True)
         pyro.get_param_store().clear()
 
         # params mode: 2*R
@@ -162,8 +164,9 @@ class TestDecodingFunc(test.TestCase):
         params_mode = '2*R'
         class_prob_norm = rb_e_step(data, codes, w, temperature, sigma, c, r, params_mode)
         self.assertAllEqual(class_prob_norm.shape, torch.Size([n, k]))
-        self.assertAllGreater(class_prob_norm, 0)
-        self.assertAllLess(class_prob_norm, 1)
+        self.assertAllInRange(class_prob_norm, 0, 1,
+                              open_lower_bound=True,
+                              open_upper_bound=True)
         pyro.get_param_store().clear()
 
         # params mode: 2*C
@@ -172,8 +175,9 @@ class TestDecodingFunc(test.TestCase):
         params_mode = '2*C'
         class_prob_norm = rb_e_step(data, codes, w, temperature, sigma, c, r, params_mode)
         self.assertAllEqual(class_prob_norm.shape, torch.Size([n, k]))
-        self.assertAllGreater(class_prob_norm, 0)
-        self.assertAllLess(class_prob_norm, 1)
+        self.assertAllInRange(class_prob_norm, 0, 1,
+                              open_lower_bound=True,
+                              open_upper_bound=True)
         pyro.get_param_store().clear()
 
         # params mode: 2*R*C
@@ -182,8 +186,9 @@ class TestDecodingFunc(test.TestCase):
         params_mode = '2*R*C'
         class_prob_norm = rb_e_step(data, codes, w, temperature, sigma, c, r, params_mode)
         self.assertAllEqual(class_prob_norm.shape, torch.Size([n, k]))
-        self.assertAllGreater(class_prob_norm, 0)
-        self.assertAllLess(class_prob_norm, 1)
+        self.assertAllInRange(class_prob_norm, 0, 1,
+                              open_lower_bound=True,
+                              open_upper_bound=True)
         pyro.get_param_store().clear()
 
     def test_gaussian_e_step(self):
@@ -204,8 +209,9 @@ class TestDecodingFunc(test.TestCase):
         sigma = kronecker_product(sigma_r, sigma_c)
         class_prob_norm = gaussian_e_step(data, w, theta, sigma, k)
         self.assertAllEqual(class_prob_norm.shape, torch.Size([n, k]))
-        self.assertAllGreater(class_prob_norm, 0)
-        self.assertAllLess(class_prob_norm, 1)
+        self.assertAllInRange(class_prob_norm, 0, 1,
+                              open_lower_bound=True,
+                              open_upper_bound=True)
         pyro.get_param_store().clear()
 
     def test_decoding_function(self):
@@ -214,10 +220,10 @@ class TestDecodingFunc(test.TestCase):
         r = 2
         c = 3
         k = 2
-        spots = np.random.rand(n, r, c)
         codes = np.array([[1, 0, 1, 0, 1, 0], [0, 1, 0, 1, 0, 1]]).reshape(k, r, c)
 
         # Relaxed Bernoulli distributions
+        spots = np.random.rand(n, r, c)
         results = decoding_function(spots, codes, num_iter=20, batch_size=n, params_mode='2*R*C')
         self.assertIsInstance(results, dict)
         self.assertAllEqual(results["class_probs"].shape, torch.Size([n, k]))
@@ -225,10 +231,12 @@ class TestDecodingFunc(test.TestCase):
         pyro.get_param_store().clear()
 
         # Gaussian distributions
+        spots = np.random.rand(n, r, c)*10
         results = decoding_function(spots, codes, num_iter=20, batch_size=n, params_mode='Gaussian')
         self.assertIsInstance(results, dict)
         self.assertAllEqual(results["class_probs"].shape, torch.Size([n, k]))
         self.assertIsInstance(results["params"], dict)
+        pyro.get_param_store().clear()
 
 
 if __name__ == "__main__":
