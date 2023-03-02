@@ -409,14 +409,20 @@ def gaussian_e_step(data, w, theta, sigma, K):
         normalized class probability with shape ``[num_spots, num_barcodes + 1]``.
 
     """
-    n = data.shape[0]
-    class_probs = torch.ones(n, K)
-    for k in range(K):
-        dist = MultivariateNormal(theta[k], sigma)
-        class_probs[:, k] = w[k] * torch.exp(dist.log_prob(data))
+    class_logprobs = np.ones((data.shape[0], K))
+    batch_sz = 50000
 
-    class_prob_norm = class_probs.div(torch.sum(class_probs, dim=1, keepdim=True))
-    class_prob_norm = class_prob_norm.cpu().numpy()
+    for idx in range(len(data) // batch_sz + 1):
+        ind_start  = idx*batch_sz
+        ind_end = torch.min(torch.tensor([(idx+1)*batch_sz, len(data)]))
+        for k in tqdm(range(K)):
+            dist = MultivariateNormal(theta[k], sigma)
+            class_logprobs[ind_start:ind_end, idx] = (
+                w[idx].log() + dist.log_prob(data[ind_start:ind_end])).cpu().numpy()
+
+    # basically doing a stable_softmax here
+    numerator = np.exp(class_logprobs - np.max(class_logprobs, axis=1)[:, None])
+    class_prob_norm = np.divide(numerator, np.sum(numerator, axis=1)[:, None])
 
     return class_prob_norm
 
