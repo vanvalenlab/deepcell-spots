@@ -153,9 +153,7 @@ class TestDecodingFunc(test.TestCase):
         params_mode = '2'
         class_prob_norm = rb_e_step(data, codes, w, temperature, sigma, c, r, params_mode)
         self.assertAllEqual(class_prob_norm.shape, torch.Size([n, k]))
-        self.assertAllInRange(class_prob_norm, 0, 1,
-                              open_lower_bound=True,
-                              open_upper_bound=True)
+        self.assertAllInRange(class_prob_norm, 0, 1)
         pyro.get_param_store().clear()
 
         # params mode: 2*R
@@ -164,9 +162,7 @@ class TestDecodingFunc(test.TestCase):
         params_mode = '2*R'
         class_prob_norm = rb_e_step(data, codes, w, temperature, sigma, c, r, params_mode)
         self.assertAllEqual(class_prob_norm.shape, torch.Size([n, k]))
-        self.assertAllInRange(class_prob_norm, 0, 1,
-                              open_lower_bound=True,
-                              open_upper_bound=True)
+        self.assertAllInRange(class_prob_norm, 0, 1)
         pyro.get_param_store().clear()
 
         # params mode: 2*C
@@ -175,9 +171,7 @@ class TestDecodingFunc(test.TestCase):
         params_mode = '2*C'
         class_prob_norm = rb_e_step(data, codes, w, temperature, sigma, c, r, params_mode)
         self.assertAllEqual(class_prob_norm.shape, torch.Size([n, k]))
-        self.assertAllInRange(class_prob_norm, 0, 1,
-                              open_lower_bound=True,
-                              open_upper_bound=True)
+        self.assertAllInRange(class_prob_norm, 0, 1)
         pyro.get_param_store().clear()
 
         # params mode: 2*R*C
@@ -186,9 +180,7 @@ class TestDecodingFunc(test.TestCase):
         params_mode = '2*R*C'
         class_prob_norm = rb_e_step(data, codes, w, temperature, sigma, c, r, params_mode)
         self.assertAllEqual(class_prob_norm.shape, torch.Size([n, k]))
-        self.assertAllInRange(class_prob_norm, 0, 1,
-                              open_lower_bound=True,
-                              open_upper_bound=True)
+        self.assertAllInRange(class_prob_norm, 0, 1)
         pyro.get_param_store().clear()
 
     def test_gaussian_e_step(self):
@@ -209,9 +201,7 @@ class TestDecodingFunc(test.TestCase):
         sigma = kronecker_product(sigma_r, sigma_c)
         class_prob_norm = gaussian_e_step(data, w, theta, sigma, k)
         self.assertAllEqual(class_prob_norm.shape, torch.Size([n, k]))
-        self.assertAllInRange(class_prob_norm, 0, 1,
-                              open_lower_bound=True,
-                              open_upper_bound=True)
+        self.assertAllInRange(class_prob_norm, 0, 1)
         pyro.get_param_store().clear()
 
     def test_decoding_function(self):

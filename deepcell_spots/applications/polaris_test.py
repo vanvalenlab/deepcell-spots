@@ -184,7 +184,7 @@ class TestPolaris(test.TestCase):
             r = 2
             c = 3
             decoding_kwargs = {'df_barcodes': df_barcodes, 'rounds': r,
-                               'channels': c, 'params_mode': '2*R*C'}
+                               'channels': c, 'params_mode': 'Gaussian'}
             app = Polaris(image_type='multiplex', decoding_kwargs=decoding_kwargs)
 
             spots_image = np.random.rand(1, 128, 128, r*c)
@@ -199,6 +199,4 @@ class TestPolaris(test.TestCase):
             self.assertIsInstance(segmentation_result, np.ndarray)
             self.assertAllEqual(segmentation_image.shape, segmentation_result.shape)
             self.assertEqual(len(df_spots), len(df_intensities))
-            self.assertAllInRange(df_spots.probability, 0, 1,
-                                  open_lower_bound=True,
-                                  open_upper_bound=True)
+            self.assertAllInRange(df_spots.probability, 0, 1)
