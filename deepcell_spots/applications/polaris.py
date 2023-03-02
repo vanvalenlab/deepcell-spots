@@ -181,14 +181,12 @@ class Polaris(object):
             self.segmentation_app = None
             warnings.warn('No segmentation application instantiated.')
 
-    def _predict_spots_image(self, spots_image, threshold, clip):
+    def _predict_spots_image(self, spots_image, clip):
         """Iterate through all channels and generate model output (probability maps)
 
         Args:
             spots_image (numpy.array): Input image for spot detection with shape
                 ``[batch, x, y, channel]``.
-            threshold (float): Probability threshold for a pixel to be
-                considered as a spot.
             clip (bool): Determines if pixel values will be clipped by percentile.
                 Defaults to True.
 
@@ -250,7 +248,7 @@ class Polaris(object):
             raise ValueError('Threshold of %s was input. Threshold value must be '
                              'between 0 and 1.'.format())
 
-        output_image = self._predict_spots_image(spots_image, threshold, clip)
+        output_image = self._predict_spots_image(spots_image, clip)
 
         clipped_output_image = np.clip(output_image, 0, 1)
         max_proj_images = np.max(clipped_output_image, axis=-1)
