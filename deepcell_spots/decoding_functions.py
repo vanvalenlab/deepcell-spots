@@ -44,10 +44,10 @@ def reshape_torch_array(torch_array):
     """Reshape a ``[k, r, c]`` array into a ``[k, r * c]``.
 
     Args:
-        torch_array (torch.array): Array to be reshaped.
+        torch_array (torch.tensor): Array to be reshaped.
 
     Returns:
-        torch.array: Reshaped array.
+        torch.tensor: Reshaped array.
     """
     return torch_array.transpose(1, 2).reshape(torch_array.shape[0], -1)
 
@@ -57,10 +57,10 @@ def normalize_spot_values(data):
     deviation of one.
     
     Args:
-        data (torch.array): Input data formatted as torch array with shape ``[num_spots, r * c]``.
+        data (torch.tensor): Input data formatted as torch array with shape ``[num_spots, r * c]``.
     
     Returns:
-        torch.array: Normalized data array.
+        torch.tensor: Normalized data array.
     """
     # TODO: add clipping functionality
 
@@ -68,8 +68,8 @@ def normalize_spot_values(data):
     max_s = torch.tensor(np.percentile(data.cpu().numpy(), 99.9, axis=0))
     min_s = torch.min(data, dim=0).values
     log_add = (s ** 2 - max_s * min_s) / (max_s + min_s - 2 * s)
-    log_add = torch.max(-torch.min(data, dim=0).values + 1e-10,
-                        other=log_add.float())
+    log_add = torch.max(-torch.min(data, dim=0).values + 1e-8,
+                        other=log_add.float() + 1e-10)
     data_log = torch.log10(data + log_add)
     data_log_mean = data_log.mean(dim=0, keepdim=True)
     data_log_std = data_log.std(dim=0, keepdim=True)
@@ -82,18 +82,19 @@ def kronecker_product(a, b):
     """Matrix multiplication with two matrices of arbitrary size.
 
     Args:
-        a (torch.array): Matrix of arbitrary size.
-        b (torch.array): Matrix of arbitrary size.
+        a (torch.tensor): Matrix of arbitrary size.
+        b (torch.tensor): Matrix of arbitrary size.
     
     Returns:
-        torch.array: Kronecker product of ``a`` and ``b``.
+        torch.tensor: Kronecker product of ``a`` and ``b``.
     """
     a_height, a_width = a.size()
     b_height, b_width = b.size()
     out_height = a_height * b_height
     out_width = a_width * b_width
     tiled_b = b.repeat(a_height, a_width)
-    expanded_tr = (a.unsqueeze(2).unsqueeze(3).repeat(1, b_height, b_width, 1).view(out_height, out_width))
+    expanded_a = (a.unsqueeze(2).unsqueeze(3).repeat(1, b_height, b_width, 1).view(
+        out_height, out_width))
 
     return expanded_a * tiled_b
 
@@ -116,23 +117,29 @@ def mat_sqrt(A, D):
 
 
 def instantiate_rb_params(r, c, codes, params_mode):
+    """Instantiates parameters for model of mixture of Relaxed Bernoulli distributions.
+
+    Args:
+        r (int): Number of rounds.
+        c (int): Number of channels.
+        codes (torch.tensor): Codebook formatted as torch array with shape
+            ``[num_barcodes + 1, r * c]``.
+        params_mode (str): Number of model parameters, whether the parameters are shared across
+            channels or rounds. valid options: ['2', '2*R', '2*C', '2*R*C'].
+
+    Returns:
+        scaled_sigma (torch.tensor): Sigma parameter of Relaxed Bernoulli.
+        aug_temperature (torch.tensor): Temperature parameter of Relaxed Bernoulli.
+    """
     k = codes.shape[0]
 
-    if params_mode == '1':
-        # one param
-        sigma = pyro.param("sigma", torch.ones(torch.Size(
-            [1])) * 0.5, constraint=constraints.unit_interval)
-        scaled_sigma = codes + (-1)**codes * 0.3 * sigma
-        temperature = pyro.param("temperature", torch.ones(
-            torch.Size([1])) * 0.5, constraint=constraints.unit_interval)
-        aug_temperature = temperature.unsqueeze(-1).repeat(k, 1)
-    elif params_mode == '2':
+    if params_mode == '2':
         # two param - one for 0-channel, one for 1-channel
         sigma = pyro.param("sigma", torch.ones(torch.Size(
             [2])) * 0.5, constraint=constraints.unit_interval)
         aug_sigma = torch.gather(
             sigma, 0, codes.reshape(-1).long()).reshape(codes.shape)
-        scaled_sigma = codes + (-1)**codes * 0.3 * aug_sigma
+        scaled_sigma = codes + (-1)**codes * 0.3 * aug_sigma  # is 0.3 an arbitrary choice?
         temperature = pyro.param('temperature', torch.ones(
             torch.Size([2])) * 0.5, constraint=constraints.unit_interval)
         aug_temperature = torch.gather(
@@ -172,11 +179,25 @@ def instantiate_rb_params(r, c, codes, params_mode):
         temperature = pyro.param("temperature", torch.ones(
             torch.Size([2, r * c])) * 0.5, constraint=constraints.unit_interval)
         aug_temperature = torch.gather(temperature, 0, codes.long())
+    else:
+        assert False, "%s not supported" % params_mode
 
     return scaled_sigma, aug_temperature
 
 
 def instantiate_gaussian_params(r, c, codes):
+    """Instantiates parameters for model of mixture of Gaussian distributions.
+
+    Args:
+        r (int): Number of rounds.
+        c (int): Number of channels.
+        codes (torch.tensor): Codebook formatted as torch array with shape
+            ``[num_barcodes + 1, r * c]``.
+
+    Returns:
+        theta (torch.tensor): Mean parameter of Gaussian.
+        sigma (torch.tensor): Covariance parameter of Gaussian.
+    """
     d = c * r
 
     # using tensor sigma
@@ -206,14 +227,14 @@ def model_constrained_tensor(
     differ across channels or rounds.
 
     Args:
-        data (torch.array): Input data formatted as torch array with shape ``[num_spots, r * c]``.
-        codes (torch.array): Codebook formatted as torch array with shape
+        data (torch.tensor): Input data formatted as torch array with shape ``[num_spots, r * c]``.
+        codes (torch.tensor): Codebook formatted as torch array with shape
             ``[num_barcodes + 1, r * c]``.
         c (int): Number of channels.
         r (int): Number of rounds.
         batch_size (int): Size of batch for training.
         params_mode (str): Number of model parameters, whether the parameters are shared across
-            channels or rounds. valid options: ['1', '2', '2*R', '2*C', '2*R*C'].
+            channels or rounds. valid options: ['2', '2*R', '2*C', '2*R*C'].
 
     Returns:
         None
@@ -221,7 +242,7 @@ def model_constrained_tensor(
     k = codes.shape[0]
     w = pyro.param('weights', torch.ones(k) / k, constraint=constraints.simplex)
 
-    if params_mode in ['1', '2', '2*R', '2*C', '2*R*C']:
+    if params_mode in ['2', '2*R', '2*C', '2*R*C']:
         scaled_sigma, aug_temperature = instantiate_rb_params(r, c, codes, params_mode)
 
         with pyro.plate('data', data.shape[0], batch_size) as batch:
@@ -255,14 +276,14 @@ def train(svi, num_iter, data, codes, c, r, batch_size, params_mode):
     Args:
         svi (pyro.infer.SVI): stochastic variational inference model.
         num_iter (int): Number of iterations for training.
-        data (torch.array): Input data formatted as torch array with shape ``[num_spots, r * c]``.
-        codes (torch.array): Codebook formatted as torch array with shape
+        data (torch.tensor): Input data formatted as torch array with shape ``[num_spots, r * c]``.
+        codes (torch.tensor): Codebook formatted as torch array with shape
             ``[num_barcodes + 1, r * c]``.
         c (int): Number of channels.
         r (int): Number of rounds.
         batch_size (int): Size of batch for training.
         params_mode (str): Number of model parameters, whether the parameters are shared across
-            channels or rounds. valid options: {'1', '2', '2*R', '2*C', '2*R*C'}.
+            channels or rounds. valid options: ['2', '2*R', '2*C', '2*R*C'].
 
     Returns:
         list: losses.
@@ -281,17 +302,17 @@ def rb_e_step(data, codes, w, temperature, sigma, c, r, params_mode='2*R*C'):
     Bernoulli distributions.
 
     Args:
-        data (torch.array): Input data formatted as torch array with shape ``[num_spots, r * c]``.
-        codes (torch.array): Codebook formatted as torch array with shape
+        data (torch.tensor): Input data formatted as torch array with shape ``[num_spots, r * c]``.
+        codes (torch.tensor): Codebook formatted as torch array with shape
             ``[num_barcodes + 1, r * c]``.
-        w (torch.array): Weight parameter with shape ``[num_barcodes + 1, r * c]``.
+        w (torch.array): Weight parameter with length ``num_barcodes + 1``.
         temperature (torch.array): Temperature parameter for Relaxed Bernoulli, shape depends on
              `params_mode`.
         sigma (torch.array): Sigma parameter for Relaxed Bernoulli, shape depends on `params_mode`.
         c (int): Number of channels.
         r (int): Number of rounds.
         params_mode (str): Number of model parameters, whether the parameters are shared across
-            channels or rounds. Valid options: {'1', '2', '2*R', '2*C', '2*R*C'}.
+            channels or rounds. Valid options: ['2', '2*R', '2*C', '2*R*C'].
 
     Returns:
         normalized class probability with shape ``[num_spots, num_barcodes + 1]``.
@@ -299,10 +320,7 @@ def rb_e_step(data, codes, w, temperature, sigma, c, r, params_mode='2*R*C'):
     k = codes.shape[0]  # num_barcodes + 1
     class_logprobs = np.ones((data.shape[0], k))
 
-    if params_mode == '1':  # one param
-        scaled_sigma = codes + (-1)**codes * 0.3 * sigma
-        aug_temperature = temperature.unsqueeze(-1).repeat(k, 1)
-    elif params_mode == '2':  # two params
+    if params_mode == '2':  # two params
         aug_sigma = torch.gather(
             sigma, 0, codes.reshape(-1).long()).reshape(codes.shape)
         scaled_sigma = codes + (-1)**codes * 0.3 * aug_sigma
@@ -350,15 +368,15 @@ def rb_e_step(data, codes, w, temperature, sigma, c, r, params_mode='2*R*C'):
 
 
 def gaussian_e_step(data, w, theta, sigma, K):
-    """Estimate the posterior probability for spot assignment from a mixture of Relaxed
-    Bernoulli distributions.
+    """Estimate the posterior probability for spot assignment from a mixture of Gaussian
+    distributions.
 
     Args:
-        data (torch.array): Input data formatted as torch array with shape ``[num_spots, r * c]``.
-        w (torch.array): Weight parameter with shape ``[num_barcodes + 1, r * c]``.
-        theta (torch.array): Mean parameter for Gaussian distribution.
-        sigma (torch.array): Covariance parameter for Gaussian distribution.
-        K (torch.array): Number of rounds * number of channels.
+        data (torch.tensor): Input data formatted as torch array with shape ``[num_spots, r * c]``.
+        w (torch.tensor): Weight parameter with length ``num_barcodes + 1``.
+        theta (torch.tensor): Mean parameter for Gaussian distribution.
+        sigma (torch.tensor): Covariance parameter for Gaussian distribution.
+        K (torch.tensor): Number of rounds * number of channels.
 
     Returns:
         normalized class probability with shape ``[num_spots, num_barcodes + 1]``.
@@ -391,7 +409,7 @@ def decoding_function(spots,
         batch_size (int): Size of batch for training. Defaults to 15000.
         set_seed (int): Seed for randomness. Defaults to 1.
         params_mode (str): Number of model parameters, whether the parameters are shared across
-            channels or rounds. Valid options: ['1', '2', '2*R', '2*C', '2*R*C']. Defaults to
+            channels or rounds. Valid options: ['2', '2*R', '2*C', '2*R*C']. Defaults to
             '2*R*C'. 
 
     Returns:
@@ -405,7 +423,7 @@ def decoding_function(spots,
     else:
         torch.set_default_tensor_type("torch.FloatTensor")
 
-    valid_params_modes = ['1', '2', '2*R', '2*C', '2*R*C', 'Gaussian']
+    valid_params_modes = ['2', '2*R', '2*C', '2*R*C', 'Gaussian']
     if params_mode not in valid_params_modes:
             raise ValueError('Invalid params_mode supplied: {}. '
                              'Must be one of {}'.format(params_mode,
@@ -442,8 +460,8 @@ def decoding_function(spots,
     if params_mode=='Gaussian':
         w_star = pyro.param('weights').detach()
 
-        sigma_c_v_star = pyro.param('sigma_ch_v').detach()
-        sigma_r_v_star = pyro.param('sigma_ro_v').detach()
+        sigma_c_v_star = pyro.param('sigma_c_v').detach()
+        sigma_r_v_star = pyro.param('sigma_r_v').detach()
         sigma_r_star = chol_sigma_from_vec(sigma_r_v_star, r)
         sigma_c_star = chol_sigma_from_vec(sigma_c_v_star, c)
         sigma_star = kronecker_product(sigma_r_star, sigma_c_star)
