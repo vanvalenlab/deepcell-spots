@@ -234,7 +234,8 @@ def model_constrained_tensor(
         r (int): Number of rounds.
         batch_size (int): Size of batch for training.
         params_mode (str): Number of model parameters, whether the parameters are shared across
-            channels or rounds. valid options: ['2', '2*R', '2*C', '2*R*C'].
+            channels or rounds for model of Relaxed Bernoulli distributions, or model of Gaussians.
+            Valid options: ['2', '2*R', '2*C', '2*R*C', 'Gaussian']. Defaults to '2*R*C'. 
 
     Returns:
         None
@@ -283,7 +284,8 @@ def train(svi, num_iter, data, codes, c, r, batch_size, params_mode):
         r (int): Number of rounds.
         batch_size (int): Size of batch for training.
         params_mode (str): Number of model parameters, whether the parameters are shared across
-            channels or rounds. valid options: ['2', '2*R', '2*C', '2*R*C'].
+            channels or rounds for model of Relaxed Bernoulli distributions, or model of Gaussians.
+            Valid options: ['2', '2*R', '2*C', '2*R*C', 'Gaussian']. Defaults to '2*R*C'. 
 
     Returns:
         list: losses.
@@ -409,8 +411,8 @@ def decoding_function(spots,
         batch_size (int): Size of batch for training. Defaults to 15000.
         set_seed (int): Seed for randomness. Defaults to 1.
         params_mode (str): Number of model parameters, whether the parameters are shared across
-            channels or rounds. Valid options: ['2', '2*R', '2*C', '2*R*C']. Defaults to
-            '2*R*C'. 
+            channels or rounds for model of Relaxed Bernoulli distributions, or model of Gaussians.
+            Valid options: ['2', '2*R', '2*C', '2*R*C', 'Gaussian']. Defaults to '2*R*C'. 
 
     Returns:
         results (dict): The decoding results as a dictionary: 'class_probs': posterior
