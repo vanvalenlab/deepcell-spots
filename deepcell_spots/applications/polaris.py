@@ -110,10 +110,10 @@ class Polaris(object):
             'singleplex' and 'multiplex'. Defaults to 'singleplex'.
         segmentation_model (tf.keras.Model): The model to load.
             If ``None``, a pre-trained model will be downloaded.
-        segmentation_compartment (str): The cellular compartment
+        segmentation_type (str): The prediction type
             for generating segmentation predictions. Valid values
-            are 'cytoplasm', 'nucleus', 'no segmentation'. Defaults
-            to 'cytoplasm'.
+            are 'cytoplasm', 'nucleus', 'mesmer', 'no segmentation'.
+            Defaults to 'cytoplasm'.
         spots_model (tf.keras.Model): The model to load.
             If ``None``, a pre-trained model will be downloaded.
         decoding_kwargs (dict): Keyword arguments to pass to the decoding method.
