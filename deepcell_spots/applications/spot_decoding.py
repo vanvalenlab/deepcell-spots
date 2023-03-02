@@ -69,15 +69,19 @@ class SpotDecoding(Application):
 
         rounds (int): Number of rounds.
         channels (int): Number of channels.
+        params_mode (str): Number of model parameters, whether the parameters are shared across
+            channels or rounds for model of Relaxed Bernoulli distributions, or model of Gaussians.
+            Valid options: ['2', '2*R', '2*C', '2*R*C', 'Gaussian']. Defaults to '2*R*C'. 
     """
 
     dataset_metadata = {}
     model_metadata = {}
 
-    def __init__(self, df_barcodes, rounds, channels):
+    def __init__(self, df_barcodes, rounds, channels, params_mode):
         self.df_barcodes = self._add_bkg_unknown_to_barcodes(df_barcodes)
         self.rounds = rounds
         self.channels = channels
+        self.params_mode = params_mode
 
         super(SpotDecoding, self).__init__(
             model=None,
@@ -160,8 +164,11 @@ class SpotDecoding(Application):
                                                                    self.channels)[:-1, :, :]
 
         # decode
-        out = decoding_function(
-            spots_intensities_reshaped, barcodes_array, num_iter=num_iter, batch_size=batch_size)
+        out = decoding_function(spots_intensities_reshaped,
+                                barcodes_array,
+                                num_iter=num_iter,
+                                batch_size=batch_size,
+                                params_mode=self.params_mode)
         decoding_dict = self._decoding_output_to_dict(out)
         decoding_dict_trunc = self._threshold_unknown_by_prob(
             decoding_dict, unknown_index, thres_prob=thres_prob)
