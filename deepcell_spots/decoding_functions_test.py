@@ -34,8 +34,9 @@ from tensorflow.python.platform import test
 
 from deepcell_spots.decoding_functions import (reshape_torch_array, decoding_function,
                                                normalize_spot_values, kronecker_product,
-                                               chol_sigma_from_vec, rb_e_step, gaussian_e_step,
-                                               instantiate_rb_params, instantiate_gaussian_params)
+                                               chol_sigma_from_vec, mat_sqrt, rb_e_step,
+                                               gaussian_e_step, instantiate_rb_params,
+                                               instantiate_gaussian_params)
 
 torch.cuda.empty_cache()
 gc.collect()
@@ -89,6 +90,13 @@ class TestDecodingFunc(test.TestCase):
         expected_tri_upper = torch.t(expected_tri_lower)
         expected_output = torch.mm(expected_tri_lower, expected_tri_upper)
         self.assertAllEqual(output, expected_output)
+
+    def test_mat_sqrt(self):
+        dim = 10
+
+        A = torch.zeros(dim, dim)
+        sqrt = mat_sqrt(A)
+        self.assertAllEqual(A, sqrt)
 
     def test_instantiate_rb_params(self):
         # number of barcodes = 2, rounds = 2, channels = 3

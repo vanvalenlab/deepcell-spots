@@ -26,8 +26,9 @@
 
 """Variational Inference functions for spot decoding"""
 
-import numpy as np
+import scipy
 import torch
+import numpy as np
 from tqdm import tqdm
 import pyro
 from pyro.distributions import (RelaxedBernoulli, Categorical, constraints,
@@ -36,6 +37,7 @@ from pyro.optim import Adam
 from pyro.infer import SVI, TraceEnum_ELBO, config_enumerate
 from pyro import poutine
 from pyro.infer.autoguide import AutoDelta
+from torch.autograd import Function
 
 assert pyro.__version__.startswith('1')
 
@@ -68,8 +70,8 @@ def normalize_spot_values(data):
     max_s = torch.tensor(np.percentile(data.cpu().numpy(), 99.9, axis=0))
     min_s = torch.min(data, dim=0).values
     log_add = (s ** 2 - max_s * min_s) / (max_s + min_s - 2 * s)
-    log_add = torch.max(-torch.min(data, dim=0).values + 1e-8,
-                        other=log_add.float() + 1e-10)
+    log_add = torch.max(-torch.min(data, dim=0).values + 1e-6,
+                        other=log_add.float() + 1e-6)
     data_log = torch.log10(data + log_add)
     data_log_mean = data_log.mean(dim=0, keepdim=True)
     data_log_std = data_log.std(dim=0, keepdim=True)
@@ -106,14 +108,38 @@ def chol_sigma_from_vec(sigma_vec, dim):
     return torch.mm(L, torch.t(L))
 
 
-def mat_sqrt(A, D):
-    try:
-        U, S, V = torch.svd(A + 1e-3 * A.mean() * torch.rand(D, D))
-    except:
-        U, S, V = torch.svd(A + 1e-2 * A.mean() * torch.rand(D, D))
-    S_sqrt = torch.sqrt(S)
+class MatrixSquareRoot(Function):
+    """Square root of a positive definite matrix.
+    NOTE: matrix square root is not differentiable for matrices with
+          zero eigenvalues.
+    """
+    @staticmethod
+    def forward(ctx, input):
+        m = input.detach().cpu().numpy().astype(np.float_)
+        sqrtm = torch.from_numpy(scipy.linalg.sqrtm(m).real).to(input)
+        ctx.save_for_backward(sqrtm)
+        return sqrtm
 
-    return torch.mm(torch.mm(U, torch.diag(S_sqrt)), V.t())
+    @staticmethod
+    def backward(ctx, grad_output):
+        grad_input = None
+        if ctx.needs_input_grad[0]:
+            sqrtm, = ctx.saved_tensors
+            sqrtm = sqrtm.data.cpu().numpy().astype(np.float_)
+            gm = grad_output.data.cpu().numpy().astype(np.float_)
+
+            # Given a positive semi-definite matrix X,
+            # since X = X^{1/2}X^{1/2}, we can compute the gradient of the
+            # matrix square root dX^{1/2} by solving the Sylvester equation:
+            # dX = (d(X^{1/2})X^{1/2} + X^{1/2}(dX^{1/2}).
+            grad_sqrtm = scipy.linalg.solve_sylvester(sqrtm, sqrtm, gm)
+
+            grad_input = torch.from_numpy(grad_sqrtm).to(grad_output)
+        return grad_input
+
+mat_sqrt_ = MatrixSquareRoot.apply
+def mat_sqrt(A):
+    return mat_sqrt_(A)
 
 
 def instantiate_rb_params(r, c, codes, params_mode):
@@ -131,7 +157,6 @@ def instantiate_rb_params(r, c, codes, params_mode):
         scaled_sigma (torch.tensor): Sigma parameter of Relaxed Bernoulli.
         aug_temperature (torch.tensor): Temperature parameter of Relaxed Bernoulli.
     """
-    k = codes.shape[0]
 
     if params_mode == '2':
         # two param - one for 0-channel, one for 1-channel
@@ -210,7 +235,7 @@ def instantiate_gaussian_params(r, c, codes):
     codes_tr_v = pyro.param('codes_tr_v', 3 * torch.ones(1, d), constraint=constraints.greater_than(1.))
     codes_tr_consts_v = pyro.param('codes_tr_consts_v', -1 * torch.ones(1, d))
 
-    theta = torch.matmul(codes * codes_tr_v + codes_tr_consts_v, mat_sqrt(sigma, d))
+    theta = torch.matmul(codes * codes_tr_v + codes_tr_consts_v, mat_sqrt(sigma))
 
     return theta, sigma
 
@@ -470,7 +495,7 @@ def decoding_function(spots,
 
         codes_tr_v_star = pyro.param('codes_tr_v').detach()
         codes_tr_consts_v_star = pyro.param('codes_tr_consts_v').detach()
-        theta_star = torch.matmul(codes * codes_tr_v_star + codes_tr_consts_v_star, mat_sqrt(sigma_star, r * c))
+        theta_star = torch.matmul(codes * codes_tr_v_star + codes_tr_consts_v_star, mat_sqrt(sigma_star))
 
         class_probs_star = gaussian_e_step(data, w_star, theta_star, sigma_star, K=codes.shape[0])
 
