@@ -38,6 +38,7 @@ from deepcell_spots.applications import SpotDetection, SpotDecoding
 from deepcell_spots.singleplex import match_spots_to_cells_as_vec_batched
 from deepcell_toolbox.processing import histogram_normalization
 from deepcell_toolbox.deep_watershed import deep_watershed
+from deepcell_spots.preprocessing_utils import min_max_normalize
 from deepcell_spots.postprocessing_utils import max_cp_array_to_point_list_max
 from deepcell_spots.multiplex import extract_spots_prob_from_coords_maxpool
 
@@ -257,8 +258,9 @@ class Polaris(object):
                                                          threshold=threshold, min_distance=1)
 
         if self.image_type == 'multiplex' and self.params_mode == 'Gaussian':
+            norm_spots_image = min_max_normalize(spots_image)
             spots_intensities = extract_spots_prob_from_coords_maxpool(
-                spots_image, spots_locations, extra_pixel_num=maxpool_extra_pixel_num)
+                norm_spots_image, spots_locations, extra_pixel_num=maxpool_extra_pixel_num)
         else:
             spots_intensities = extract_spots_prob_from_coords_maxpool(
                 clipped_output_image, spots_locations, extra_pixel_num=maxpool_extra_pixel_num)
