@@ -69,9 +69,10 @@ def normalize_spot_values(data):
     s = torch.tensor(np.percentile(data.cpu().numpy(), 60, axis=0))
     max_s = torch.tensor(np.percentile(data.cpu().numpy(), 99.9, axis=0))
     min_s = torch.min(data, dim=0).values
+    eps = 1e-10*max_s
     log_add = (s ** 2 - max_s * min_s) / (max_s + min_s - 2 * s)
-    log_add = torch.max(-torch.min(data, dim=0).values + 1e-6,
-                        other=log_add.float() + 1e-6)
+    log_add = torch.max(-torch.min(data, dim=0).values + eps,
+                        other=log_add.float() + eps)
     data_log = torch.log10(data + log_add)
     data_log_mean = data_log.mean(dim=0, keepdim=True)
     data_log_std = data_log.std(dim=0, keepdim=True)
@@ -318,7 +319,7 @@ def train(svi, num_iter, data, codes, c, r, batch_size, params_mode):
     """
     pyro.clear_param_store()
     losses = []
-    for _ in range(num_iter):
+    for _ in tqdm(range(num_iter)):
         loss = svi.step(data, codes, c, r, batch_size, params_mode)
         losses.append(loss)
     return losses
@@ -380,7 +381,7 @@ def rb_e_step(data, codes, w, temperature, sigma, c, r, params_mode='2*R*C'):
     for idx in range(len(data) // batch_sz + 1):
         ind_start = idx * batch_sz
         ind_end = torch.min(torch.tensor([(idx + 1) * batch_sz, len(data)]))
-        for idx in range(k):
+        for idx in tqdm(range(k)):
             dist = RelaxedBernoulli(
                 temperature=aug_temperature[idx],
                 probs=scaled_sigma[idx]).to_event(1)
@@ -409,20 +410,17 @@ def gaussian_e_step(data, w, theta, sigma, K):
         normalized class probability with shape ``[num_spots, num_barcodes + 1]``.
 
     """
-    class_logprobs = np.ones((data.shape[0], K))
+    class_probs = torch.ones(data.shape[0], K)
     batch_sz = 50000
 
     for idx in range(len(data) // batch_sz + 1):
-        ind_start  = idx*batch_sz
-        ind_end = torch.min(torch.tensor([(idx+1)*batch_sz, len(data)]))
+        ind_start  = idx * batch_sz
+        ind_end = torch.min(torch.tensor([(idx+1) * batch_sz, len(data)]))
         for k in tqdm(range(K)):
             dist = MultivariateNormal(theta[k], sigma)
-            class_logprobs[ind_start:ind_end, idx] = (
-                w[idx].log() + dist.log_prob(data[ind_start:ind_end])).cpu().numpy()
+            class_probs[ind_start:ind_end, k] = w[k] * torch.exp(dist.log_prob(data))
 
-    # basically doing a stable_softmax here
-    numerator = np.exp(class_logprobs - np.max(class_logprobs, axis=1)[:, None])
-    class_prob_norm = np.divide(numerator, np.sum(numerator, axis=1)[:, None])
+    class_prob_norm = class_probs.div(torch.sum(class_probs, dim=1, keepdim=True)).cpu().numpy()
 
     return class_prob_norm
 
@@ -538,6 +536,7 @@ def decoding_function(spots,
             'losses': losses
         }
 
-    results = {'class_probs': class_probs_star, 'params': torch_params}
+    results = {'class_probs': class_probs_star,
+               'params': torch_params}
 
     return results
