@@ -24,7 +24,8 @@
 # limitations under the License.
 # ==============================================================================
 
-"""Variational Inference functions for spot decoding"""
+"""Variational Inference functions for spot decoding. Code adapted from PoSTcode
+https://github.com/gerstung-lab/postcode (https://doi.org/10.1101/2021.10.12.464086)."""
 
 import scipy
 import torch
