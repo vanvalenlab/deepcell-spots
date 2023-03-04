@@ -154,14 +154,14 @@ class SpotDecoding(Application):
         """
 
         spots_intensities_reshaped = np.reshape(spots_intensities_vec,
-                                                (-1, self.rounds, self.channels))
+                                                (-1, self.channels, self.rounds))
 
         # convert df_barcodes to an array
         ch_names = list(self.df_barcodes.columns)
         ch_names.remove('code_name')
         unknown_index = self.df_barcodes.index.max()
-        barcodes_array = self.df_barcodes[ch_names].values.reshape(-1, self.rounds,
-                                                                   self.channels)[:-1, :, :]
+        barcodes_array = self.df_barcodes[ch_names].values.reshape(-1, self.channels,
+                                                                   self.rounds)[:-1, :, :]
 
         # decode
         out = decoding_function(spots_intensities_reshaped,
