@@ -167,7 +167,7 @@ class TestPolaris(test.TestCase):
             self.assertAllEqual(df_spots.predicted_id, [None]*len(df_spots))
             self.assertAllEqual(df_spots.predicted_name, [None]*len(df_spots))
 
-            # test prediction type -- multiplex
+            # test prediction type -- multiplex Gaussian
             df_barcodes = pd.DataFrame(
                 [
                     ["code1", 1, 1, 0, 0, 0, 0],
@@ -187,7 +187,7 @@ class TestPolaris(test.TestCase):
                                'channels': c, 'params_mode': 'Gaussian'}
             app = Polaris(image_type='multiplex', decoding_kwargs=decoding_kwargs)
 
-            spots_image = np.random.rand(1, 128, 128, r*c)
+            spots_image = np.random.rand(1, 128, 128, r*c) + 1
             segmentation_image = np.random.rand(1, 128, 128, 1)
             pred = app.predict(spots_image=spots_image,
                                segmentation_image=segmentation_image)

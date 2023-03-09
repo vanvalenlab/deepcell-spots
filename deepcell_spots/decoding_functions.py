@@ -70,7 +70,7 @@ def normalize_spot_values(data):
     s = torch.tensor(np.percentile(data.cpu().numpy(), 60, axis=0))
     max_s = torch.tensor(np.percentile(data.cpu().numpy(), 99.9, axis=0))
     min_s = torch.min(data, dim=0).values
-    eps = 1e-10*max_s
+    eps = 1e-6*max_s
     log_add = (s ** 2 - max_s * min_s) / (max_s + min_s - 2 * s)
     log_add = torch.max(-torch.min(data, dim=0).values + eps,
                         other=log_add.float() + eps)
