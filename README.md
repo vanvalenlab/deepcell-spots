@@ -8,28 +8,30 @@
 [![PyPi Monthly Downloads](https://img.shields.io/pypi/dm/deepcell-spots)](https://pypistats.org/packages/deepcell-spots)
 [![Python Versions](https://img.shields.io/pypi/pyversions/deepcell-spots.svg)](https://pypi.org/project/deepcell-spots/)
 
-`deepcell-spots` is a deep learning library for fluorescent spot detection image analysis. It allows you to apply pre-existing models and train new deep learning models for spot detection. It is written in Python and built using [TensorFlow](https://github.com/tensorflow/tensorflow), [Keras](https://www.tensorflow.org/guide/keras) and [DeepCell](https://github.com/vanvalenlab/deepcell-tf). More detailed documentation is available [here](https://deepcell-spots.readthedocs.io/).
+`deepcell-spots` is a deep learning package for analyzing spatial transcriptomics data sets. Its application, Polaris, allows you to apply pre-existing models and train new deep learning models for fluorescent spot detection. Polaris also contains a probabilistic method for combinatorial barcode assignment. It is written in Python and leverages a number of packages, including: [TensorFlow](https://github.com/tensorflow/tensorflow), [Keras](https://www.tensorflow.org/guide/keras), [PyTorch](https://pytorch.org), and [DeepCell](https://github.com/vanvalenlab/deepcell-tf). More detailed documentation of `deepcell-spots` is available [here](https://deepcell-spots.readthedocs.io/).
 
-# ![Spot Detection Example](https://raw.githubusercontent.com/vanvalenlab/deepcell-spots/master/docs/images/spot_montage.png)
+# ![Spot Detection Example](/docs/images/spot_montage.png)
 
-## DeepCell Spots Application
+# Getting Started
 
-`deepcell-spots` contains an applications that greatly simplify the implementation of deep learning models for spot detection. `deepcell-spots.applications.SpotDetection` contains a pre-trained model for fluorescent spot detection on images derived from assays such as RNA FISH and in-situ sequencing. This model returns a list of coordinate locations for fluorescent spots detected in the input image. `deepcell-spots.applications.Polaris` pairs this spot detection model with [DeepCell](https://github.com/vanvalenlab/deepcell-tf) models for nuclear and cytoplasmic segmentation.
+## Install with pip
+The simplest way to install `deepcell-spots` is with `pip`:
 
-### How to Use
-
-```python
-from deepcell_spots.applications import SpotDetection
-
-app = SpotDetection()
-# image is an np array with dimensions (batch,x,y,channel)
-# threshold is the probability threshold that a pixel must exceed to be considered a spot
-coords = app.predict(image,threshold=0.9)
+```bash
+pip install deepcell-spots
 ```
 
-## DeepCell-Spots for Developers
+## Install with Docker
+The `deepcell-spots` Docker container is also available on DockerHub. For more details for running DeepCell Docker containers, please see the [deepcell-tf README](https://github.com/vanvalenlab/deepcell-tf/blob/master/README.md).
 
-Build and run a local docker container, similarly to the instructions for deepcell-tf. The relevant parts are copied here with modifications to work for deepcell-spots. For more elaborate instructions, see the [deepcell-tf README](https://github.com/vanvalenlab/deepcell-tf/blob/master/README.md).
+
+# DeepCell Spots Applications
+
+`deepcell-spots` contains an applications that greatly simplify the implementation of machine learning models for spot detection and decoding. `SpotDetection` contains a pre-trained model for fluorescent spot detection on images derived from assays such as RNA FISH and in-situ sequencing. This model returns a list of coordinate locations for fluorescent spots detected in the input image. `SpotDecoding` fit a probabilistic model for spot decoding with SVI. It returns a gene identity for each detected spot for multiplex FISH data sets. `Polaris` pairs these two applications with [DeepCell](https://github.com/vanvalenlab/deepcell-tf) models for nuclear and cytoplasmic segmentation. For example implementation, please see the [example notebooks](https://github.com/vanvalenlab/deepcell-spots/blob/master/notebooks).
+
+# DeepCell Spots for Developers
+
+Build and run a local docker container, similarly to the instructions for deepcell-tf. The relevant parts are copied here with modifications to work for deepcell-spots. For further instructions, see the [deepcell-tf README](https://github.com/vanvalenlab/deepcell-tf/blob/master/README.md).
 
 ### Build a local docker container, specifying the deepcell version with DEEPCELL_VERSION
 
