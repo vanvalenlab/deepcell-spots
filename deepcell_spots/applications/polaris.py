@@ -38,6 +38,7 @@ from deepcell_spots.applications import SpotDetection, SpotDecoding
 from deepcell_spots.singleplex import match_spots_to_cells_as_vec_batched
 from deepcell_toolbox.processing import histogram_normalization
 from deepcell_toolbox.deep_watershed import deep_watershed
+from deepcell_spots.preprocessing_utils import min_max_normalize
 from deepcell_spots.postprocessing_utils import max_cp_array_to_point_list_max
 from deepcell_spots.multiplex import extract_spots_prob_from_coords_maxpool
 
@@ -110,10 +111,10 @@ class Polaris(object):
             'singleplex' and 'multiplex'. Defaults to 'singleplex'.
         segmentation_model (tf.keras.Model): The model to load.
             If ``None``, a pre-trained model will be downloaded.
-        segmentation_compartment (str): The cellular compartment
+        segmentation_type (str): The prediction type
             for generating segmentation predictions. Valid values
-            are 'cytoplasm', 'nucleus', 'no segmentation'. Defaults
-            to 'cytoplasm'.
+            are 'cytoplasm', 'nucleus', 'mesmer', 'no segmentation'.
+            Defaults to 'cytoplasm'.
         spots_model (tf.keras.Model): The model to load.
             If ``None``, a pre-trained model will be downloaded.
         decoding_kwargs (dict): Keyword arguments to pass to the decoding method.
@@ -162,6 +163,7 @@ class Polaris(object):
                 warnings.warn('No spot decoding application instantiated.')
             else:
                 self.decoding_app = SpotDecoding(**decoding_kwargs)
+                self.params_mode = decoding_kwargs['params_mode']
 
         valid_compartments = ['cytoplasm', 'nucleus', 'mesmer', 'no segmentation']
         if segmentation_type not in valid_compartments:
@@ -181,14 +183,12 @@ class Polaris(object):
             self.segmentation_app = None
             warnings.warn('No segmentation application instantiated.')
 
-    def _predict_spots_image(self, spots_image, threshold, clip):
+    def _predict_spots_image(self, spots_image, clip):
         """Iterate through all channels and generate model output (probability maps)
 
         Args:
             spots_image (numpy.array): Input image for spot detection with shape
                 ``[batch, x, y, channel]``.
-            threshold (float): Probability threshold for a pixel to be
-                considered as a spot.
             clip (bool): Determines if pixel values will be clipped by percentile.
                 Defaults to True.
 
@@ -211,7 +211,7 @@ class Polaris(object):
                 threshold=0.95,
                 clip=True,
                 maxpool_extra_pixel_num=0,
-                decoding_training_kwargs=None):
+                decoding_training_kwargs={}):
         """Generates prediction output consisting of a labeled cell segmentation image,
         detected spot locations, and a dictionary of spot locations assigned to labeled
         cells of the input.
@@ -250,15 +250,20 @@ class Polaris(object):
             raise ValueError('Threshold of %s was input. Threshold value must be '
                              'between 0 and 1.'.format())
 
-        output_image = self._predict_spots_image(spots_image, threshold, clip)
+        output_image = self._predict_spots_image(spots_image, clip)
 
         clipped_output_image = np.clip(output_image, 0, 1)
         max_proj_images = np.max(clipped_output_image, axis=-1)
         spots_locations = max_cp_array_to_point_list_max(max_proj_images,
                                                          threshold=threshold, min_distance=1)
 
-        spots_intensities = extract_spots_prob_from_coords_maxpool(
-            clipped_output_image, spots_locations, extra_pixel_num=maxpool_extra_pixel_num)
+        if self.image_type == 'multiplex' and self.params_mode == 'Gaussian':
+            norm_spots_image = min_max_normalize(spots_image)
+            spots_intensities = extract_spots_prob_from_coords_maxpool(
+                norm_spots_image, spots_locations, extra_pixel_num=maxpool_extra_pixel_num)
+        else:
+            spots_intensities = extract_spots_prob_from_coords_maxpool(
+                clipped_output_image, spots_locations, extra_pixel_num=maxpool_extra_pixel_num)
         spots_intensities_vec = np.concatenate(spots_intensities)
         spots_locations_vec = np.concatenate([np.concatenate(
             [item, [[idx_batch]] * len(item)], axis=1)
