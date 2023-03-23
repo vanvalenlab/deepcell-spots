@@ -33,7 +33,7 @@ import numpy as np
 from tensorflow.python.platform import test
 
 from deepcell_spots.decoding_functions import (reshape_torch_array, decoding_function,
-                                               normalize_spot_values, kronecker_product,
+                                               normalize_spot_values,
                                                chol_sigma_from_vec, mat_sqrt, rb_e_step,
                                                gaussian_e_step, instantiate_rb_params,
                                                instantiate_gaussian_params)
@@ -60,22 +60,6 @@ class TestDecodingFunc(test.TestCase):
         norm_data = normalize_spot_values(data)
         self.assertEqual(data.shape, norm_data.shape)
         pyro.get_param_store().clear()
-
-    def test_kronecker_product(self):
-        dim = 3
-        a = torch.zeros(dim, dim)
-        b = torch.zeros(dim, dim)
-        product_array = kronecker_product(a, b)
-        self.assertEqual(product_array.shape, (dim**2, dim**2))
-
-        a = torch.tensor([[1,2], [3,4]])
-        b = torch.tensor([[0,5], [6,7]])
-        product_array = kronecker_product(a, b)
-        expected_product = torch.tensor([[0,5,0,10],
-                                         [6,7,12,14],
-                                         [0,15,0,20],
-                                         [18,21,24,28]])
-        self.assertAllEqual(product_array, expected_product)
 
     def test_chol_sigma_from_vec(self):
         dim = 3
@@ -206,7 +190,7 @@ class TestDecodingFunc(test.TestCase):
         sigma_c = chol_sigma_from_vec(sigma_c_v, c)
         sigma_r_v = torch.eye(r*c)[np.tril_indices(r, 0)]
         sigma_r = chol_sigma_from_vec(sigma_r_v, r)
-        sigma = kronecker_product(sigma_r, sigma_c)
+        sigma = torch.kron(sigma_r, sigma_c)
         class_prob_norm = gaussian_e_step(data, w, theta, sigma, k)
         self.assertAllEqual(class_prob_norm.shape, torch.Size([n, k]))
         self.assertAllInRange(class_prob_norm, 0, 1)
