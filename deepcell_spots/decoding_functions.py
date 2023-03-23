@@ -84,7 +84,7 @@ def normalize_spot_values(data):
 
 def chol_sigma_from_vec(sigma_vec, dim):
     L = torch.zeros(dim, dim)
-    L[torch.tril(torch.ones(dim, dim)) == 1] = sigma_vec
+    L[np.tril_indices(dim)] = sigma_vec
 
     return torch.mm(L, torch.t(L))
 
