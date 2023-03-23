@@ -82,27 +82,6 @@ def normalize_spot_values(data):
     return data_norm
 
 
-def kronecker_product(a, b):
-    """Matrix multiplication with two matrices of arbitrary size.
-
-    Args:
-        a (torch.tensor): Matrix of arbitrary size.
-        b (torch.tensor): Matrix of arbitrary size.
-    
-    Returns:
-        torch.tensor: Kronecker product of ``a`` and ``b``.
-    """
-    a_height, a_width = a.size()
-    b_height, b_width = b.size()
-    out_height = a_height * b_height
-    out_width = a_width * b_width
-    tiled_b = b.repeat(a_height, a_width)
-    expanded_a = (a.unsqueeze(2).unsqueeze(3).repeat(1, b_height, b_width, 1).view(
-        out_height, out_width))
-
-    return expanded_a * tiled_b
-
-
 def chol_sigma_from_vec(sigma_vec, dim):
     L = torch.zeros(dim, dim)
     L[torch.tril(torch.ones(dim, dim)) == 1] = sigma_vec
@@ -232,7 +211,7 @@ def instantiate_gaussian_params(r, c, codes):
     sigma_c = chol_sigma_from_vec(sigma_c_v, c)
     sigma_r_v = pyro.param('sigma_r_v', torch.eye(d)[np.tril_indices(r, 0)])
     sigma_r = chol_sigma_from_vec(sigma_r_v, r)
-    sigma = kronecker_product(sigma_r, sigma_c)
+    sigma = torch.kron(sigma_r, sigma_c)
 
     codes_tr_v = pyro.param('codes_tr_v', 3 * torch.ones(1, d), constraint=constraints.greater_than(1.))
     codes_tr_consts_v = pyro.param('codes_tr_consts_v', -1 * torch.ones(1, d))
@@ -496,7 +475,7 @@ def decoding_function(spots,
         sigma_r_v_star = pyro.param('sigma_r_v').detach()
         sigma_r_star = chol_sigma_from_vec(sigma_r_v_star, r)
         sigma_c_star = chol_sigma_from_vec(sigma_c_v_star, c)
-        sigma_star = kronecker_product(sigma_r_star, sigma_c_star)
+        sigma_star = torch.kron(sigma_r_star, sigma_c_star)
 
         codes_tr_v_star = pyro.param('codes_tr_v').detach()
         codes_tr_consts_v_star = pyro.param('codes_tr_consts_v').detach()
