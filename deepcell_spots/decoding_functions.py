@@ -360,8 +360,8 @@ def rb_e_step(data, codes, w, temperature, sigma, c, r, params_mode='2*R*C'):
     batch_sz = 50000
     for idx in range(len(data) // batch_sz + 1):
         ind_start = idx * batch_sz
-        ind_end = torch.min(torch.tensor([(idx + 1) * batch_sz, len(data)]))
-        if ind_start==ind_end.numpy():
+        ind_end = (idx+1) * batch_sz
+        if len(data[ind_start:ind_end]) == 0:
             break
         for k in tqdm(range(K)):
             dist = RelaxedBernoulli(
@@ -397,8 +397,8 @@ def gaussian_e_step(data, w, theta, sigma, K):
 
     for idx in range(len(data) // batch_sz + 1):
         ind_start  = idx * batch_sz
-        ind_end = torch.min(torch.tensor([(idx+1) * batch_sz, len(data)]))
-        if ind_start==ind_end.numpy():
+        ind_end = (idx+1) * batch_sz
+        if len(data[ind_start:ind_end]) == 0:
             break
         for k in tqdm(range(K)):
             dist = MultivariateNormal(theta[k], sigma)
