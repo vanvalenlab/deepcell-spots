@@ -325,8 +325,8 @@ def rb_e_step(data, codes, w, temperature, sigma, c, r, params_mode='2*R*C'):
     Returns:
         normalized class probability with shape ``[num_spots, num_barcodes + 1]``.
     """
-    k = codes.shape[0]  # num_barcodes + 1
-    class_logprobs = np.ones((data.shape[0], k))
+    K = codes.shape[0]  # num_barcodes + 1
+    class_logprobs = np.ones((data.shape[0], K))
 
     if params_mode == '2':  # two params
         aug_sigma = torch.gather(
@@ -360,13 +360,15 @@ def rb_e_step(data, codes, w, temperature, sigma, c, r, params_mode='2*R*C'):
     batch_sz = 50000
     for idx in range(len(data) // batch_sz + 1):
         ind_start = idx * batch_sz
-        ind_end = torch.min(torch.tensor([(idx + 1) * batch_sz, len(data)]))
-        for idx in tqdm(range(k)):
+        ind_end = (idx+1) * batch_sz
+        if len(data[ind_start:ind_end]) == 0:
+            break
+        for k in tqdm(range(K)):
             dist = RelaxedBernoulli(
-                temperature=aug_temperature[idx],
-                probs=scaled_sigma[idx]).to_event(1)
-            class_logprobs[ind_start:ind_end, idx] = (
-                w[idx].log() + dist.log_prob(data[ind_start:ind_end])).cpu().numpy()
+                temperature=aug_temperature[k],
+                probs=scaled_sigma[k]).to_event(1)
+            class_logprobs[ind_start:ind_end, k] = (
+                w[k].log() + dist.log_prob(data[ind_start:ind_end])).cpu().numpy()
 
     # basically doing a stable_softmax here
     numerator = np.exp(class_logprobs - np.max(class_logprobs, axis=1)[:, None])
@@ -395,10 +397,12 @@ def gaussian_e_step(data, w, theta, sigma, K):
 
     for idx in range(len(data) // batch_sz + 1):
         ind_start  = idx * batch_sz
-        ind_end = torch.min(torch.tensor([(idx+1) * batch_sz, len(data)]))
+        ind_end = (idx+1) * batch_sz
+        if len(data[ind_start:ind_end]) == 0:
+            break
         for k in tqdm(range(K)):
             dist = MultivariateNormal(theta[k], sigma)
-            class_probs[ind_start:ind_end, k] = w[k] * torch.exp(dist.log_prob(data))
+            class_probs[ind_start:ind_end, k] = w[k] * torch.exp(dist.log_prob(data[ind_start:ind_end]))
 
     class_prob_norm = class_probs.div(torch.sum(class_probs, dim=1, keepdim=True)).cpu().numpy()
 
