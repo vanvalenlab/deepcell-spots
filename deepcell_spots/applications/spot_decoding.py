@@ -29,6 +29,7 @@
 from __future__ import absolute_import, division, print_function
 
 import numpy as np
+import pandas as pd
 
 from deepcell.applications import Application
 from deepcell_spots.decoding_functions import decoding_function
@@ -82,7 +83,7 @@ class SpotDecoding(Application):
         self.channels = channels
         self.params_mode = params_mode
 
-        _validate_codebook(df_barcodes)
+        self._validate_codebook(df_barcodes)
         self.df_barcodes = self._add_bkg_unknown_to_barcodes(df_barcodes)
         
 
@@ -123,12 +124,12 @@ class SpotDecoding(Application):
             raise ValueError('The first column of df_barcodes must contain the gene names and '
                              'have the column name \'Gene\'.')
         
-        if len(df_barcodes.columns) != self.rounds * self.channels + 1
+        if len(df_barcodes.columns) != self.rounds * self.channels + 1:
             raise ValueError('The length of the barcode must equal rounds*channels.')
         
         valid_vals = [0,1]
         vals = df_barcodes.values[:, 1:]
-        if set(valid_vals) != set(vals):
+        if set(valid_vals) != set(vals.flatten()):
             raise ValueError('Barcode values must be 0 or 1.')
 
         if 'Background' in df_barcodes.columns or 'Unknown' in df_barcodes.columns:
