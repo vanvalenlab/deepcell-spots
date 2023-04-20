@@ -51,7 +51,7 @@ class SpotDecoding(Application):
         decoding_dict = app.predict(spots_intensities_vec)
 
     Args:
-        df_barcodes (pandas.DataFrame): Codebook, one column is gene names ('Gene'),
+        df_barcodes (pandas.DataFrame): Codebook, the first column is gene names ('Gene'),
             the rest are binary barcodes, encoded using 1 and 0. Index should start at 1.
             For exmaple, for a (rounds=10, channels=2) codebook, it should look like::
             
@@ -100,7 +100,7 @@ class SpotDecoding(Application):
         """Validate the format of the input codebook.
 
         Args:
-            df_barcodes (pandas.DataFrame): Codebook, one column is gene names ('Gene'),
+            df_barcodes (pandas.DataFrame): Codebook, the first column is gene names ('Gene'),
             the rest are binary barcodes, encoded using 1 and 0. Index should start at 1.
             For exmaple, for a (rounds=10, channels=2) codebook, it should look like::
             
