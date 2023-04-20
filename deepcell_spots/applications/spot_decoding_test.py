@@ -48,7 +48,7 @@ class TestSpotDecoding(test.TestCase):
                 ["code6", 0, 1, 0, 0, 1, 0],
                 ["code7", 1, 0, 1, 0, 0, 0],
             ],
-            columns=["code_name", "r0c0", "r0c1", "r0c2", "r1c0", "r1c1", "r1c2"],
+            columns=["Gene", "r0c0", "r0c1", "r0c2", "r1c0", "r1c1", "r1c2"],
             index=np.arange(7) + 1,
         )
         app1 = SpotDecoding(df_barcodes=df_barcodes1, rounds=2, channels=3, params_mode='2*R*C')
@@ -63,7 +63,7 @@ class TestSpotDecoding(test.TestCase):
 
         df_barcodes2 = pd.DataFrame(
             [["code1", 0, 0, 0, 0, 0, 0], ["code2", 1, 1, 1, 1, 1, 1]],
-            columns=["code_name", "r0c0", "r0c1", "r0c2", "r1c0", "r1c1", "r1c2"],
+            columns=["Gene", "r0c0", "r0c1", "r0c2", "r1c0", "r1c1", "r1c2"],
             index=np.arange(2) + 1,
         )
         app2 = SpotDecoding(df_barcodes=df_barcodes2, rounds=2, channels=3, params_mode='2*R*C')
