@@ -180,7 +180,6 @@ class SpotDecoding(Application):
                                                      barcodes_array[ii])
                 scaled_dist_list = dist_list * barcode_len
                 if 1 in scaled_dist_list:
-                    print('rescued!')
                     new_gene = np.argwhere(scaled_dist_list == 1)[0][0]
                     predicted_ids[i] = new_gene
                     predicted_names[i] = self.df_barcodes['code_name'].values[new_gene]
