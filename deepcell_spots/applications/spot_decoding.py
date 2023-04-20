@@ -31,6 +31,7 @@ from __future__ import absolute_import, division, print_function
 import numpy as np
 
 from scipy.spatial import distance
+from tqdm import tqdm
 
 from deepcell.applications import Application
 from deepcell_spots.decoding_functions import decoding_function
@@ -171,13 +172,13 @@ class SpotDecoding(Application):
         predicted_ids = decoding_dict_trunc['predicted_id']
         predicted_names = decoding_dict_trunc['predicted_name']
 
-        for i,pred in enumerate(predicted_names):
+        for i,pred in tqdm(enumerate(predicted_names)):
             if pred in ['Background', 'Unknown']:
                 dist_list = np.zeros(num_barcodes)
                 for ii in range(num_barcodes):
                     dist_list[ii] = distance.hamming(np.round(spots_intensities_vec[i]),
                                                      barcodes_array[ii])
-                scale_dist_list = dist_list * num_barcodes
+                scaled_dist_list = dist_list * num_barcodes
                 if 1 in scaled_dist_list:
                     new_gene = np.argwhere(scaled_dist_list == 1)[0][0]
                     predicted_ids[i] = new_gene
