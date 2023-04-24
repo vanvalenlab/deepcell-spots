@@ -29,6 +29,7 @@
 from __future__ import absolute_import, division, print_function
 
 import numpy as np
+import pandas as pd
 
 from deepcell.applications import Application
 from deepcell_spots.decoding_functions import decoding_function
@@ -51,14 +52,14 @@ class SpotDecoding(Application):
         decoding_dict = app.predict(spots_intensities_vec)
 
     Args:
-        df_barcodes (pandas.DataFrame): Codebook, one column is gene names ('code_name'),
+        df_barcodes (pandas.DataFrame): Codebook, the first column is gene names ('Gene'),
             the rest are binary barcodes, encoded using 1 and 0. Index should start at 1.
             For exmaple, for a (rounds=10, channels=2) codebook, it should look like::
             
                 Index:
                     RangeIndex (starting from 1)
                 Columns:
-                    Name: code_name, dtype: object
+                    Name: Gene, dtype: object
                     Name: r0c0, dtype: int64
                     Name: r0c1, dtype: int64
                     Name: r1c0, dtype: int64
@@ -78,10 +79,13 @@ class SpotDecoding(Application):
     model_metadata = {}
 
     def __init__(self, df_barcodes, rounds, channels, params_mode):
-        self.df_barcodes = self._add_bkg_unknown_to_barcodes(df_barcodes)
         self.rounds = rounds
         self.channels = channels
         self.params_mode = params_mode
+
+        self._validate_codebook(df_barcodes)
+        self.df_barcodes = self._add_bkg_unknown_to_barcodes(df_barcodes)
+        
 
         super(SpotDecoding, self).__init__(
             model=None,
@@ -92,6 +96,45 @@ class SpotDecoding(Application):
             format_model_output_fn=None,
             dataset_metadata=self.dataset_metadata,
             model_metadata=self.model_metadata)
+
+    def _validate_codebook(self, df_barcodes):
+        """Validate the format of the input codebook.
+
+        Args:
+            df_barcodes (pandas.DataFrame): Codebook, the first column is gene names ('Gene'),
+            the rest are binary barcodes, encoded using 1 and 0. Index should start at 1.
+            For exmaple, for a (rounds=10, channels=2) codebook, it should look like::
+            
+                Index:
+                    RangeIndex (starting from 1)
+                Columns:
+                    Name: Gene, dtype: object
+                    Name: r0c0, dtype: int64
+                    Name: r0c1, dtype: int64
+                    Name: r1c0, dtype: int64
+                    Name: r1c1, dtype: int64
+                    ...
+                    Name: r9c0, dtype: int64
+                    Name: r9c1, dtype: int64
+        """
+        if not isinstance(df_barcodes, pd.DataFrame):
+            raise TypeError('df_barcodes must be a Pandas DataFrame')
+        
+        if df_barcodes.columns[0] != 'Gene':
+            raise ValueError('The first column of df_barcodes must contain the gene names and '
+                             'have the column name \'Gene\'.')
+        
+        if len(df_barcodes.columns) != self.rounds * self.channels + 1:
+            raise ValueError('The length of the barcode must equal rounds*channels.')
+        
+        valid_vals = [0,1]
+        vals = df_barcodes.values[:, 1:]
+        if set(valid_vals) != set(vals.flatten()):
+            raise ValueError('Barcode values must be 0 or 1.')
+
+        if 'Background' in df_barcodes.columns or 'Unknown' in df_barcodes.columns:
+            raise ValueError('Codebook should not include \'Background\' or \'Unknown\' values. '
+                             'These values will be added automatically.')
 
     def _add_bkg_unknown_to_barcodes(self, df_barcodes):
         """Add Background and Unknown category to the codebook. The barcode of Background
@@ -121,7 +164,7 @@ class SpotDecoding(Application):
 
         """
         barcodes_idx2name = dict(
-            zip(1 + np.arange(len(self.df_barcodes)), self.df_barcodes.code_name.values))
+            zip(1 + np.arange(len(self.df_barcodes)), self.df_barcodes.Gene.values))
         decoded_dict = {}
         decoded_dict['probability'] = out['class_probs'].max(axis=1)
         decoded_dict['predicted_id'] = out['class_probs'].argmax(axis=1) + 1
@@ -158,7 +201,7 @@ class SpotDecoding(Application):
 
         # convert df_barcodes to an array
         ch_names = list(self.df_barcodes.columns)
-        ch_names.remove('code_name')
+        ch_names.remove('Gene')
         unknown_index = self.df_barcodes.index.max()
         barcodes_array = self.df_barcodes[ch_names].values.reshape(-1, self.channels,
                                                                    self.rounds)[:-1, :, :]

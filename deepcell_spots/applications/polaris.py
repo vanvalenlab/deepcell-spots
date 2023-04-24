@@ -119,7 +119,7 @@ class Polaris(object):
             If ``None``, a pre-trained model will be downloaded.
         decoding_kwargs (dict): Keyword arguments to pass to the decoding method.
             df_barcodes, rounds, channels. Defaults to empty, no decoding is performed.
-            df_barcodes (pandas.DataFrame): Codebook, one column is gene names ('code_name'),
+            df_barcodes (pandas.DataFrame): Codebook, the first column is gene names ('Gene'),
                 the rest are binary barcodes, encoded using 1 and 0. Index should start at 1.
                 For exmaple, for a (rounds=10, channels=2) codebook, it should look the following
                 (see `notebooks/Multiplex FISH Analysis.ipynb` for examples)::
@@ -127,7 +127,7 @@ class Polaris(object):
                     Index:
                         RangeIndex (starting from 1)
                     Columns:
-                        Name: code_name, dtype: object
+                        Name: Gene, dtype: object
                         Name: r0c0, dtype: int64
                         Name: r0c1, dtype: int64
                         Name: r1c0, dtype: int64
