@@ -156,9 +156,26 @@ class SpotDecoding(Application):
         df_barcodes_aug.loc[len(df_barcodes_aug)+1] = ['Background'] + [0] * (barcode_len)
         df_barcodes_aug.loc[len(df_barcodes_aug)+1] = ['Unknown'] + [-1] * (barcode_len)
         return df_barcodes_aug
+    
+    def _validate_spots_intensities(self, spots_intensities_vec):
+        """Validate values of spot intensities before spot decoding prediction.
+
+        Args:
+            spots_intensities_vec (numpy.array): Array of spot probability values with shape
+                [num_spots, r*c].
+        """
+        if self.distribution == 'Relaxed Bernoulli':
+            if (spots_intensities_vec > 1).any() or (spots_intensities_vec < 0).any():
+                raise ValueError('Spot intensities should be between 0 and 1 when '
+                                 'distribution=\'Relaxed Bernoulli\'.')
+            
+            if self.distribution == 'Bernoulli':
+                if set([0,1]) != set(spots_intensities_vec.flatten()):
+                    raise ValueError('Spot intensities should be 0 or 1 when '
+                                 'distribution=\'Bernoulli\'.')
 
     def _decoding_output_to_dict(self, out):
-        """convert decoding output to dictionary.
+        """Convert decoding output to dictionary.
 
         Args:
             out (dict): Dictionary with keys: 'class_probs', 'params'.
@@ -256,7 +273,7 @@ class SpotDecoding(Application):
         Returns:
             dict: Dictionary with keys: 'probability', 'predicted_id', 'predicted_name'.
         """
-
+        self._validate_spots_intensities(spots_intensities_vec)
 
         spots_intensities_reshaped = np.reshape(spots_intensities_vec,
                                                 (-1, self.channels, self.rounds))

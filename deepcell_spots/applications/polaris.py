@@ -271,7 +271,7 @@ class Polaris(object):
             elif self.distribution == 'Bernoulli':
                 spots_intensities = extract_spots_prob_from_coords_maxpool(
                     clipped_output_image, spots_locations, extra_pixel_num=maxpool_extra_pixel_num)
-                # TODO: threshold hard coded for now
+                # TODO: validate hard coded threshold
                 spots_intensities = np.array(spots_intensities > 0.5).astype('int')
         spots_intensities_vec = np.concatenate(spots_intensities)
         spots_locations_vec = np.concatenate([np.concatenate(
