@@ -163,7 +163,10 @@ class Polaris(object):
                 warnings.warn('No spot decoding application instantiated.')
             else:
                 self.decoding_app = SpotDecoding(**decoding_kwargs)
-                self.params_mode = decoding_kwargs['params_mode']
+                if 'distribution' in decoding_kwargs.keys():
+                    self.distribution = decoding_kwargs['distribution']
+                else:
+                    self.distribution = 'Relaxed Bernoulli'
 
         valid_compartments = ['cytoplasm', 'nucleus', 'mesmer', 'no segmentation']
         if segmentation_type not in valid_compartments:
@@ -257,13 +260,19 @@ class Polaris(object):
         spots_locations = max_cp_array_to_point_list_max(max_proj_images,
                                                          threshold=threshold, min_distance=1)
 
-        if self.image_type == 'multiplex' and self.params_mode == 'Gaussian':
-            norm_spots_image = min_max_normalize(spots_image)
-            spots_intensities = extract_spots_prob_from_coords_maxpool(
-                norm_spots_image, spots_locations, extra_pixel_num=maxpool_extra_pixel_num)
-        else:
-            spots_intensities = extract_spots_prob_from_coords_maxpool(
-                clipped_output_image, spots_locations, extra_pixel_num=maxpool_extra_pixel_num)
+        if self.image_type == 'multiplex':
+            if self.distribution == 'Gaussian':
+                norm_spots_image = min_max_normalize(spots_image)
+                spots_intensities = extract_spots_prob_from_coords_maxpool(
+                    norm_spots_image, spots_locations, extra_pixel_num=maxpool_extra_pixel_num)
+            elif self.distribution == 'Relaxed Bernoulli':
+                spots_intensities = extract_spots_prob_from_coords_maxpool(
+                    clipped_output_image, spots_locations, extra_pixel_num=maxpool_extra_pixel_num)
+            elif self.distribution == 'Bernoulli':
+                spots_intensities = extract_spots_prob_from_coords_maxpool(
+                    clipped_output_image, spots_locations, extra_pixel_num=maxpool_extra_pixel_num)
+                # TODO: threshold hard coded for now
+                spots_intensities = np.array(spots_intensities > 0.5).astype('int')
         spots_intensities_vec = np.concatenate(spots_intensities)
         spots_locations_vec = np.concatenate([np.concatenate(
             [item, [[idx_batch]] * len(item)], axis=1)
