@@ -33,7 +33,7 @@ import numpy as np
 from tqdm import tqdm
 import pyro
 from pyro.distributions import (RelaxedBernoulli, Categorical, constraints,
-                                MultivariateNormal)
+                                MultivariateNormal, Bernoulli)
 from pyro.optim import Adam
 from pyro.infer import SVI, TraceEnum_ELBO, config_enumerate
 from pyro import poutine
@@ -191,6 +191,56 @@ def instantiate_rb_params(r, c, codes, params_mode):
     return scaled_sigma, aug_temperature
 
 
+def instantiate_bernoulli_params(r, c, codes, params_mode):
+    """Instantiates parameters for model of mixture of Bernoulli distributions.
+
+    Args:
+        r (int): Number of rounds.
+        c (int): Number of channels.
+        codes (torch.tensor): Codebook formatted as torch array with shape
+            ``[num_barcodes + 1, r * c]``.
+        params_mode (str): Number of model parameters, whether the parameters are shared across
+            channels or rounds. valid options: ['2', '2*R', '2*C', '2*R*C'].
+
+    Returns:
+        scaled_sigma (torch.tensor): Sigma parameter of Bernoulli.
+    """
+
+    if params_mode == '2':
+        # two param - one for 0-channel, one for 1-channel
+        sigma = pyro.param("sigma", torch.ones(torch.Size(
+            [2])) * 0.5, constraint=constraints.unit_interval)
+        aug_sigma = torch.gather(
+            sigma, 0, codes.reshape(-1).long()).reshape(codes.shape)
+        scaled_sigma = codes + (-1)**codes * 0.3 * aug_sigma  # is 0.3 an arbitrary choice?
+    elif params_mode == '2*R':
+        # 2*R params
+        sigma = pyro.param("sigma", torch.ones(torch.Size(
+            [2, r])) * 0.5, constraint=constraints.unit_interval)
+        sigma_temp = sigma.unsqueeze(-1).repeat(1, 1, c)
+        sigma_temp1 = reshape_torch_array(sigma_temp)
+        aug_sigma = torch.gather(sigma_temp1, 0, codes.long())
+        scaled_sigma = codes + (-1)**codes * 0.3 * aug_sigma
+    elif params_mode == '2*C':
+        # 2*C params
+        sigma = pyro.param("sigma", torch.ones(torch.Size(
+            [2, c])) * 0.5, constraint=constraints.unit_interval)
+        sigma_temp = sigma.unsqueeze(-1).repeat(1, 1, r)
+        sigma_temp1 = reshape_torch_array(sigma_temp)
+        aug_sigma = torch.gather(sigma_temp1, 0, codes.long())
+        scaled_sigma = codes + (-1)**codes * 0.3 * aug_sigma
+    elif params_mode == '2*R*C':
+        # 2*R*C params
+        sigma = pyro.param("sigma", torch.ones(torch.Size(
+            [2, r * c])) * 0.5, constraint=constraints.unit_interval)
+        aug_sigma = torch.gather(sigma, 0, codes.long())
+        scaled_sigma = codes + (-1)**codes * 0.3 * aug_sigma
+    else:
+        assert False, "%s not supported" % params_mode
+
+    return scaled_sigma
+
+
 def instantiate_gaussian_params(r, c, codes):
     """Instantiates parameters for model of mixture of Gaussian distributions.
 
@@ -228,6 +278,7 @@ def model_constrained_tensor(
         c,
         r,
         batch_size=None,
+        distribution='Relaxed Bernoulli',
         params_mode='2*R*C'):
     """Model definition: relaxed bernoulli, paramters are shared across all genes, but might
     differ across channels or rounds.
@@ -249,7 +300,7 @@ def model_constrained_tensor(
     k = codes.shape[0]
     w = pyro.param('weights', torch.ones(k) / k, constraint=constraints.simplex)
 
-    if params_mode in ['2', '2*R', '2*C', '2*R*C']:
+    if distribution == 'Relaxed Bernoulli':
         scaled_sigma, aug_temperature = instantiate_rb_params(r, c, codes, params_mode)
 
         with pyro.plate('data', data.shape[0], batch_size) as batch:
@@ -261,7 +312,7 @@ def model_constrained_tensor(
                     probs=scaled_sigma[z]).to_event(1),
                 obs=data[batch])
 
-    elif params_mode == 'Gaussian':
+    elif distribution == 'Gaussian':
         theta, sigma = instantiate_gaussian_params(r, c, codes)
 
         with pyro.plate('data', data.shape[0], batch_size) as batch:
@@ -273,11 +324,21 @@ def model_constrained_tensor(
                     covariance_matrix=sigma),
                 obs=data[batch])
 
+    elif distribution == 'Bernoulli':
+        scaled_sigma = instantiate_bernoulli_params(r, c, codes, params_mode)
+
+        with pyro.plate('data', data.shape[0], batch_size) as batch:
+            z = pyro.sample('z', Categorical(w))
+            pyro.sample(
+                'obs',
+                Bernoulli(probs=scaled_sigma[z]).to_event(1),
+                obs=data[batch])
+    
     else:
-        assert False, "%s not supported" % params_mode
+        assert False, "%s not supported" % distribution
 
 
-def train(svi, num_iter, data, codes, c, r, batch_size, params_mode):
+def train(svi, num_iter, data, codes, c, r, batch_size, distribution, params_mode):
     """Do the training for SVI model.
 
     Args:
@@ -300,7 +361,7 @@ def train(svi, num_iter, data, codes, c, r, batch_size, params_mode):
     pyro.clear_param_store()
     losses = []
     for _ in tqdm(range(num_iter)):
-        loss = svi.step(data, codes, c, r, batch_size, params_mode)
+        loss = svi.step(data, codes, c, r, batch_size, distribution, params_mode)
         losses.append(loss)
     return losses
 
@@ -377,6 +438,66 @@ def rb_e_step(data, codes, w, temperature, sigma, c, r, params_mode='2*R*C'):
     return class_prob_norm
 
 
+def bernoulli_e_step(data, codes, w, sigma, c, r, params_mode='2*R*C'):
+    """Estimate the posterior probability for spot assignment from a mixture of Relaxed
+    Bernoulli distributions.
+
+    Args:
+        data (torch.tensor): Input data formatted as torch array with shape ``[num_spots, r * c]``.
+        codes (torch.tensor): Codebook formatted as torch array with shape
+            ``[num_barcodes + 1, r * c]``.
+        w (torch.array): Weight parameter with length ``num_barcodes + 1``.
+        temperature (torch.array): Temperature parameter for Relaxed Bernoulli, shape depends on
+             `params_mode`.
+        sigma (torch.array): Sigma parameter for Relaxed Bernoulli, shape depends on `params_mode`.
+        c (int): Number of channels.
+        r (int): Number of rounds.
+        params_mode (str): Number of model parameters, whether the parameters are shared across
+            channels or rounds. Valid options: ['2', '2*R', '2*C', '2*R*C'].
+
+    Returns:
+        normalized class probability with shape ``[num_spots, num_barcodes + 1]``.
+    """
+    K = codes.shape[0]  # num_barcodes + 1
+    class_logprobs = np.ones((data.shape[0], K))
+
+    if params_mode == '2':  # two params
+        aug_sigma = torch.gather(
+            sigma, 0, codes.reshape(-1).long()).reshape(codes.shape)
+        scaled_sigma = codes + (-1)**codes * 0.3 * aug_sigma
+    elif params_mode == '2*R':  # 2*R params
+        sigma_temp = sigma.unsqueeze(-1).repeat(1, 1, c)
+        sigma_temp1 = reshape_torch_array(sigma_temp)
+        aug_sigma = torch.gather(sigma_temp1, 0, codes.long())
+        scaled_sigma = codes + (-1)**codes * 0.3 * aug_sigma
+    elif params_mode == '2*C':  # 2*C params
+        sigma_temp = sigma.unsqueeze(-1).repeat(1, 1, r)
+        sigma_temp1 = reshape_torch_array(sigma_temp)
+        aug_sigma = torch.gather(sigma_temp1, 0, codes.long())
+        scaled_sigma = codes + (-1)**codes * 0.3 * aug_sigma
+    elif params_mode == '2*R*C':  # 2*R*C params
+        aug_sigma = torch.gather(sigma, 0, codes.long())
+        scaled_sigma = codes + (-1)**codes * 0.3 * aug_sigma
+    else:
+        assert False, "%s not supported" % params_mode
+
+    batch_sz = 50000
+    for idx in range(len(data) // batch_sz + 1):
+        ind_start = idx * batch_sz
+        ind_end = (idx+1) * batch_sz
+        if len(data[ind_start:ind_end]) == 0:
+            break
+        for k in tqdm(range(K)):
+            dist = Bernoulli(probs=scaled_sigma[k]).to_event(1)
+            class_logprobs[ind_start:ind_end, k] = (
+                w[k].log() + dist.log_prob(data[ind_start:ind_end])).cpu().numpy()
+
+    # basically doing a stable_softmax here
+    numerator = np.exp(class_logprobs - np.max(class_logprobs, axis=1)[:, None])
+    class_prob_norm = np.divide(numerator, np.sum(numerator, axis=1)[:, None])
+
+    return class_prob_norm
+
 def gaussian_e_step(data, w, theta, sigma, K):
     """Estimate the posterior probability for spot assignment from a mixture of Gaussian
     distributions.
@@ -414,6 +535,7 @@ def decoding_function(spots,
                       num_iter=500,
                       batch_size=15000,
                       set_seed=1,
+                      distribution='Relaxed Bernoulli',
                       params_mode='2*R*C'):
     """Main function for the spot decoding.
 
@@ -438,7 +560,13 @@ def decoding_function(spots,
     else:
         torch.set_default_tensor_type("torch.FloatTensor")
 
-    valid_params_modes = ['2', '2*R', '2*C', '2*R*C', 'Gaussian']
+    valid_distributions = ['Relaxed Bernoulli', 'Bernoulli', 'Gaussian']
+    if distribution not in valid_distributions:
+            raise ValueError('Invalid params_mode supplied: {}. '
+                             'Must be one of {}'.format(distribution,
+                                                        valid_distributions))
+
+    valid_params_modes = ['2', '2*R', '2*C', '2*R*C']
     if params_mode not in valid_params_modes:
             raise ValueError('Invalid params_mode supplied: {}. '
                              'Must be one of {}'.format(params_mode,
@@ -449,7 +577,7 @@ def decoding_function(spots,
     data = reshape_torch_array(torch.tensor(spots).float())
     codes = reshape_torch_array(torch.tensor(barcodes).float())
 
-    if params_mode=='Gaussian':
+    if distribution=='Gaussian':
         data = normalize_spot_values(data)
         auto_guide_constrained_tensor = AutoDelta(poutine.block(model_constrained_tensor,
                                                   expose=['weights',
@@ -458,10 +586,14 @@ def decoding_function(spots,
                                                           'sigma_c_v',
                                                           'sigma_r_v']))
 
-    else:
+    elif distribution=='Relaxed Bernoulli':
         auto_guide_constrained_tensor = AutoDelta(poutine.block(model_constrained_tensor,
                                                   expose=['weights',
                                                           'temperature',
+                                                          'sigma']))
+    else:
+        auto_guide_constrained_tensor = AutoDelta(poutine.block(model_constrained_tensor,
+                                                  expose=['weights',
                                                           'sigma']))
 
     optim = Adam({'lr': 0.085, 'betas': [0.85, 0.99]})
@@ -470,9 +602,9 @@ def decoding_function(spots,
     pyro.set_rng_seed(set_seed)
 
     losses = train(svi, num_iter, data, codes, c, r,
-                   min(num_spots, batch_size), params_mode)
+                   min(num_spots, batch_size), distribution, params_mode)
 
-    if params_mode=='Gaussian':
+    if distribution=='Gaussian':
         w_star = pyro.param('weights').detach()
 
         sigma_c_v_star = pyro.param('sigma_c_v').detach()
@@ -501,7 +633,7 @@ def decoding_function(spots,
             'losses': losses
         }
     
-    else:
+    elif distribution=='Relaxed Bernoulli':
 
         w_star = pyro.param('weights').detach()
         temperature_star = pyro.param('temperature').detach()
@@ -516,6 +648,23 @@ def decoding_function(spots,
         torch_params = {
             'w_star': w_star.cpu(),
             'temperature_star': temperature_star.cpu(),
+            'sigma_star': sigma_star.cpu(),
+            'losses': losses
+        }
+
+    elif distribution=='Bernoulli':
+
+        w_star = pyro.param('weights').detach()
+        sigma_star = pyro.param('sigma').detach()
+
+        class_probs_star = bernoulli_e_step(
+            data, codes, w_star, sigma_star, c, r, params_mode)
+
+        if torch.cuda.is_available():
+            torch.set_default_tensor_type("torch.FloatTensor")
+
+        torch_params = {
+            'w_star': w_star.cpu(),
             'sigma_star': sigma_star.cpu(),
             'losses': losses
         }
