@@ -141,7 +141,7 @@ class TestPolaris(test.TestCase):
                     ["code6", 0, 1, 0, 0, 1, 0],
                     ["code7", 1, 0, 1, 0, 0, 0],
                 ],
-                columns=["code_name", "r0c0", "r0c1", "r0c2", "r1c0", "r1c1", "r1c2"],
+                columns=["Gene", "r0c0", "r0c1", "r0c2", "r1c0", "r1c1", "r1c2"],
                 index=np.arange(7) + 1,
             )
             decoding_kwargs = {'df_barcodes': df_barcodes, 'rounds': 2,
@@ -178,7 +178,7 @@ class TestPolaris(test.TestCase):
                     ["code6", 0, 1, 0, 0, 1, 0],
                     ["code7", 1, 0, 1, 0, 0, 0],
                 ],
-                columns=["code_name", "r0c0", "r0c1", "r0c2", "r1c0", "r1c1", "r1c2"],
+                columns=["Gene", "r0c0", "r0c1", "r0c2", "r1c0", "r1c1", "r1c2"],
                 index=np.arange(7) + 1,
             )
             r = 2

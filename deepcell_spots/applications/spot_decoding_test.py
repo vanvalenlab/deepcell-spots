@@ -38,6 +38,7 @@ from deepcell_spots.applications import SpotDecoding
 
 class TestSpotDecoding(test.TestCase):
     def test_spot_decoding_app(self):
+        # test output shape
         df_barcodes1 = pd.DataFrame(
             [
                 ["code1", 1, 1, 0, 0, 0, 0],
@@ -48,7 +49,7 @@ class TestSpotDecoding(test.TestCase):
                 ["code6", 0, 1, 0, 0, 1, 0],
                 ["code7", 1, 0, 1, 0, 0, 0],
             ],
-            columns=["code_name", "r0c0", "r0c1", "r0c2", "r1c0", "r1c1", "r1c2"],
+            columns=["Gene", "r0c0", "r0c1", "r0c2", "r1c0", "r1c1", "r1c2"],
             index=np.arange(7) + 1,
         )
         app1 = SpotDecoding(df_barcodes=df_barcodes1, rounds=2, channels=3, params_mode='2*R*C')
@@ -61,9 +62,10 @@ class TestSpotDecoding(test.TestCase):
         self.assertEqual(decoding_dict_trunc1["predicted_id"].shape, (100,))
         self.assertEqual(decoding_dict_trunc1["predicted_name"].shape, (100,))
 
+        # simple functionality test
         df_barcodes2 = pd.DataFrame(
             [["code1", 0, 0, 0, 0, 0, 0], ["code2", 1, 1, 1, 1, 1, 1]],
-            columns=["code_name", "r0c0", "r0c1", "r0c2", "r1c0", "r1c1", "r1c2"],
+            columns=["Gene", "r0c0", "r0c1", "r0c2", "r1c0", "r1c1", "r1c2"],
             index=np.arange(2) + 1,
         )
         app2 = SpotDecoding(df_barcodes=df_barcodes2, rounds=2, channels=3, params_mode='2*R*C')
@@ -85,3 +87,73 @@ class TestSpotDecoding(test.TestCase):
             decoding_dict_trunc22["predicted_id"].tolist(), np.ones((100,)).tolist()
         )
         self.assertListEqual(decoding_dict_trunc22["predicted_name"].tolist(), ["code1"] * 100)
+
+        # test invalid codebooks
+        # codebook is not a Pandas DataFrame
+        df_barcodes = np.array(
+            [
+                ["code1", 1, 1, 0, 0, 0, 0],
+                ["code2", 0, 0, 1, 1, 0, 0],
+                ["code3", 0, 0, 0, 0, 1, 1],
+                ["code4", 1, 0, 0, 0, 1, 0],
+                ["code5", 0, 0, 1, 0, 0, 1],
+                ["code6", 0, 1, 0, 0, 1, 0],
+                ["code7", 1, 0, 1, 0, 0, 0],
+            ])
+        with self.assertRaises(TypeError):
+            _ = SpotDecoding(df_barcodes=df_barcodes, rounds=2, channels=3, params_mode='2*R*C')
+
+        # incorrect column name - "Test" instead of "Gene"
+        df_barcodes = pd.DataFrame(
+            [
+                ["code1", 1, 1, 0, 0, 0, 0],
+                ["code2", 0, 0, 1, 1, 0, 0],
+                ["code3", 0, 0, 0, 0, 1, 1],
+                ["code4", 1, 0, 0, 0, 1, 0],
+                ["code5", 0, 0, 1, 0, 0, 1],
+                ["code6", 0, 1, 0, 0, 1, 0],
+                ["code7", 1, 0, 1, 0, 0, 0],
+            ],
+            columns=["Test", "r0c0", "r0c1", "r0c2", "r1c0", "r1c1", "r1c2"],
+            index=np.arange(7) + 1,
+        )
+        with self.assertRaises(ValueError):
+            _ = SpotDecoding(df_barcodes=df_barcodes, rounds=2, channels=3, params_mode='2*R*C')
+
+        # incorrect length of barcode
+        with self.assertRaises(ValueError):
+            _ = SpotDecoding(df_barcodes=df_barcodes, rounds=3, channels=3, params_mode='2*R*C')
+
+        # invalid barcode values
+        df_barcodes = pd.DataFrame(
+            [
+                ["code1", 1, 2, 0, 0, 0, 0],
+                ["code2", 0, 0, 1, 2, 0, 0],
+                ["code3", 0, 0, 0, 0, 1, 2],
+                ["code4", 1, 0, 0, 0, 2, 0],
+                ["code5", 0, 0, 2, 0, 0, 1],
+                ["code6", 0, 2, 0, 0, 1, 0],
+                ["code7", 1, 0, 2, 0, 0, 0],
+            ],
+            columns=["Gene", "r0c0", "r0c1", "r0c2", "r1c0", "r1c1", "r1c2"],
+            index=np.arange(7) + 1,
+        )
+        with self.assertRaises(ValueError):
+            _ = SpotDecoding(df_barcodes=df_barcodes, rounds=2, channels=3, params_mode='2*R*C')
+
+        # invalid 'Background' codebook entry
+        df_barcodes = pd.DataFrame(
+            [
+                ["code1", 1, 2, 0, 0, 0, 0],
+                ["code2", 0, 0, 1, 2, 0, 0],
+                ["code3", 0, 0, 0, 0, 1, 2],
+                ["code4", 1, 0, 0, 0, 2, 0],
+                ["code5", 0, 0, 2, 0, 0, 1],
+                ["code6", 0, 2, 0, 0, 1, 0],
+                ["Background", 0, 0, 0, 0, 0, 0],
+            ],
+            columns=["Gene", "r0c0", "r0c1", "r0c2", "r1c0", "r1c1", "r1c2"],
+            index=np.arange(7) + 1,
+        )
+        with self.assertRaises(ValueError):
+            _ = SpotDecoding(df_barcodes=df_barcodes, rounds=2, channels=3, params_mode='2*R*C')

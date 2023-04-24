@@ -29,6 +29,10 @@
 from __future__ import absolute_import, division, print_function
 
 import numpy as np
+import pandas as pd
+
+from scipy.spatial import distance
+from tqdm import tqdm
 
 from deepcell.applications import Application
 from deepcell_spots.decoding_functions import decoding_function
@@ -51,14 +55,14 @@ class SpotDecoding(Application):
         decoding_dict = app.predict(spots_intensities_vec)
 
     Args:
-        df_barcodes (pandas.DataFrame): Codebook, one column is gene names ('code_name'),
+        df_barcodes (pandas.DataFrame): Codebook, the first column is gene names ('Gene'),
             the rest are binary barcodes, encoded using 1 and 0. Index should start at 1.
             For exmaple, for a (rounds=10, channels=2) codebook, it should look like::
             
                 Index:
                     RangeIndex (starting from 1)
                 Columns:
-                    Name: code_name, dtype: object
+                    Name: Gene, dtype: object
                     Name: r0c0, dtype: int64
                     Name: r0c1, dtype: int64
                     Name: r1c0, dtype: int64
@@ -83,7 +87,9 @@ class SpotDecoding(Application):
         self.distribution = distribution
         self.params_mode = params_mode
 
-        self.df_barocdes = self._add_bkg_unknown_to_barcodes(df_barcodes)
+        self._validate_codebook(df_barcodes)
+        self.df_barcodes = self._add_bkg_unknown_to_barcodes(df_barcodes)
+        
 
         super(SpotDecoding, self).__init__(
             model=None,
@@ -94,6 +100,45 @@ class SpotDecoding(Application):
             format_model_output_fn=None,
             dataset_metadata=self.dataset_metadata,
             model_metadata=self.model_metadata)
+
+    def _validate_codebook(self, df_barcodes):
+        """Validate the format of the input codebook.
+
+        Args:
+            df_barcodes (pandas.DataFrame): Codebook, the first column is gene names ('Gene'),
+            the rest are binary barcodes, encoded using 1 and 0. Index should start at 1.
+            For exmaple, for a (rounds=10, channels=2) codebook, it should look like::
+            
+                Index:
+                    RangeIndex (starting from 1)
+                Columns:
+                    Name: Gene, dtype: object
+                    Name: r0c0, dtype: int64
+                    Name: r0c1, dtype: int64
+                    Name: r1c0, dtype: int64
+                    Name: r1c1, dtype: int64
+                    ...
+                    Name: r9c0, dtype: int64
+                    Name: r9c1, dtype: int64
+        """
+        if not isinstance(df_barcodes, pd.DataFrame):
+            raise TypeError('df_barcodes must be a Pandas DataFrame')
+        
+        if df_barcodes.columns[0] != 'Gene':
+            raise ValueError('The first column of df_barcodes must contain the gene names and '
+                             'have the column name \'Gene\'.')
+        
+        if len(df_barcodes.columns) != self.rounds * self.channels + 1:
+            raise ValueError('The length of the barcode must equal rounds*channels.')
+        
+        valid_vals = [0,1]
+        vals = df_barcodes.values[:, 1:]
+        if set(valid_vals) != set(vals.flatten()):
+            raise ValueError('Barcode values must be 0 or 1.')
+
+        if 'Background' in df_barcodes.columns or 'Unknown' in df_barcodes.columns:
+            raise ValueError('Codebook should not include \'Background\' or \'Unknown\' values. '
+                             'These values will be added automatically.')
 
     def _add_bkg_unknown_to_barcodes(self, df_barcodes):
         """Add Background and Unknown category to the codebook. The barcode of Background
@@ -123,7 +168,7 @@ class SpotDecoding(Application):
 
         """
         barcodes_idx2name = dict(
-            zip(1 + np.arange(len(self.df_barcodes)), self.df_barcodes.code_name.values))
+            zip(1 + np.arange(len(self.df_barcodes)), self.df_barcodes.Gene.values))
         decoded_dict = {}
         decoded_dict['probability'] = out['class_probs'].max(axis=1)
         decoded_dict['predicted_id'] = out['class_probs'].argmax(axis=1) + 1
@@ -136,7 +181,8 @@ class SpotDecoding(Application):
         if below a certain threshold, the spot will be classfied as Unknown.
 
         Args:
-            decoded_dict (dict): The decoded dict.
+            decoded_dict (dict): Dictionary containing decoded spot identities with
+                keys: 'probability', 'predicted_id', 'predicted_name'.
             unknown_index (int): The index for Unknown category.
 
         Returns:
@@ -147,20 +193,77 @@ class SpotDecoding(Application):
         decoded_dict['predicted_name'][decoded_dict['probability'] < thres_prob] = 'Unknown'
         return decoded_dict
 
+    def _rescue_spots(self,
+                      decoding_dict_trunc,
+                      spots_intensities_vec):
+        """Rescues decoded spots assigned as 'Background' or 'Unknown' by if their spot
+        probability values have a Hamming distance of 1 from each of the barcodes.
+
+        Args:
+            decoding_dict_trunc (dict): Dictionary containing decoded spot identities with
+                keys: 'probability', 'predicted_id', 'predicted_name'. This dictionary has already
+                been processed to assign low probability predictions to 'Unknown'.
+            spots_intensities_vec (numpy.array): Array of spot probability values with shape
+                [num_spots, r*c].
+        """
+
+        ch_names = list(self.df_barcodes.columns)
+        ch_names.remove('code_name')
+        barcodes_array = self.df_barcodes[ch_names].values
+        num_barcodes = barcodes_array.shape[0]
+        barcode_len = barcodes_array.shape[1]
+
+        predicted_ids = decoding_dict_trunc['predicted_id']
+        predicted_names = decoding_dict_trunc['predicted_name']
+
+        for i,pred in tqdm(enumerate(predicted_names)):
+            if pred in ['Background', 'Unknown']:
+                dist_list = np.zeros(num_barcodes)
+                for ii in range(num_barcodes):
+                    dist_list[ii] = distance.hamming(np.round(spots_intensities_vec[i]),
+                                                     barcodes_array[ii])
+                scaled_dist_list = dist_list * barcode_len
+                if 1 in scaled_dist_list:
+                    new_gene = np.argwhere(scaled_dist_list == 1)[0][0]
+                    predicted_ids[i] = new_gene
+                    predicted_names[i] = self.df_barcodes['code_name'].values[new_gene]
+        
+        decoding_dict_rescued = {
+            'predicted_id': predicted_ids,
+            'predicted_name': predicted_names,
+            'probability': decoding_dict_trunc['probability']
+        }
+        
+        return(decoding_dict_rescued)
+
     def _predict(self,
                  spots_intensities_vec,
                  num_iter,
                  batch_size,
-                 thres_prob):
+                 thres_prob,
+                 rescue_spots):
         """Predict the gene assignment of each spot.
+
+        Args:
+            spots_intensities_vec (numpy.array): Array of spot probability values with shape
+                [num_spots, r*c].
+            num_iter (int): Number of iterations for training. Defaults to 500.
+            batch_size (int): Size of batches for training. Defaults to 1000.
+            thres_prob (float): The threshold of unknown category, within [0,1]. Defaults to 0.5.
+            rescue_spots (bool): Whether to check if 'Background'-  and 'Unknown'-assigned spots
+                have a Hamming distance of 1 to other barcodes.
+
+        Returns:
+            dict: Dictionary with keys: 'probability', 'predicted_id', 'predicted_name'.
         """
+
 
         spots_intensities_reshaped = np.reshape(spots_intensities_vec,
                                                 (-1, self.channels, self.rounds))
 
         # convert df_barcodes to an array
         ch_names = list(self.df_barcodes.columns)
-        ch_names.remove('code_name')
+        ch_names.remove('Gene')
         unknown_index = self.df_barcodes.index.max()
         barcodes_array = self.df_barcodes[ch_names].values.reshape(-1, self.channels,
                                                                    self.rounds)[:-1, :, :]
@@ -176,20 +279,29 @@ class SpotDecoding(Application):
         decoding_dict_trunc = self._threshold_unknown_by_prob(
             decoding_dict, unknown_index, thres_prob=thres_prob)
 
-        return decoding_dict_trunc
+        if rescue_spots:
+            decoding_dict_rescued = self._rescue_spots(decoding_dict_trunc,
+                                                       spots_intensities_vec)
+            return decoding_dict_rescued
+        else:
+            return decoding_dict_trunc
 
     def predict(self,
                 spots_intensities_vec,
                 num_iter=500,
                 batch_size=1000,
-                thres_prob=0.5):
+                thres_prob=0.5,
+                rescue_spots=True):
         """Predict the gene assignment of each spot.
 
         Args:
-            spots_intensities_vec (numpy.array): [num_spots, r*c]
+            spots_intensities_vec (numpy.array): Array of spot probability values with shape
+                [num_spots, r*c].
             num_iter (int): Number of iterations for training. Defaults to 500.
             batch_size (int): Size of batches for training. Defaults to 1000.
             thres_prob (float): The threshold of unknown category, within [0,1]. Defaults to 0.5.
+            rescue_spots (bool): Whether to check if 'Background' and 'Unknown' assigned spots
+                have a Hamming distance of 1 to other barcodes.
 
         Returns:
             dict: Dictionary with keys: 'probability', 'predicted_id', 'predicted_name'.
@@ -199,4 +311,5 @@ class SpotDecoding(Application):
             spots_intensities_vec=spots_intensities_vec,
             num_iter=num_iter,
             batch_size=batch_size,
-            thres_prob=thres_prob)
+            thres_prob=thres_prob,
+            rescue_spots=rescue_spots)
