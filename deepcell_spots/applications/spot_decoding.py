@@ -73,15 +73,22 @@ class SpotDecoding(Application):
 
         rounds (int): Number of rounds.
         channels (int): Number of channels.
+        distribution (str): Distribution for spot intensities in spot decoding model. Valid options:
+            ['Gaussian', 'Bernoulli', 'Relaxed Bernoulli']. Defaults to 'Relaxed Bernoulli'.
         params_mode (str): Number of model parameters, whether the parameters are shared across
-            channels or rounds for model of Relaxed Bernoulli distributions, or model of Gaussians.
+            channels or rounds for model of Bernoulli or Relaxed Bernoulli distributions.
             Valid options: ['2', '2*R', '2*C', '2*R*C', 'Gaussian']. Defaults to '2*R*C'. 
     """
 
     dataset_metadata = {}
     model_metadata = {}
 
-    def __init__(self, df_barcodes, rounds, channels, distribution, params_mode):
+    def __init__(self,
+                 df_barcodes,
+                 rounds,
+                 channels,
+                 distribution='Relaxed Bernoulli',
+                 params_mode='2*R*C'):
         self.rounds = rounds
         self.channels = channels
         self.distribution = distribution
@@ -243,7 +250,7 @@ class SpotDecoding(Application):
                 if 1 in scaled_dist_list:
                     new_gene = np.argwhere(scaled_dist_list == 1)[0][0]
                     predicted_ids[i] = new_gene
-                    predicted_names[i] = self.df_barcodes['code_name'].values[new_gene]
+                    predicted_names[i] = self.df_barcodes['Gene'].values[new_gene]
         
         decoding_dict_rescued = {
             'predicted_id': predicted_ids,

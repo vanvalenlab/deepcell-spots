@@ -545,6 +545,8 @@ def decoding_function(spots,
         num_iter (int): Number of iterations for training. Defaults to 500.
         batch_size (int): Size of batch for training. Defaults to 15000.
         set_seed (int): Seed for randomness. Defaults to 1.
+        distribution (str): Distribution for spot intensities in spot decoding model. Valid options:
+            ['Gaussian', 'Bernoulli', 'Relaxed Bernoulli']. Defaults to 'Relaxed Bernoulli'.
         params_mode (str): Number of model parameters, whether the parameters are shared across
             channels or rounds for model of Relaxed Bernoulli distributions, or model of Gaussians.
             Valid options: ['2', '2*R', '2*C', '2*R*C', 'Gaussian']. Defaults to '2*R*C'. 
