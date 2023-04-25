@@ -225,7 +225,7 @@ class SpotDecoding(Application):
         """
 
         ch_names = list(self.df_barcodes.columns)
-        ch_names.remove('code_name')
+        ch_names.remove('Gene')
         barcodes_array = self.df_barcodes[ch_names].values
         num_barcodes = barcodes_array.shape[0]
         barcode_len = barcodes_array.shape[1]
