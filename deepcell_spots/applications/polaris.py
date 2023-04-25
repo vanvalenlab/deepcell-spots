@@ -273,6 +273,9 @@ class Polaris(object):
                     clipped_output_image, spots_locations, extra_pixel_num=maxpool_extra_pixel_num)
                 # TODO: validate hard coded threshold
                 spots_intensities = np.array(spots_intensities > 0.5).astype('int')
+        else:
+            spots_intensities = extract_spots_prob_from_coords_maxpool(
+                    spots_image, spots_locations, extra_pixel_num=maxpool_extra_pixel_num)
         spots_intensities_vec = np.concatenate(spots_intensities)
         spots_locations_vec = np.concatenate([np.concatenate(
             [item, [[idx_batch]] * len(item)], axis=1)

@@ -145,7 +145,8 @@ class TestPolaris(test.TestCase):
                 index=np.arange(7) + 1,
             )
             decoding_kwargs = {'df_barcodes': df_barcodes, 'rounds': 2,
-                               'channels': 3, 'params_mode': '2*R*C'}
+                               'channels': 3, 'distribution': 'Relaxed Bernoulli',
+                               'params_mode': '2*R*C'}
             app = Polaris(image_type='multiplex', decoding_kwargs=decoding_kwargs)
             self.assertIsNotNone(app.decoding_app)
 
@@ -184,7 +185,7 @@ class TestPolaris(test.TestCase):
             r = 2
             c = 3
             decoding_kwargs = {'df_barcodes': df_barcodes, 'rounds': r,
-                               'channels': c, 'params_mode': 'Gaussian'}
+                               'channels': c, 'distribution': 'Gaussian'}
             app = Polaris(image_type='multiplex', decoding_kwargs=decoding_kwargs)
 
             spots_image = np.random.rand(1, 128, 128, r*c) + 1
