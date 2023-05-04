@@ -237,7 +237,8 @@ class TestDecodingFunc(test.TestCase):
 
         # Relaxed Bernoulli distributions
         spots = np.random.rand(n, r, c)
-        results = decoding_function(spots, codes, num_iter=20, batch_size=n, params_mode='2*R*C')
+        results = decoding_function(spots, codes, num_iter=20, batch_size=n,
+                                    distribution='Relaxed Bernoulli', params_mode='2*R*C')
         self.assertIsInstance(results, dict)
         self.assertAllEqual(results["class_probs"].shape, torch.Size([n, k]))
         self.assertIsInstance(results["params"], dict)
@@ -245,7 +246,16 @@ class TestDecodingFunc(test.TestCase):
 
         # Gaussian distributions
         spots = np.random.rand(n, r, c)*10
-        results = decoding_function(spots, codes, num_iter=20, batch_size=n, params_mode='Gaussian')
+        results = decoding_function(spots, codes, num_iter=20, batch_size=n, distribution='Gaussian')
+        self.assertIsInstance(results, dict)
+        self.assertAllEqual(results["class_probs"].shape, torch.Size([n, k]))
+        self.assertIsInstance(results["params"], dict)
+        pyro.get_param_store().clear()
+
+        # Bernoulli distributions
+        spots = np.random.choice(2, (n, r, c))
+        results = decoding_function(spots, codes, num_iter=20, batch_size=n,
+                                    distribution='Bernoulli', params_mode='2*R*C')
         self.assertIsInstance(results, dict)
         self.assertAllEqual(results["class_probs"].shape, torch.Size([n, k]))
         self.assertIsInstance(results["params"], dict)

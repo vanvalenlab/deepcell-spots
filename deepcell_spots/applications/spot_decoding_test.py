@@ -52,7 +52,8 @@ class TestSpotDecoding(test.TestCase):
             columns=["Gene", "r0c0", "r0c1", "r0c2", "r1c0", "r1c1", "r1c2"],
             index=np.arange(7) + 1,
         )
-        app1 = SpotDecoding(df_barcodes=df_barcodes1, rounds=2, channels=3, params_mode='2*R*C')
+        app1 = SpotDecoding(df_barcodes=df_barcodes1, rounds=2, channels=3,
+                            distribution='Relaxed Bernoulli', params_mode='2*R*C')
 
         spots_intensities_vec1 = np.random.rand(100, 6)
         decoding_dict_trunc1 = app1.predict(
@@ -68,7 +69,8 @@ class TestSpotDecoding(test.TestCase):
             columns=["Gene", "r0c0", "r0c1", "r0c2", "r1c0", "r1c1", "r1c2"],
             index=np.arange(2) + 1,
         )
-        app2 = SpotDecoding(df_barcodes=df_barcodes2, rounds=2, channels=3, params_mode='2*R*C')
+        app2 = SpotDecoding(df_barcodes=df_barcodes2, rounds=2, channels=3,
+                            distribution='Relaxed Bernoulli', params_mode='2*R*C')
 
         spots_intensities_vec21 = np.ones((100, 6))
         decoding_dict_trunc21 = app2.predict(
@@ -101,7 +103,8 @@ class TestSpotDecoding(test.TestCase):
                 ["code7", 1, 0, 1, 0, 0, 0],
             ])
         with self.assertRaises(TypeError):
-            _ = SpotDecoding(df_barcodes=df_barcodes, rounds=2, channels=3, params_mode='2*R*C')
+            _ = SpotDecoding(df_barcodes=df_barcodes, rounds=2, channels=3,
+                             distribution='Relaxed Bernoulli', params_mode='2*R*C')
 
         # incorrect column name - "Test" instead of "Gene"
         df_barcodes = pd.DataFrame(
@@ -118,11 +121,13 @@ class TestSpotDecoding(test.TestCase):
             index=np.arange(7) + 1,
         )
         with self.assertRaises(ValueError):
-            _ = SpotDecoding(df_barcodes=df_barcodes, rounds=2, channels=3, params_mode='2*R*C')
+            _ = SpotDecoding(df_barcodes=df_barcodes, rounds=2, channels=3,
+                             distribution='Relaxed Bernoulli', params_mode='2*R*C')
 
         # incorrect length of barcode
         with self.assertRaises(ValueError):
-            _ = SpotDecoding(df_barcodes=df_barcodes, rounds=3, channels=3, params_mode='2*R*C')
+            _ = SpotDecoding(df_barcodes=df_barcodes, rounds=3, channels=3,
+                             distribution='Relaxed Bernoulli', params_mode='2*R*C')
 
         # invalid barcode values
         df_barcodes = pd.DataFrame(
@@ -139,7 +144,8 @@ class TestSpotDecoding(test.TestCase):
             index=np.arange(7) + 1,
         )
         with self.assertRaises(ValueError):
-            _ = SpotDecoding(df_barcodes=df_barcodes, rounds=2, channels=3, params_mode='2*R*C')
+            _ = SpotDecoding(df_barcodes=df_barcodes, rounds=2, channels=3,
+                             distribution='Relaxed Bernoulli', params_mode='2*R*C')
 
         # invalid 'Background' codebook entry
         df_barcodes = pd.DataFrame(
@@ -156,4 +162,29 @@ class TestSpotDecoding(test.TestCase):
             index=np.arange(7) + 1,
         )
         with self.assertRaises(ValueError):
-            _ = SpotDecoding(df_barcodes=df_barcodes, rounds=2, channels=3, params_mode='2*R*C')
+            _ = SpotDecoding(df_barcodes=df_barcodes, rounds=2, channels=3,
+                             distribution='Relaxed Bernoulli', params_mode='2*R*C')
+
+        # test invalid spot intensities
+        # Relaxed Bernoulli
+        app = SpotDecoding(df_barcodes=df_barcodes1, rounds=2, channels=3,
+                           distribution='Relaxed Bernoulli', params_mode='2*R*C')
+
+        spots_intensities_vec = np.random.rand(100, 6)
+        spots_intensities_vec[0,0] = 2
+        with self.assertRaises(ValueError):
+            _ = app.predict(spots_intensities_vec=spots_intensities_vec, num_iter=20, batch_size=100)
+
+        # Bernoulli
+        app = SpotDecoding(df_barcodes=df_barcodes1, rounds=2, channels=3,
+                           distribution='Bernoulli', params_mode='2*R*C')
+
+        spots_intensities_vec = np.random.rand(100, 6)
+        spots_intensities_vec[0,0] = 2
+        with self.assertRaises(ValueError):
+            _ = app.predict(spots_intensities_vec=spots_intensities_vec, num_iter=20, batch_size=100)
+
+        spots_intensities_vec = np.random.rand(100, 6)
+        spots_intensities_vec[0,0] = 0.5
+        with self.assertRaises(ValueError):
+            _ = app.predict(spots_intensities_vec=spots_intensities_vec, num_iter=20, batch_size=100)

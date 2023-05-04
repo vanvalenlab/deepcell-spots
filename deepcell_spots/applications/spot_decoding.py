@@ -73,17 +73,25 @@ class SpotDecoding(Application):
 
         rounds (int): Number of rounds.
         channels (int): Number of channels.
+        distribution (str): Distribution for spot intensities in spot decoding model. Valid options:
+            ['Gaussian', 'Bernoulli', 'Relaxed Bernoulli']. Defaults to 'Relaxed Bernoulli'.
         params_mode (str): Number of model parameters, whether the parameters are shared across
-            channels or rounds for model of Relaxed Bernoulli distributions, or model of Gaussians.
+            channels or rounds for model of Bernoulli or Relaxed Bernoulli distributions.
             Valid options: ['2', '2*R', '2*C', '2*R*C', 'Gaussian']. Defaults to '2*R*C'. 
     """
 
     dataset_metadata = {}
     model_metadata = {}
 
-    def __init__(self, df_barcodes, rounds, channels, params_mode):
+    def __init__(self,
+                 df_barcodes,
+                 rounds,
+                 channels,
+                 distribution='Relaxed Bernoulli',
+                 params_mode='2*R*C'):
         self.rounds = rounds
         self.channels = channels
+        self.distribution = distribution
         self.params_mode = params_mode
 
         self._validate_codebook(df_barcodes)
@@ -155,9 +163,26 @@ class SpotDecoding(Application):
         df_barcodes_aug.loc[len(df_barcodes_aug)+1] = ['Background'] + [0] * (barcode_len)
         df_barcodes_aug.loc[len(df_barcodes_aug)+1] = ['Unknown'] + [-1] * (barcode_len)
         return df_barcodes_aug
+    
+    def _validate_spots_intensities(self, spots_intensities_vec):
+        """Validate values of spot intensities before spot decoding prediction.
+
+        Args:
+            spots_intensities_vec (numpy.array): Array of spot probability values with shape
+                [num_spots, r*c].
+        """
+        if self.distribution == 'Relaxed Bernoulli':
+            if (spots_intensities_vec > 1).any() or (spots_intensities_vec < 0).any():
+                raise ValueError('Spot intensities should be between 0 and 1 when '
+                                 'distribution=\'Relaxed Bernoulli\'.')
+            
+            if self.distribution == 'Bernoulli':
+                if set([0,1]) != set(spots_intensities_vec.flatten()):
+                    raise ValueError('Spot intensities should be 0 or 1 when '
+                                 'distribution=\'Bernoulli\'.')
 
     def _decoding_output_to_dict(self, out):
-        """convert decoding output to dictionary.
+        """Convert decoding output to dictionary.
 
         Args:
             out (dict): Dictionary with keys: 'class_probs', 'params'.
@@ -207,7 +232,7 @@ class SpotDecoding(Application):
         """
 
         ch_names = list(self.df_barcodes.columns)
-        ch_names.remove('code_name')
+        ch_names.remove('Gene')
         barcodes_array = self.df_barcodes[ch_names].values
         num_barcodes = barcodes_array.shape[0]
         barcode_len = barcodes_array.shape[1]
@@ -225,7 +250,7 @@ class SpotDecoding(Application):
                 if 1 in scaled_dist_list:
                     new_gene = np.argwhere(scaled_dist_list == 1)[0][0]
                     predicted_ids[i] = new_gene
-                    predicted_names[i] = self.df_barcodes['code_name'].values[new_gene]
+                    predicted_names[i] = self.df_barcodes['Gene'].values[new_gene]
         
         decoding_dict_rescued = {
             'predicted_id': predicted_ids,
@@ -255,7 +280,7 @@ class SpotDecoding(Application):
         Returns:
             dict: Dictionary with keys: 'probability', 'predicted_id', 'predicted_name'.
         """
-
+        self._validate_spots_intensities(spots_intensities_vec)
 
         spots_intensities_reshaped = np.reshape(spots_intensities_vec,
                                                 (-1, self.channels, self.rounds))
@@ -272,6 +297,7 @@ class SpotDecoding(Application):
                                 barcodes_array,
                                 num_iter=num_iter,
                                 batch_size=batch_size,
+                                distribution=self.distribution,
                                 params_mode=self.params_mode)
         decoding_dict = self._decoding_output_to_dict(out)
         decoding_dict_trunc = self._threshold_unknown_by_prob(
