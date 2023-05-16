@@ -201,3 +201,37 @@ class TestPolaris(test.TestCase):
             self.assertAllEqual(segmentation_image.shape, segmentation_result.shape)
             self.assertEqual(len(df_spots), len(df_intensities))
             self.assertAllInRange(df_spots.probability, 0, 1)
+
+            # test prediction type -- Bernoulli
+            df_barcodes = pd.DataFrame(
+                [
+                    ["code1", 1, 1, 0, 0, 0, 0],
+                    ["code2", 0, 0, 1, 1, 0, 0],
+                    ["code3", 0, 0, 0, 0, 1, 1],
+                    ["code4", 1, 0, 0, 0, 1, 0],
+                    ["code5", 0, 0, 1, 0, 0, 1],
+                    ["code6", 0, 1, 0, 0, 1, 0],
+                    ["code7", 1, 0, 1, 0, 0, 0],
+                ],
+                columns=["Gene", "r0c0", "r0c1", "r0c2", "r1c0", "r1c1", "r1c2"],
+                index=np.arange(7) + 1,
+            )
+            r = 2
+            c = 3
+            decoding_kwargs = {'df_barcodes': df_barcodes, 'rounds': r,
+                               'channels': c, 'distribution': 'Bernoulli'}
+            app = Polaris(image_type='multiplex', decoding_kwargs=decoding_kwargs)
+
+            spots_image = np.random.rand(1, 128, 128, r*c) + 1
+            segmentation_image = np.random.rand(1, 128, 128, 1)
+            pred = app.predict(spots_image=spots_image,
+                               segmentation_image=segmentation_image)
+            df_spots = pred[0]
+            df_intensities = pred[1]
+            segmentation_result = pred[2]
+            self.assertIsInstance(df_spots, pd.DataFrame)
+            self.assertIsInstance(df_intensities, pd.DataFrame)
+            self.assertIsInstance(segmentation_result, np.ndarray)
+            self.assertAllEqual(segmentation_image.shape, segmentation_result.shape)
+            self.assertEqual(len(df_spots), len(df_intensities))
+            self.assertAllInRange(df_spots.probability, 0, 1)
