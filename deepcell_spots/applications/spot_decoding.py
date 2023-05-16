@@ -138,9 +138,9 @@ class SpotDecoding(Application):
         if len(df_barcodes.columns) != self.rounds * self.channels + 1:
             raise ValueError('The length of the barcode must equal rounds*channels.')
         
-        valid_vals = [0,1]
+        valid_vals = {0,1}
         vals = df_barcodes.values[:, 1:]
-        if set(valid_vals) != set(vals.flatten()):
+        if valid_vals != set(vals.flatten()):
             raise ValueError('Barcode values must be 0 or 1.')
 
         if 'Background' in df_barcodes.columns or 'Unknown' in df_barcodes.columns:
@@ -177,9 +177,9 @@ class SpotDecoding(Application):
                                  'distribution=\'Relaxed Bernoulli\'.')
             
             if self.distribution == 'Bernoulli':
-                if set([0,1]) != set(spots_intensities_vec.flatten()):
+                if {0,1} != set(spots_intensities_vec.flatten()):
                     raise ValueError('Spot intensities should be 0 or 1 when '
-                                 'distribution=\'Bernoulli\'.')
+                                     'distribution=\'Bernoulli\'.')
 
     def _decoding_output_to_dict(self, out):
         """Convert decoding output to dictionary.
