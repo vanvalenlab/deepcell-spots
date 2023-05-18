@@ -202,7 +202,7 @@ class SpotDecoding(Application):
 
         Returns:
             dict: Dictionary with keys: 'spot_index', 'probability', 'predicted_id',
-                'predicted_name'.
+                'predicted_name', 'source'.
 
         """
         barcodes_idx2name = dict(
@@ -213,6 +213,8 @@ class SpotDecoding(Application):
         decoded_dict['predicted_id'] = out['class_probs'].argmax(axis=1) + 1
         decoded_dict['predicted_name'] = np.array(
             list(map(barcodes_idx2name.get, decoded_dict['predicted_id'])))
+        decoded_dict['source'] = np.repeat(
+            'prediction', len(decoded_dict['probability'])).astype('U25')
         return decoded_dict
 
     def _threshold_unknown_by_prob(self, decoded_dict, unknown_index, thres_prob=0.5):
@@ -221,7 +223,7 @@ class SpotDecoding(Application):
 
         Args:
             decoded_dict (dict): Dictionary containing decoded spot identities with
-                keys: 'spot_index', 'probability', 'predicted_id', 'predicted_name'.
+                keys: 'spot_index', 'probability', 'predicted_id', 'predicted_name', 'source'.
             unknown_index (int): The index for Unknown category.
 
         Returns:
@@ -240,14 +242,14 @@ class SpotDecoding(Application):
 
         Args:
             decoding_dict (dict): Dictionary containing decoded spot identities with
-                keys: 'spot_index', 'probability', 'predicted_id', 'predicted_name'. This
+                keys: 'spot_index', 'probability', 'predicted_id', 'predicted_name', 'source'. This
                 dictionary has already been processed to assign low probability predictions
                 to 'Unknown'.
             spots_intensities_vec (numpy.array): Array of spot probability values with shape
                 [num_spots, r*c].
         Returns:
             dict: Dictionary with keys: 'spot_index', 'probability', 'predicted_id',
-                'predicted_name'.
+                'predicted_name', 'source'.
         """
 
         ch_names = list(self.df_barcodes.columns)
@@ -258,6 +260,7 @@ class SpotDecoding(Application):
 
         predicted_ids = decoding_dict['predicted_id']
         predicted_names = decoding_dict['predicted_name']
+        sources = decoding_dict['source']
 
         attempted = 0
         successful = 0
@@ -275,12 +278,14 @@ class SpotDecoding(Application):
                     new_gene = np.argwhere(scaled_dist_list == 1)[0][0]
                     predicted_ids[i] = new_gene
                     predicted_names[i] = self.df_barcodes['Gene'].values[new_gene]
+                    sources[i] = 'error rescue'
         
         result = {
             'spot_index': decoding_dict['spot_index'],
             'predicted_id': predicted_ids,
             'predicted_name': predicted_names,
-            'probability': decoding_dict['probability']
+            'probability': decoding_dict['probability'],
+            'source': sources
         }
 
         print('{} of {} rescue attempts were successful.'.format(successful, attempted))
@@ -296,7 +301,7 @@ class SpotDecoding(Application):
 
         Args:
             decoding_dict (dict): Dictionary containing decoded spot identities with
-                keys: 'spot_index', 'probability', 'predicted_id', 'predicted_name'.
+                keys: 'spot_index', 'probability', 'predicted_id', 'predicted_name', 'source'.
             spots_intensities_vec (numpy.array): Array of spot probability values with shape
                 [num_spots, r*c].
             df_barcodes (pd.DataFrame): Codebook, the first column is gene names ('Gene'),
@@ -317,7 +322,7 @@ class SpotDecoding(Application):
 
         Returns:
             dict: Dictionary with keys: 'spot_index', 'probability', 'predicted_id',
-                'predicted_name'.
+                'predicted_name', 'source'.
         """
 
         ch_names = list(self.df_barcodes.columns)
@@ -330,6 +335,7 @@ class SpotDecoding(Application):
         predicted_ids = decoding_dict['predicted_id']
         predicted_names = decoding_dict['predicted_name']
         probabilities = decoding_dict['probability']
+        sources = decoding_dict['source']
 
         attempted = 0
         successful = 0
@@ -360,11 +366,14 @@ class SpotDecoding(Application):
 
                     probabilities = np.append(probabilities, [-1])
 
+                    sources = np.append(sources, 'mixed rescue')
+
         result = {
             'spot_index': spot_indices,
             'predicted_id': predicted_ids,
             'predicted_name': predicted_names,
-            'probability': probabilities
+            'probability': probabilities,
+            'source': sources
         }
 
         print('{} of {} rescue attempts were successful.'.format(successful, attempted))
@@ -393,7 +402,7 @@ class SpotDecoding(Application):
 
         Returns:
             dict: Dictionary with keys: 'spot_index', 'probability', 'predicted_id',
-                'predicted_name'.
+                'predicted_name', 'source'.
         """
         self._validate_spots_intensities(spots_intensities_vec)
 
@@ -451,7 +460,7 @@ class SpotDecoding(Application):
 
         Returns:
             dict: Dictionary with keys: 'spot_index', 'probability', 'predicted_id',
-                'predicted_name'.
+                'predicted_name', 'source'.
         """
 
         return self._predict(
