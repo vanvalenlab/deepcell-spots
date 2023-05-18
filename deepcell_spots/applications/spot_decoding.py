@@ -276,7 +276,8 @@ class SpotDecoding(Application):
                     successful += 1
 
                     new_gene = np.argwhere(scaled_dist_list == 1)[0][0]
-                    predicted_ids[i] = new_gene
+                    # gene ids are 1-indexed
+                    predicted_ids[i] = new_gene + 1
                     predicted_names[i] = self.df_barcodes['Gene'].values[new_gene]
                     sources[i] = 'error rescue'
         
@@ -345,7 +346,9 @@ class SpotDecoding(Application):
                 gene_id = predicted_ids[i]
                 if gene_id > num_barcodes-2:
                     continue
-                barcode = barcodes_array[gene_id]
+                
+                # gene ids are 1-indexed
+                barcode = barcodes_array[gene_id-1]
                 intensities_updated = spots_intensities_vec[i].copy()
                 intensities_updated[barcode==1] = 0
 
@@ -356,10 +359,11 @@ class SpotDecoding(Application):
                 scaled_dist_list = dist_list * barcode_len
                 if 1 in scaled_dist_list:
                     successful += 1
-                    spot_indices = np.append(spot_indices, [i])
+                    spot_indices = np.append(spot_indices, [spot_indices[i]])
 
                     new_id = np.argwhere(scaled_dist_list == 1)[0][0]
-                    predicted_ids = np.append(predicted_ids, [new_id])
+                    # gene ids are 1-indexed
+                    predicted_ids = np.append(predicted_ids, [new_id + 1])
 
                     new_name = self.df_barcodes['Gene'].values[new_id]
                     predicted_names = np.append(predicted_names, [new_name])
@@ -428,7 +432,7 @@ class SpotDecoding(Application):
             decoding_dict, unknown_index, thres_prob=thres_prob)
 
         if rescue_errors:
-            print('Correcting errors...')
+            print('Revising errors...')
             decoding_dict_trunc = self._rescue_errors(decoding_dict_trunc,
                                                       spots_intensities_vec)
         if rescue_mixed:
