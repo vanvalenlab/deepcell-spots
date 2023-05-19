@@ -298,8 +298,11 @@ class Polaris(object):
             decoding_result = self.decoding_app.predict(
                 spots_intensities_vec, **decoding_training_kwargs)
         else:
-            decoding_result = {'probability': None,
-                               'predicted_id': None, 'predicted_name': None}
+            decoding_result = {'spot_index': None,
+                               'probability': None,
+                               'predicted_id': None,
+                               'predicted_name': None,
+                               'source': None}
 
         df_spots = output_to_df(spots_locations_vec, spots_cell_assignments_vec, decoding_result)
         df_intensities = pd.DataFrame(spots_intensities_vec)
