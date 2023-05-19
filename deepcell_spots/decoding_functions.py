@@ -603,9 +603,11 @@ def decoding_function(spots,
               optim, loss=TraceEnum_ELBO(max_plate_nesting=1))
     pyro.set_rng_seed(set_seed)
 
+    print('Training...')
     losses = train(svi, num_iter, data, codes, c, r,
                    min(num_spots, batch_size), distribution, params_mode)
 
+    print('Estimating barcode probabilities...')
     if distribution=='Gaussian':
         w_star = pyro.param('weights').detach()
 
