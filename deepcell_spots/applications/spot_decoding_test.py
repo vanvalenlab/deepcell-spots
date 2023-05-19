@@ -59,9 +59,11 @@ class TestSpotDecoding(test.TestCase):
         decoding_dict_trunc1 = app1.predict(
             spots_intensities_vec=spots_intensities_vec1, num_iter=20, batch_size=100
         )
+        self.assertEqual(decoding_dict_trunc1["spot_index"].shape, (100,))
         self.assertEqual(decoding_dict_trunc1["probability"].shape, (100,))
         self.assertEqual(decoding_dict_trunc1["predicted_id"].shape, (100,))
         self.assertEqual(decoding_dict_trunc1["predicted_name"].shape, (100,))
+        self.assertEqual(decoding_dict_trunc1["source"].shape, (100,))
 
         # simple functionality test
         df_barcodes2 = pd.DataFrame(
@@ -188,3 +190,18 @@ class TestSpotDecoding(test.TestCase):
         spots_intensities_vec[0,0] = 0.5
         with self.assertRaises(ValueError):
             _ = app.predict(spots_intensities_vec=spots_intensities_vec, num_iter=20, batch_size=100)
+
+        # Test mixed rescue
+        app = SpotDecoding(df_barcodes=df_barcodes1, rounds=2, channels=3,
+                           distribution='Bernoulli', params_mode='2*R*C')
+
+        spots_intensities_vec = np.random.rand(100, 6)
+        spots_intensities_vec[0,0] = 2
+        decoding_dict = app.predict(spots_intensities_vec=spots_intensities_vec, num_iter=20, batch_size=100,
+                                    rescue_mixed=True)
+        
+        self.assertEqual(decoding_dict["spot_index"].shape, (100,))
+        self.assertEqual(decoding_dict["probability"].shape, (100,))
+        self.assertEqual(decoding_dict["predicted_id"].shape, (100,))
+        self.assertEqual(decoding_dict["predicted_name"].shape, (100,))
+        self.assertEqual(decoding_dict["source"].shape, (100,))
