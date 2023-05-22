@@ -68,7 +68,7 @@ def output_to_df(spots_locations_vec, cell_id_list, decoding_result):
     return df
 
 
-class Polaris(object):
+class Polaris:
     """Loads spot detection and cell segmentation applications
     from deepcell_spots and deepcell_tf, respectively.
 
@@ -292,16 +292,16 @@ class Polaris(object):
 
         return(result)
 
-    def predict(self,
-                spots_image,
-                segmentation_image=None,
-                background_image=None,
-                image_mpp=None,
-                threshold=0.95,
-                clip=True,
-                mask_threshold=0.5,
-                maxpool_extra_pixel_num=0,
-                decoding_training_kwargs={}):
+    def _predict(self,
+                 spots_image,
+                 segmentation_image,
+                 background_image,
+                 image_mpp,
+                 threshold,
+                 clip,
+                 mask_threshold,
+                 maxpool_extra_pixel_num,
+                 decoding_training_kwargs):
         """Generates prediction output consisting of a labeled cell segmentation image,
         detected spot locations, and a dictionary of spot locations assigned to labeled
         cells of the input.
@@ -401,3 +401,64 @@ class Polaris(object):
         df_spots = output_to_df(spots_locations_vec, spots_cell_assignments_vec, decoding_result)
         df_intensities = pd.DataFrame(spots_intensities_vec)
         return df_spots, df_intensities, segmentation_result
+
+    def predict(self,
+                spots_image,
+                segmentation_image=None,
+                background_image=None,
+                image_mpp=None,
+                threshold=0.95,
+                clip=True,
+                mask_threshold=0.5,
+                maxpool_extra_pixel_num=0,
+                decoding_training_kwargs={}):
+        """Generates prediction output consisting of a labeled cell segmentation image,
+        detected spot locations, and a dictionary of spot locations assigned to labeled
+        cells of the input.
+
+        Input images are required to have 4 dimensions ``[batch, x, y, channel]``. Additional
+        empty dimensions can be added using ``np.expand_dims``.
+
+        Args:
+            spots_image (numpy.array): Input image for spot detection with shape
+                ``[batch, x, y, channel]``. Channel dimension should equal ``rounds x channels``.
+            segmentation_image (numpy.array): Input image for cell segmentation with shape
+                ``[batch, x, y, channel]``. Channel dimension should have a value of 1.
+                Defaults to None.
+            background_image (numpy.array): Input image for masking bright background objects with
+                shape ``[batch, x, y, channel]``. Channel dimension should less than or equal to
+                the number of imaging channels. Defaults to None.
+            image_mpp (float): Microns per pixel for ``image``.
+            threshold (float): Probability threshold for a pixel to be
+                considered as a spot.
+            clip (bool): Determines if pixel values will be clipped by percentile.
+                Defaults to True.
+            mask_threshold (float): Percentile of pixel values in background image used to
+                create a mask for bright background objects.
+            maxpool_extra_pixel_num (int): Number of extra pixel for max pooling. Defaults
+                to 0, means no max pooling. For any number t, there will be a pool with
+                shape ``[-t, t] x [-t, t]``.
+            decoding_training_kwargs (dict): Including num_iter, batch_size, thres_prob.
+        Raises:
+            ValueError: Threshold value must be between 0 and 1.
+            ValueError: Segmentation application must be instantiated if segmentation
+                image is defined.
+
+        Returns:
+            df_spots (pandas.DataFrame): Columns are x, y, batch_id, cell_id, probability,
+                predicted_id, preicted_name. Cell_id = 0 means background.
+            df_intensities (pandas.DataFrame): Columns are channels and rows are spots.
+            segmentation_result (numpy.array): Segmentation mask with shape ``[batch, x, y, 1]``.
+        """
+
+        return self._predict(
+            spots_image=spots_image,
+            segmentation_image=segmentation_image,
+            background_image=background_image,
+            image_mpp=image_mpp,
+            threshold=threshold,
+            clip=clip,
+            mask_threshold=mask_threshold,
+            maxpool_extra_pixel_num=maxpool_extra_pixel_num,
+            decoding_training_kwargs=decoding_training_kwargs
+        )

@@ -38,7 +38,7 @@ from deepcell.applications import Application
 from deepcell_spots.decoding_functions import decoding_function
 
 
-class SpotDecoding(Application):
+class SpotDecoding:
     """Initialize a model for spot decoding of multiplex images.
 
     The ``predict`` method handles inference procedure. It infers the
@@ -96,16 +96,6 @@ class SpotDecoding(Application):
 
         self._validate_codebook(df_barcodes)
         self.df_barcodes = self._add_bkg_unknown_to_barcodes(df_barcodes)
-
-        super(SpotDecoding, self).__init__(
-            model=None,
-            model_image_shape=[0],
-            model_mpp=None,
-            preprocessing_fn=None,
-            postprocessing_fn=None,
-            format_model_output_fn=None,
-            dataset_metadata=self.dataset_metadata,
-            model_metadata=self.model_metadata)
 
     def _validate_codebook(self, df_barcodes):
         """Validate the format of the input codebook.
