@@ -184,8 +184,10 @@ class TestPolaris(test.TestCase):
             app = Polaris()
             spots_image = np.random.rand(1, 128, 128, 1)
             segmentation_image = np.random.rand(1, 128, 128, 1)
+            background_image = np.random.rand(1, 128, 128, 1)
             pred = app.predict(spots_image=spots_image,
-                               segmentation_image=segmentation_image)
+                               segmentation_image=segmentation_image,
+                               background_image=background_image)
             df_spots = pred[0]
             df_intensities = pred[1]
             segmentation_result = pred[2]
@@ -220,8 +222,10 @@ class TestPolaris(test.TestCase):
 
             spots_image = np.random.rand(1, 128, 128, r*c) + 1
             segmentation_image = np.random.rand(1, 128, 128, 1)
+            background_image = np.random.rand(1, 128, 128, 1)
             pred = app.predict(spots_image=spots_image,
-                               segmentation_image=segmentation_image)
+                               segmentation_image=segmentation_image,
+                               background_image=background_image)
             df_spots = pred[0]
             df_intensities = pred[1]
             segmentation_result = pred[2]
@@ -254,8 +258,10 @@ class TestPolaris(test.TestCase):
 
             spots_image = np.random.rand(1, 128, 128, r*c) + 1
             segmentation_image = np.random.rand(1, 128, 128, 1)
+            background_image = np.random.rand(1, 128, 128, 1)
             pred = app.predict(spots_image=spots_image,
-                               segmentation_image=segmentation_image)
+                               segmentation_image=segmentation_image,
+                               background_image=background_image)
             df_spots = pred[0]
             df_intensities = pred[1]
             segmentation_result = pred[2]
