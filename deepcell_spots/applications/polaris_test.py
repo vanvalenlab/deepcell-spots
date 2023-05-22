@@ -118,6 +118,10 @@ class TestPolaris(test.TestCase):
                 _ = app.predict(spots_image=spots_image, threshold=1.1)
             with self.assertRaises(ValueError):
                 _ = app.predict(spots_image=spots_image, threshold=-1.1)
+            with self.assertRaises(ValueError):
+                _ = app.predict(spots_image=spots_image, mask_threshold=1.1)
+            with self.assertRaises(ValueError):
+                _ = app.predict(spots_image=spots_image, mask_threshold=-1.1)
 
             # test segmentation app error
             app = Polaris(segmentation_type='no segmentation')
@@ -128,7 +132,7 @@ class TestPolaris(test.TestCase):
                                 segmentation_image=segmentation_image)
 
             # test multiplex image type
-            app = Polaris(image_type='multiplex')
+            app = Polaris(image_type='multiplex', segmentation_type='mesmer')
             self.assertIsNone(app.decoding_app)
 
             df_barcodes = pd.DataFrame(
@@ -150,12 +154,40 @@ class TestPolaris(test.TestCase):
             app = Polaris(image_type='multiplex', decoding_kwargs=decoding_kwargs)
             self.assertIsNotNone(app.decoding_app)
 
+            with self.assertRaises(ValueError):
+                spots_image = np.random.rand(1, 128, 128, 1)
+                _ = app.predict(spots_image=spots_image)
+            with self.assertRaises(ValueError):
+                spots_image = np.random.rand(1, 128, 128, 6)
+                segmentation_image = np.random.rand(2, 128, 128, 1)
+                _ = app.predict(spots_image=spots_image,
+                                segmentation_image=segmentation_image)
+            with self.assertRaises(ValueError):
+                spots_image = np.random.rand(1, 128, 128, 6)
+                segmentation_image = np.random.rand(1, 128, 128, 2)
+                _ = app.predict(spots_image=spots_image,
+                                segmentation_image=segmentation_image)
+            with self.assertRaises(ValueError):
+                spots_image = np.random.rand(1, 128, 128, 6)
+                segmentation_image = np.random.rand(2, 128, 128, 1)
+                background_image = np.random.rand(2, 128, 128, 1)
+                _ = app.predict(spots_image=spots_image,
+                                segmentation_image=segmentation_image)
+            with self.assertRaises(ValueError):
+                spots_image = np.random.rand(1, 128, 128, 6)
+                segmentation_image = np.random.rand(1, 128, 128, 2)
+                background_image = np.random.rand(1, 128, 128, 4)
+                _ = app.predict(spots_image=spots_image,
+                                segmentation_image=segmentation_image)
+
             # test prediction type -- singleplex
             app = Polaris()
             spots_image = np.random.rand(1, 128, 128, 1)
             segmentation_image = np.random.rand(1, 128, 128, 1)
+            background_image = np.random.rand(1, 128, 128, 1)
             pred = app.predict(spots_image=spots_image,
-                               segmentation_image=segmentation_image)
+                               segmentation_image=segmentation_image,
+                               background_image=background_image)
             df_spots = pred[0]
             df_intensities = pred[1]
             segmentation_result = pred[2]
@@ -168,7 +200,7 @@ class TestPolaris(test.TestCase):
             self.assertAllEqual(df_spots.predicted_id, [None]*len(df_spots))
             self.assertAllEqual(df_spots.predicted_name, [None]*len(df_spots))
 
-            # test prediction type -- multiplex Gaussian
+            # test prediction type -- multivariate Gaussian
             df_barcodes = pd.DataFrame(
                 [
                     ["code1", 1, 1, 0, 0, 0, 0],
@@ -190,8 +222,10 @@ class TestPolaris(test.TestCase):
 
             spots_image = np.random.rand(1, 128, 128, r*c) + 1
             segmentation_image = np.random.rand(1, 128, 128, 1)
+            background_image = np.random.rand(1, 128, 128, 1)
             pred = app.predict(spots_image=spots_image,
-                               segmentation_image=segmentation_image)
+                               segmentation_image=segmentation_image,
+                               background_image=background_image)
             df_spots = pred[0]
             df_intensities = pred[1]
             segmentation_result = pred[2]
@@ -224,8 +258,10 @@ class TestPolaris(test.TestCase):
 
             spots_image = np.random.rand(1, 128, 128, r*c) + 1
             segmentation_image = np.random.rand(1, 128, 128, 1)
+            background_image = np.random.rand(1, 128, 128, 1)
             pred = app.predict(spots_image=spots_image,
-                               segmentation_image=segmentation_image)
+                               segmentation_image=segmentation_image,
+                               background_image=background_image)
             df_spots = pred[0]
             df_intensities = pred[1]
             segmentation_result = pred[2]
