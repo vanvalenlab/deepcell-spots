@@ -159,6 +159,8 @@ class Polaris(object):
         self.image_type = image_type
         if self.image_type == 'singleplex':
             self.decoding_app = None
+            self.rounds = 1
+            self.channels = 1
         elif self.image_type == 'multiplex':
             if not decoding_kwargs:
                 self.decoding_app = None
