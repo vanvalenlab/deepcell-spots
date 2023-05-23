@@ -363,7 +363,7 @@ class Polaris:
                 to 0, means no max pooling. For any number t, there will be a pool with
                 shape `[-t, t] x [-t, t]`.
             decoding_training_kwargs (dict): Including `num_iter`, `batch_size`,
-                `thres_prob`.
+                `pred_prob_thresh`.
         Raises:
             ValueError: The size of the channel dimension of `spots_image` must equal
                 `rounds * channels` for multiplex predictions.
@@ -485,7 +485,7 @@ class Polaris:
                 to 0, means no max pooling. For any number t, there will be a pool with
                 shape `[-t, t] x [-t, t]`.
             decoding_training_kwargs (dict): Including `num_iter`, `batch_size`,
-                `thres_prob`.
+                `pred_prob_thresh`.
         Raises:
             ValueError: The size of the channel dimension of `spots_image` must equal
                 `rounds * channels` for multiplex predictions.
