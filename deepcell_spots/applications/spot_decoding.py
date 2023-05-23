@@ -55,7 +55,7 @@ class SpotDecoding:
         decoding_dict = app.predict(spots_intensities_vec)
 
     Args:
-        df_barcodes (pandas.DataFrame): Codebook, the first column is gene names ('Gene'),
+        df_barcodes (pandas.DataFrame): Codebook, the first column is gene names (``'Gene'``),
                 the rest are binary barcodes, encoded using 1 and 0. Index should start at 1.
                 For exmaple, for a (rounds=10, channels=2) codebook, it should look like::
             
@@ -74,10 +74,10 @@ class SpotDecoding:
         rounds (int): Number of rounds.
         channels (int): Number of channels.
         distribution (str): Distribution for spot intensities in spot decoding model. Valid options:
-            ['Gaussian', 'Bernoulli', 'Relaxed Bernoulli']. Defaults to 'Relaxed Bernoulli'.
+            ``['Gaussian', 'Bernoulli', 'Relaxed Bernoulli']``. Defaults to ``'Relaxed Bernoulli'``.
         params_mode (str): Number of model parameters, whether the parameters are shared across
             channels or rounds for model of Bernoulli or Relaxed Bernoulli distributions.
-            Valid options: ['2', '2*R', '2*C', '2*R*C', 'Gaussian']. Defaults to '2*R*C'. 
+            Valid options: ``['2', '2*R', '2*C', '2*R*C', 'Gaussian']``. Defaults to ``'2*R*C'``. 
     """
 
     dataset_metadata = {}
@@ -101,7 +101,7 @@ class SpotDecoding:
         """Validate the format of the input codebook.
 
         Args:
-            df_barcodes (pandas.DataFrame): Codebook, the first column is gene names ('Gene'),
+            df_barcodes (pandas.DataFrame): Codebook, the first column is gene names (``'Gene'``),
                 the rest are binary barcodes, encoded using 1 and 0. Index should start at 1.
                 For exmaple, for a (rounds=10, channels=2) codebook, it should look like::
             
@@ -137,11 +137,11 @@ class SpotDecoding:
                              'These values will be added automatically.')
 
     def _add_bkg_unknown_to_barcodes(self, df_barcodes):
-        """Add Background and Unknown barcodes to the codebook. The barcode of Background
-        is all zeros and the barcode for Unknown is all -1s.
+        """Add ``Background`` and ``Unknown`` barcodes to the codebook. The barcode of
+        ``Background`` is all zeros and the barcode for ``Unknown`` is all -1s.
 
         Args:
-            df_barcodes (pd.DataFrame): Codebook, the first column is gene names ('Gene'),
+            df_barcodes (pd.DataFrame): Codebook, the first column is gene names (``'Gene'``),
             the rest are binary barcodes, encoded using 1 and 0. Index should start at 1.
             For exmaple, for a (rounds=10, channels=2) codebook, it should look like::
             
@@ -172,7 +172,7 @@ class SpotDecoding:
 
         Args:
             spots_intensities_vec (numpy.array): Array of spot probability values with shape
-                [num_spots, r*c].
+                [num_spots, (rounds * channels)].
         """
         if self.distribution == 'Relaxed Bernoulli':
             if (spots_intensities_vec > 1).any() or (spots_intensities_vec < 0).any():
@@ -188,11 +188,11 @@ class SpotDecoding:
         """Convert decoding output to dictionary.
 
         Args:
-            out (dict): Dictionary with keys: 'class_probs', 'params'.
+            out (dict): Dictionary with keys: ``'class_probs'``, ``'params'``.
 
         Returns:
-            dict: Dictionary with keys: 'spot_index', 'probability', 'predicted_id',
-                'predicted_name', 'source'.
+            dict: Dictionary with keys: ``'spot_index'``, ``'probability'``, ``'predicted_id'``,
+                ``'predicted_name'``, ``'source'``.
 
         """
         barcodes_idx2name = dict(
@@ -213,12 +213,13 @@ class SpotDecoding:
 
         Args:
             decoded_dict (dict): Dictionary containing decoded spot identities with
-                keys: 'spot_index', 'probability', 'predicted_id', 'predicted_name', 'source'.
-            unknown_index (int): The index for Unknown category.
+                keys: ``'spot_index'``, ``'probability'``, ``'predicted_id'``,
+                ``'predicted_name'``, ``'source'``.
+            unknown_index (int): The index for ``Unknown`` category.
 
         Returns:
             dict: similar to input, just replace the low probability
-                ones with Unknown.
+                ones with ``Unknown``.
         """
         decoded_dict['predicted_id'][decoded_dict['probability'] < thres_prob] = unknown_index
         decoded_dict['predicted_name'][decoded_dict['probability'] < thres_prob] = 'Unknown'
@@ -227,19 +228,19 @@ class SpotDecoding:
     def _rescue_errors(self,
                        decoding_dict,
                        spots_intensities_vec):
-        """Rescues decoded spots assigned as 'Background' or 'Unknown' by if their spot
+        """Rescues decoded spots assigned as ``'Background'`` or ``'Unknown'`` by if their spot
         probability values have a Hamming distance of 1 from each of the barcodes.
 
         Args:
             decoding_dict (dict): Dictionary containing decoded spot identities with
-                keys: 'spot_index', 'probability', 'predicted_id', 'predicted_name', 'source'. This
-                dictionary has already been processed to assign low probability predictions
-                to 'Unknown'.
+                keys: ``'spot_index'``, ``'probability'``, ``'predicted_id'``,
+                ``'predicted_name'``, ``'source'``. This dictionary has already been processed to
+                assign low probability predictions to ``'Unknown'``.
             spots_intensities_vec (numpy.array): Array of spot probability values with shape
-                [num_spots, r*c].
+                ``[num_spots, (rounds * channels)]``.
         Returns:
-            dict: Dictionary with keys: 'spot_index', 'probability', 'predicted_id',
-                'predicted_name', 'source'.
+            dict: Dictionary with keys: ``'spot_index'``, ``'probability'``, ``'predicted_id'``,
+                ``'predicted_name'``, ``'source'``.
         """
 
         ch_names = list(self.df_barcodes.columns)
@@ -287,15 +288,16 @@ class SpotDecoding:
                             decoding_dict,
                             spots_intensities_vec,
                             prob_threshold=0.95):
-        """Rescues decoded spots assigned as 'Background' or 'Unknown' by if their spot
+        """Rescues decoded spots assigned as ``'Background'`` or ``'Unknown'`` by if their spot
         probability values have a Hamming distance of 1 from each of the barcodes.
 
         Args:
             decoding_dict (dict): Dictionary containing decoded spot identities with
-                keys: 'spot_index', 'probability', 'predicted_id', 'predicted_name', 'source'.
+                keys: ``'spot_index'``, ``'probability'``, ``'predicted_id'``,
+                ``'predicted_name'``, ``'source'``.
             spots_intensities_vec (numpy.array): Array of spot probability values with shape
-                [num_spots, r*c].
-            df_barcodes (pd.DataFrame): Codebook, the first column is gene names ('Gene'),
+                ``[num_spots, (rounds * channels)]``.
+            df_barcodes (pd.DataFrame): Codebook, the first column is gene names (``'Gene'``),
                 the rest are binary barcodes, encoded using 1 and 0. Index should start at 1.
                 For exmaple, for a (rounds=10, channels=2) codebook, it should look like::
             
@@ -312,8 +314,8 @@ class SpotDecoding:
                     Name: r9c1, dtype: int64
 
         Returns:
-            dict: Dictionary with keys: 'spot_index', 'probability', 'predicted_id',
-                'predicted_name', 'source'.
+            dict: Dictionary with keys: ``'spot_index'``, ``'probability'``, ``'predicted_id'``,
+                ``'predicted_name'``, ``'source'``.
         """
 
         ch_names = list(self.df_barcodes.columns)
@@ -385,18 +387,18 @@ class SpotDecoding:
 
         Args:
             spots_intensities_vec (numpy.array): Array of spot probability values with shape
-                [num_spots, r*c].
+                ``[num_spots, (rounds * channels)]``.
             num_iter (int): Number of iterations for training. Defaults to 500.
             batch_size (int): Size of batches for training. Defaults to 1000.
             thres_prob (float): The threshold of unknown category, within [0,1]. Defaults to 0.5.
-            rescue_errors (bool): Whether to check if 'Background'-  and 'Unknown'-assigned spots
-                have a Hamming distance of 1 to other barcodes.
+            rescue_errors (bool): Whether to check if ``'Background'``-  and ``'Unknown'``-assigned
+                spots have a Hamming distance of 1 to other barcodes.
             rescue_mixed (bool): Whether to check if low probability predictions are the result of
                 two mixed barcodes.
 
         Returns:
-            dict: Dictionary with keys: 'spot_index', 'probability', 'predicted_id',
-                'predicted_name', 'source'.
+            dict: Dictionary with keys: ``'spot_index'``, ``'probability'``, ``'predicted_id'``,
+                ``'predicted_name'``, ``'source'``.
         """
         self._validate_spots_intensities(spots_intensities_vec)
 
@@ -443,18 +445,18 @@ class SpotDecoding:
 
         Args:
             spots_intensities_vec (numpy.array): Array of spot probability values with shape
-                [num_spots, r*c].
+                ``[num_spots, (rounds * channels)]``.
             num_iter (int): Number of iterations for training. Defaults to 500.
             batch_size (int): Size of batches for training. Defaults to 1000.
             thres_prob (float): The threshold of unknown category, within [0,1]. Defaults to 0.5.
-            rescue_errors (bool): Whether to check if 'Background'- and 'Unknown'-assigned spots
-                have a Hamming distance of 1 to other barcodes.
+            rescue_errors (bool): Whether to check if ``'Background'``-  and ``'Unknown'``-assigned
+                spots have a Hamming distance of 1 to other barcodes.
             rescue_mixed (bool): Whether to check if low probability predictions are the result of
                 two mixed barcodes.
 
         Returns:
-            dict: Dictionary with keys: 'spot_index', 'probability', 'predicted_id',
-                'predicted_name', 'source'.
+            dict: Dictionary with keys: ``'spot_index'``, ``'probability'``, ``'predicted_id'``,
+                ``'predicted_name'``, ``'source'``.
         """
 
         return self._predict(

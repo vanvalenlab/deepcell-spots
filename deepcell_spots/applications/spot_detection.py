@@ -197,7 +197,7 @@ class SpotDetection(Application):
             image (numpy.array): Input image with shape
                 ``[batch, x, y, channel]``.
             batch_size (int): Number of images to predict on per batch.
-            pad_mode (str): The padding mode, one of "constant" or "reflect".
+            pad_mode (str): The padding mode, one of ``"constant"`` or ``"reflect"``.
             preprocess_kwargs (dict): Keyword arguments to pass to the
                 pre-processing function.
             postprocess_kwargs (dict): Keyword arguments to pass to the
@@ -254,7 +254,7 @@ class SpotDetection(Application):
             image (numpy.array): Input image with shape
                 ``[batch, x, y, channel]``.
             batch_size (int): Number of images to predict on per batch.
-            pad_mode (str): The padding mode, one of "constant" or "reflect".
+            pad_mode (str): The padding mode, one of ``"constant"`` or ``"reflect"``.
             preprocess_kwargs (dict): Keyword arguments to pass to the
                 pre-processing function.
             postprocess_kwargs (dict): Keyword arguments to pass to the
@@ -262,7 +262,7 @@ class SpotDetection(Application):
             threshold (float): Probability threshold for a pixel to be
                 considered as a spot.
             clip (bool): Determines if pixel values will be clipped by percentile.
-                Defaults to True.
+                Defaults to ``True``.
 
         Raises:
             ValueError: Input data must match required rank of the application,

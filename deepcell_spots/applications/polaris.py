@@ -110,18 +110,18 @@ class Polaris:
 
     Args:
         image_type (str): The type of the image. Valid values are
-            'singleplex' and 'multiplex'. Defaults to 'singleplex'.
+            ``'singleplex'`` and ``'multiplex'``. Defaults to ``'singleplex'``.
         segmentation_model (tf.keras.Model): The model to load.
             If ``None``, a pre-trained model will be downloaded.
         segmentation_type (str): The prediction type
             for generating segmentation predictions. Valid values
-            are 'cytoplasm', 'nucleus', 'mesmer', 'no segmentation'.
-            Defaults to 'cytoplasm'.
+            are ``'cytoplasm'``, ``'nucleus'``, ``'mesmer'``, ``'no segmentation'``.
+            Defaults to ``'cytoplasm'``.
         spots_model (tf.keras.Model): The model to load.
             If ``None``, a pre-trained model will be downloaded.
         decoding_kwargs (dict): Keyword arguments to pass to the decoding method.
             df_barcodes, rounds, channels. Defaults to empty, no decoding is performed.
-            df_barcodes (pandas.DataFrame): Codebook, the first column is gene names ('Gene'),
+            df_barcodes (pandas.DataFrame): Codebook, the first column is gene names (``'Gene'``),
                 the rest are binary barcodes, encoded using 1 and 0. Index should start at 1.
                 For exmaple, for a (rounds=10, channels=2) codebook, it should look the following
                 (see `notebooks/Multiplex FISH Analysis.ipynb` for examples)::
@@ -237,13 +237,13 @@ class Polaris:
                              'between 0 and 1.'.format())
 
     def _predict_spots_image(self, spots_image, clip):
-        """Iterate through all channels and generate model output (probability maps).
+        """Iterate through all channels and generate model output (pixel-wise spot probability).
 
         Args:
             spots_image (numpy.array): Input image for spot detection with shape
                 ``[batch, x, y, channel]``.
             clip (bool): Determines if pixel values will be clipped by percentile.
-                Defaults to True.
+                Defaults to ``True``.
 
         Returns:
             numpy.array: Output probability map with shape ``[batch, x, y, channel]``.
@@ -328,15 +328,17 @@ class Polaris:
             maxpool_extra_pixel_num (int): Number of extra pixel for max pooling. Defaults
                 to 0, means no max pooling. For any number t, there will be a pool with
                 shape ``[-t, t] x [-t, t]``.
-            decoding_training_kwargs (dict): Including num_iter, batch_size, thres_prob.
+            decoding_training_kwargs (dict): Including ``num_iter``, ``batch_size``,
+                ``thres_prob``.
         Raises:
             ValueError: Threshold value must be between 0 and 1.
             ValueError: Segmentation application must be instantiated if segmentation
                 image is defined.
 
         Returns:
-            df_spots (pandas.DataFrame): Columns are x, y, batch_id, cell_id, probability,
-                predicted_id, preicted_name. Cell_id = 0 means background.
+            df_spots (pandas.DataFrame): Columns are ``x``, ``y``, ``batch_id``, ``cell_id``,
+                ``probability``, ``predicted_id``, ``predicted_name``. ``cell_id = 0`` means
+                the spot is outside the cells or tissue.
             df_intensities (pandas.DataFrame): Columns are channels and rows are spots.
             segmentation_result (numpy.array): Segmentation mask with shape ``[batch, x, y, 1]``.
         """
@@ -438,15 +440,17 @@ class Polaris:
             maxpool_extra_pixel_num (int): Number of extra pixel for max pooling. Defaults
                 to 0, means no max pooling. For any number t, there will be a pool with
                 shape ``[-t, t] x [-t, t]``.
-            decoding_training_kwargs (dict): Including num_iter, batch_size, thres_prob.
+            decoding_training_kwargs (dict): Including ``num_iter``, ``batch_size``,
+                ``thres_prob``.
         Raises:
             ValueError: Threshold value must be between 0 and 1.
             ValueError: Segmentation application must be instantiated if segmentation
                 image is defined.
 
         Returns:
-            df_spots (pandas.DataFrame): Columns are x, y, batch_id, cell_id, probability,
-                predicted_id, preicted_name. Cell_id = 0 means background.
+            df_spots (pandas.DataFrame): Columns are ``x``, ``y``, ``batch_id``, ``cell_id``,
+                ``probability``, ``predicted_id``, ``predicted_name``. ``cell_id = 0`` means
+                background.
             df_intensities (pandas.DataFrame): Columns are channels and rows are spots.
             segmentation_result (numpy.array): Segmentation mask with shape ``[batch, x, y, 1]``.
         """
