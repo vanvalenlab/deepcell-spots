@@ -220,7 +220,7 @@ class SpotDecoding:
             'prediction', len(decoded_dict['probability'])).astype('U25')
         return decoded_dict
 
-    def _threshold_unknown_by_prob(self, decoded_dict, unknown_index, thres_prob=0.5):
+    def _threshold_unknown_by_prob(self, decoded_dict, unknown_index, pred_prob_thresh=0.5):
         """Threshold the decoded spots to identify unknown. If the highest probability
         if below a certain threshold, the spot will be classfied as Unknown.
 
@@ -234,8 +234,8 @@ class SpotDecoding:
             dict: similar to input, just replace the low probability
                 ones with `Unknown`.
         """
-        decoded_dict['predicted_id'][decoded_dict['probability'] < thres_prob] = unknown_index
-        decoded_dict['predicted_name'][decoded_dict['probability'] < thres_prob] = 'Unknown'
+        decoded_dict['predicted_id'][decoded_dict['probability'] < pred_prob_thresh] = unknown_index
+        decoded_dict['predicted_name'][decoded_dict['probability'] < pred_prob_thresh] = 'Unknown'
         return decoded_dict
 
     def _rescue_errors(self,
@@ -393,7 +393,7 @@ class SpotDecoding:
                  spots_intensities_vec,
                  num_iter,
                  batch_size,
-                 thres_prob,
+                 pred_prob_thresh,
                  rescue_errors,
                  rescue_mixed):
         """Predict the gene assignment of each spot.
@@ -403,7 +403,7 @@ class SpotDecoding:
                 `[num_spots, (rounds * channels)]`.
             num_iter (int): Number of iterations for training. Defaults to 500.
             batch_size (int): Size of batches for training. Defaults to 1000.
-            thres_prob (float): The threshold of unknown category, within [0,1]. Defaults to 0.5.
+            pred_prob_thresh (float): The threshold of unknown category, within [0,1]. Defaults to 0.5.
             rescue_errors (bool): Whether to check if `'Background'`-  and `'Unknown'`-assigned
                 spots have a Hamming distance of 1 to other barcodes.
             rescue_mixed (bool): Whether to check if low probability predictions are the result of
@@ -434,7 +434,7 @@ class SpotDecoding:
                                 params_mode=self.params_mode)
         decoding_dict = self._decoding_output_to_dict(out)
         decoding_dict_trunc = self._threshold_unknown_by_prob(
-            decoding_dict, unknown_index, thres_prob=thres_prob)
+            decoding_dict, unknown_index, pred_prob_thresh=pred_prob_thresh)
 
         if rescue_errors:
             print('Revising errors...')
@@ -451,7 +451,7 @@ class SpotDecoding:
                 spots_intensities_vec,
                 num_iter=500,
                 batch_size=1000,
-                thres_prob=0.5,
+                pred_prob_thresh=0.5,
                 rescue_errors=True,
                 rescue_mixed=False):
         """Predict the gene assignment of each spot.
@@ -461,7 +461,7 @@ class SpotDecoding:
                 `[num_spots, (rounds * channels)]`.
             num_iter (int): Number of iterations for training. Defaults to 500.
             batch_size (int): Size of batches for training. Defaults to 1000.
-            thres_prob (float): The threshold of unknown category, within [0,1]. Defaults to 0.5.
+            pred_prob_thresh (float): The threshold of unknown category, within [0,1]. Defaults to 0.5.
             rescue_errors (bool): Whether to check if `'Background'`-  and `'Unknown'`-assigned
                 spots have a Hamming distance of 1 to other barcodes.
             rescue_mixed (bool): Whether to check if low probability predictions are the result of
@@ -476,6 +476,6 @@ class SpotDecoding:
             spots_intensities_vec=spots_intensities_vec,
             num_iter=num_iter,
             batch_size=batch_size,
-            thres_prob=thres_prob,
+            pred_prob_thresh=pred_prob_thresh,
             rescue_errors=rescue_errors,
             rescue_mixed=rescue_mixed)
