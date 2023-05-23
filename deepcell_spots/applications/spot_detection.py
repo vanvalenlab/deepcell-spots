@@ -84,7 +84,7 @@ class SpotDetection(Application):
         coords = app.predict(im)
 
     Args:
-        model (tf.keras.Model): The model to load. If ``None``,
+        model (tf.keras.Model): The model to load. If `None`,
             a pre-trained model will be downloaded.
     """
 
@@ -189,15 +189,15 @@ class SpotDetection(Application):
         This differs from parent Application class which returns a labeled image.
 
         Input images are required to have 4 dimensions
-        ``[batch, x, y, channel]``.
+        `[batch, x, y, channel]`.
 
         Additional empty dimensions can be added using ``np.expand_dims``.
 
         Args:
             image (numpy.array): Input image with shape
-                ``[batch, x, y, channel]``.
+                `[batch, x, y, channel]`.
             batch_size (int): Number of images to predict on per batch.
-            pad_mode (str): The padding mode, one of ``"constant"`` or ``"reflect"``.
+            pad_mode (str): The padding mode, one of `"constant"` or `"reflect"`.
             preprocess_kwargs (dict): Keyword arguments to pass to the
                 pre-processing function.
             postprocess_kwargs (dict): Keyword arguments to pass to the
@@ -246,15 +246,15 @@ class SpotDetection(Application):
         functions.
 
         Input images are required to have 4 dimensions
-        ``[batch, x, y, channel]``.
+        `[batch, x, y, channel]`.
 
         Additional empty dimensions can be added using ``np.expand_dims``.
 
         Args:
             image (numpy.array): Input image with shape
-                ``[batch, x, y, channel]``.
+                `[batch, x, y, channel]`.
             batch_size (int): Number of images to predict on per batch.
-            pad_mode (str): The padding mode, one of ``"constant"`` or ``"reflect"``.
+            pad_mode (str): The padding mode, one of `"constant"` or `"reflect"`.
             preprocess_kwargs (dict): Keyword arguments to pass to the
                 pre-processing function.
             postprocess_kwargs (dict): Keyword arguments to pass to the
@@ -262,7 +262,7 @@ class SpotDetection(Application):
             threshold (float): Probability threshold for a pixel to be
                 considered as a spot.
             clip (bool): Determines if pixel values will be clipped by percentile.
-                Defaults to ``True``.
+                Defaults to `True`.
 
         Raises:
             ValueError: Input data must match required rank of the application,
