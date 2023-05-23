@@ -132,7 +132,7 @@ def instantiate_rb_params(r, c, codes, params_mode):
         codes (torch.tensor): Codebook formatted as torch array with shape
             ``[num_barcodes + 1, r * c]``.
         params_mode (str): Number of model parameters, whether the parameters are shared across
-            channels or rounds. valid options: ['2', '2*R', '2*C', '2*R*C'].
+            channels or rounds. valid options: ``['2', '2*R', '2*C', '2*R*C']``.
 
     Returns:
         scaled_sigma (torch.tensor): Sigma parameter of Relaxed Bernoulli.
@@ -200,7 +200,7 @@ def instantiate_bernoulli_params(r, c, codes, params_mode):
         codes (torch.tensor): Codebook formatted as torch array with shape
             ``[num_barcodes + 1, r * c]``.
         params_mode (str): Number of model parameters, whether the parameters are shared across
-            channels or rounds. valid options: ['2', '2*R', '2*C', '2*R*C'].
+            channels or rounds. valid options: ``['2', '2*R', '2*C', '2*R*C']``.
 
     Returns:
         scaled_sigma (torch.tensor): Sigma parameter of Bernoulli.
@@ -284,15 +284,15 @@ def model_constrained_tensor(
     differ across channels or rounds.
 
     Args:
-        data (torch.tensor): Input data formatted as torch array with shape ``[num_spots, r * c]``.
+        data (torch.tensor): Input data formatted as torch array with shape `[num_spots, r * c]`.
         codes (torch.tensor): Codebook formatted as torch array with shape
-            ``[num_barcodes + 1, r * c]``.
+            `[num_barcodes + 1, r * c]`.
         c (int): Number of channels.
         r (int): Number of rounds.
         batch_size (int): Size of batch for training.
         params_mode (str): Number of model parameters, whether the parameters are shared across
             channels or rounds for model of Relaxed Bernoulli distributions, or model of Gaussians.
-            Valid options: ['2', '2*R', '2*C', '2*R*C', 'Gaussian']. Defaults to '2*R*C'. 
+            Valid options: `['2', '2*R', '2*C', '2*R*C']`. Defaults to `'2*R*C'`. 
 
     Returns:
         None
@@ -344,15 +344,15 @@ def train(svi, num_iter, data, codes, c, r, batch_size, distribution, params_mod
     Args:
         svi (pyro.infer.SVI): stochastic variational inference model.
         num_iter (int): Number of iterations for training.
-        data (torch.tensor): Input data formatted as torch array with shape ``[num_spots, r * c]``.
+        data (torch.tensor): Input data formatted as torch array with shape `[num_spots, r * c]`.
         codes (torch.tensor): Codebook formatted as torch array with shape
-            ``[num_barcodes + 1, r * c]``.
+            `[num_barcodes + 1, r * c]`.
         c (int): Number of channels.
         r (int): Number of rounds.
         batch_size (int): Size of batch for training.
         params_mode (str): Number of model parameters, whether the parameters are shared across
             channels or rounds for model of Relaxed Bernoulli distributions, or model of Gaussians.
-            Valid options: ['2', '2*R', '2*C', '2*R*C', 'Gaussian']. Defaults to '2*R*C'. 
+            Valid options: `['2', '2*R', '2*C', '2*R*C']`. Defaults to `'2*R*C'`. 
 
     Returns:
         list: losses.
@@ -371,20 +371,20 @@ def rb_e_step(data, codes, w, temperature, sigma, c, r, params_mode='2*R*C'):
     Bernoulli distributions.
 
     Args:
-        data (torch.tensor): Input data formatted as torch array with shape ``[num_spots, r * c]``.
+        data (torch.tensor): Input data formatted as torch array with shape `[num_spots, r * c]`.
         codes (torch.tensor): Codebook formatted as torch array with shape
-            ``[num_barcodes + 1, r * c]``.
-        w (torch.array): Weight parameter with length ``num_barcodes + 1``.
+            `[num_barcodes + 1, r * c]`.
+        w (torch.array): Weight parameter with length `num_barcodes + 1`.
         temperature (torch.array): Temperature parameter for Relaxed Bernoulli, shape depends on
              `params_mode`.
         sigma (torch.array): Sigma parameter for Relaxed Bernoulli, shape depends on `params_mode`.
         c (int): Number of channels.
         r (int): Number of rounds.
         params_mode (str): Number of model parameters, whether the parameters are shared across
-            channels or rounds. Valid options: ['2', '2*R', '2*C', '2*R*C'].
+            channels or rounds. Valid options: `['2', '2*R', '2*C', '2*R*C']`.
 
     Returns:
-        normalized class probability with shape ``[num_spots, num_barcodes + 1]``.
+        normalized class probability with shape `[num_spots, num_barcodes + 1]`.
     """
     K = codes.shape[0]  # num_barcodes + 1
     class_logprobs = np.ones((data.shape[0], K))
@@ -443,20 +443,20 @@ def bernoulli_e_step(data, codes, w, sigma, c, r, params_mode='2*R*C'):
     Bernoulli distributions.
 
     Args:
-        data (torch.tensor): Input data formatted as torch array with shape ``[num_spots, r * c]``.
+        data (torch.tensor): Input data formatted as torch array with shape `[num_spots, r * c]`.
         codes (torch.tensor): Codebook formatted as torch array with shape
-            ``[num_barcodes + 1, r * c]``.
-        w (torch.array): Weight parameter with length ``num_barcodes + 1``.
+            `[num_barcodes + 1, r * c]`.
+        w (torch.array): Weight parameter with length `num_barcodes + 1`.
         temperature (torch.array): Temperature parameter for Relaxed Bernoulli, shape depends on
              `params_mode`.
         sigma (torch.array): Sigma parameter for Relaxed Bernoulli, shape depends on `params_mode`.
         c (int): Number of channels.
         r (int): Number of rounds.
         params_mode (str): Number of model parameters, whether the parameters are shared across
-            channels or rounds. Valid options: ['2', '2*R', '2*C', '2*R*C'].
+            channels or rounds. Valid options: `['2', '2*R', '2*C', '2*R*C']`.
 
     Returns:
-        normalized class probability with shape ``[num_spots, num_barcodes + 1]``.
+        normalized class probability with shape `[num_spots, num_barcodes + 1]`.
     """
     K = codes.shape[0]  # num_barcodes + 1
     class_logprobs = np.ones((data.shape[0], K))
@@ -503,14 +503,14 @@ def gaussian_e_step(data, w, theta, sigma, K):
     distributions.
 
     Args:
-        data (torch.tensor): Input data formatted as torch array with shape ``[num_spots, r * c]``.
-        w (torch.tensor): Weight parameter with length ``num_barcodes + 1``.
+        data (torch.tensor): Input data formatted as torch array with shape `[num_spots, r * c]`.
+        w (torch.tensor): Weight parameter with length `num_barcodes + 1`.
         theta (torch.tensor): Mean parameter for Gaussian distribution.
         sigma (torch.tensor): Covariance parameter for Gaussian distribution.
         K (torch.tensor): Number of rounds * number of channels.
 
     Returns:
-        normalized class probability with shape ``[num_spots, num_barcodes + 1]``.
+        normalized class probability with shape `[num_spots, num_barcodes + 1]`.
 
     """
     class_probs = torch.ones(data.shape[0], K)
@@ -540,20 +540,24 @@ def decoding_function(spots,
     """Main function for the spot decoding.
 
     Args:
-        spots (numpy.array): Input spot intensity array with shape ``[num_spots, c, r]``.
-        barcodes (numpy.array): Input codebook array with shape ``[num_barcodes, c, r]``.
+        spots (numpy.array): Input spot intensity array with shape `[num_spots, c, r]`.
+        barcodes (numpy.array): Input codebook array with shape `[num_barcodes, c, r]`.
         num_iter (int): Number of iterations for training. Defaults to 500.
         batch_size (int): Size of batch for training. Defaults to 15000.
         set_seed (int): Seed for randomness. Defaults to 1.
         distribution (str): Distribution for spot intensities in spot decoding model. Valid options:
-            ['Gaussian', 'Bernoulli', 'Relaxed Bernoulli']. Defaults to 'Relaxed Bernoulli'.
+            `['Gaussian', 'Bernoulli', 'Relaxed Bernoulli']`. Defaults to `'Relaxed Bernoulli'`.
         params_mode (str): Number of model parameters, whether the parameters are shared across
             channels or rounds for model of Relaxed Bernoulli distributions, or model of Gaussians.
-            Valid options: ['2', '2*R', '2*C', '2*R*C', 'Gaussian']. Defaults to '2*R*C'. 
+            Valid options: `['2', '2*R', '2*C', '2*R*C']`. Defaults to `'2*R*C'`. 
 
+    Raises:
+        ValueError: `distribution` must be one of `['2', '2*R', '2*C', '2*R*C']`.
+        ValueError: `params_mode` must be one of `['Relaxed Bernoulli', 'Bernoulli', 'Gaussian']`.
+    
     Returns:
-        results (dict): The decoding results as a dictionary: 'class_probs': posterior
-            probabilities for each spot and each gene category; 'params': estimated model
+        results (dict): The decoding results as a dictionary: `'class_probs'`: posterior
+            probabilities for each spot and each gene category; `'params'`: estimated model
             parameters.
     """
     # if cuda available, runs on gpu
