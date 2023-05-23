@@ -37,8 +37,8 @@ from tensorflow.keras.preprocessing.image import (ImageDataGenerator,
                                                   Iterator,
                                                   array_to_img)
 
-from deepcell_spots.utils import (affine_transform_points,
-                                  subpixel_distance_transform)
+from deepcell_spots.utils.augmentation_utils import (affine_transform_points,
+                                                     subpixel_distance_transform)
 
 
 class ImageFullyConvDotIterator(Iterator):

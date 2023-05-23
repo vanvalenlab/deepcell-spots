@@ -24,7 +24,7 @@
 # limitations under the License.
 # ==============================================================================
 
-"""Tests for data_utils"""
+"""Tests for data utils"""
 
 import os
 
@@ -33,8 +33,8 @@ from sklearn.model_selection import train_test_split
 from tensorflow.keras import backend as K
 from tensorflow.python.platform import test
 
-from deepcell_spots.data_utils import (get_data, slice_annotated_image,
-                                       slice_image)
+from deepcell_spots.utils.data_utils import (get_data, slice_annotated_image,
+                                             slice_image)
 
 
 class TestDataUtils(test.TestCase):

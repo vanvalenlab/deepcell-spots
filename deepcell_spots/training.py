@@ -40,7 +40,7 @@ from tensorflow.keras import backend as K
 from tensorflow.keras import callbacks
 
 from deepcell_spots import dotnet_losses, image_generators
-from deepcell_spots.data_utils import get_data
+from deepcell_spots.utils.data_utils import get_data
 
 
 def train_model_dot(model,

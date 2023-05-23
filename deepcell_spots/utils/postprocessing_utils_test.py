@@ -29,7 +29,7 @@
 import numpy as np
 from tensorflow.python.platform import test
 
-from deepcell_spots.postprocessing_utils import (
+from deepcell_spots.utils.postprocessing_utils import (
     y_annotations_to_point_list,
     y_annotations_to_point_list_cc,
     y_annotations_to_point_list_max,

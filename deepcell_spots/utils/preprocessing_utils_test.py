@@ -24,20 +24,44 @@
 # limitations under the License.
 # ==============================================================================
 
-"""Package for fluorescent spot detection with convolutional neural networks"""
+"""Tests for preprocessing utils"""
 
-from deepcell_spots import applications
-from deepcell_spots import utils
-from deepcell_spots._version import __version__
+import numpy as np
+from tensorflow.python.platform import test
 
-from deepcell_spots import cluster_vis
-from deepcell_spots import dotnet_losses
-from deepcell_spots import dotnet
-from deepcell_spots import image_alignment
-from deepcell_spots import image_generators
-from deepcell_spots import multiplex
-from deepcell_spots import point_metrics
-from deepcell_spots import simulate_data
-from deepcell_spots import singleplex
-from deepcell_spots import spot_em
-from deepcell_spots import training
+from deepcell_spots.utils.preprocessing_utils import (mean_std_normalize,
+                                                min_max_normalize)
+
+
+class TestPreProcUtils(test.TestCase):
+    def test_mean_std_normalize(self):
+        image_dims = 128
+        image = np.random.random((2, image_dims, image_dims, 1))
+        norm_image = mean_std_normalize(image)
+
+        self.assertEqual(image.shape, norm_image.shape)
+
+        # test convert to int
+        image_dims = 128
+        image = np.ones((2, image_dims, image_dims, 1)).astype(int)
+        norm_image = mean_std_normalize(image)
+
+        self.assertEqual(image.shape, norm_image.shape)
+
+    def test_min_max_normalize(self):
+        image_dims = 128
+        image = np.random.random((2, image_dims, image_dims, 1))
+        norm_image = min_max_normalize(image)
+
+        self.assertEqual(image.shape, norm_image.shape)
+
+        # test convert to int
+        image_dims = 128
+        image = np.ones((2, image_dims, image_dims, 1)).astype(int)
+        norm_image = min_max_normalize(image)
+
+        self.assertEqual(image.shape, norm_image.shape)
+
+
+if __name__ == '__main__':
+    test.main()

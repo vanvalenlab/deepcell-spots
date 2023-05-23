@@ -29,9 +29,9 @@
 import numpy as np
 from tensorflow.python.platform import test
 
-from deepcell_spots.utils import (affine_transform_points,
-                                  generate_transformation_matrix,
-                                  subpixel_distance_transform)
+from deepcell_spots.utils.augmentation_utils import (affine_transform_points,
+                                                     generate_transformation_matrix,
+                                                     subpixel_distance_transform)
 
 
 class TestUtils(test.TestCase):
