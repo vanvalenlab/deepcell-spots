@@ -37,7 +37,7 @@ from scipy.optimize import linear_sum_assignment
 from scipy.spatial.distance import cdist
 # from sklearn.metrics import *
 
-from deepcell_spots.postprocessing_utils import y_annotations_to_point_list_max
+from deepcell_spots.utils.postprocessing_utils import y_annotations_to_point_list_max
 
 
 def sum_of_min_distance(pts1, pts2, normalized=False):
