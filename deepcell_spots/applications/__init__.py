@@ -24,7 +24,7 @@
 # limitations under the License.
 # ==============================================================================
 
-"""Applications for pre-trained spot detection models"""
+"""Deepcell Spots Applications - pre-trained spot detection and decoding models"""
 
 from deepcell_spots.applications.spot_detection import SpotDetection
 from deepcell_spots.applications.spot_decoding import SpotDecoding
