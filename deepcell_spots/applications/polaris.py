@@ -38,6 +38,7 @@ from deepcell_spots.applications import SpotDetection, SpotDecoding
 from deepcell_spots.singleplex import match_spots_to_cells_as_vec_batched
 from deepcell_toolbox.processing import histogram_normalization
 from deepcell_toolbox.deep_watershed import deep_watershed
+from deepcell_spots.preprocessing_utils import min_max_normalize
 from deepcell_spots.postprocessing_utils import max_cp_array_to_point_list_max
 from deepcell_spots.multiplex import extract_spots_prob_from_coords_maxpool
 
@@ -48,7 +49,9 @@ def output_to_df(spots_locations_vec, cell_id_list, decoding_result):
 
     Args:
         spots_locations_vec (numpy.array): An array of spots coordinates with
-            shape ``[num_spots, 2]``.
+            shape ``[num_spots, 3]``. The first two columns contain the coordinate
+            locations of the spots and the last column contains the batch id of each
+            spot.
         cell_id_list (numpy.array): An array of assigned cell id for each spot
             with shape ``[num_spots,]``.
         decoding_result (dict): Keys include: 'probability', 'predicted_id',
@@ -65,7 +68,7 @@ def output_to_df(spots_locations_vec, cell_id_list, decoding_result):
     return df
 
 
-class Polaris(object):
+class Polaris:
     """Loads spot detection and cell segmentation applications
     from deepcell_spots and deepcell_tf, respectively.
 
@@ -110,15 +113,15 @@ class Polaris(object):
             'singleplex' and 'multiplex'. Defaults to 'singleplex'.
         segmentation_model (tf.keras.Model): The model to load.
             If ``None``, a pre-trained model will be downloaded.
-        segmentation_compartment (str): The cellular compartment
+        segmentation_type (str): The prediction type
             for generating segmentation predictions. Valid values
-            are 'cytoplasm', 'nucleus', 'no segmentation'. Defaults
-            to 'cytoplasm'.
+            are 'cytoplasm', 'nucleus', 'mesmer', 'no segmentation'.
+            Defaults to 'cytoplasm'.
         spots_model (tf.keras.Model): The model to load.
             If ``None``, a pre-trained model will be downloaded.
         decoding_kwargs (dict): Keyword arguments to pass to the decoding method.
             df_barcodes, rounds, channels. Defaults to empty, no decoding is performed.
-            df_barcodes (pandas.DataFrame): Codebook, one column is gene names ('code_name'),
+            df_barcodes (pandas.DataFrame): Codebook, the first column is gene names ('Gene'),
                 the rest are binary barcodes, encoded using 1 and 0. Index should start at 1.
                 For exmaple, for a (rounds=10, channels=2) codebook, it should look the following
                 (see `notebooks/Multiplex FISH Analysis.ipynb` for examples)::
@@ -126,7 +129,7 @@ class Polaris(object):
                     Index:
                         RangeIndex (starting from 1)
                     Columns:
-                        Name: code_name, dtype: object
+                        Name: Gene, dtype: object
                         Name: r0c0, dtype: int64
                         Name: r0c1, dtype: int64
                         Name: r1c0, dtype: int64
@@ -156,12 +159,20 @@ class Polaris(object):
         self.image_type = image_type
         if self.image_type == 'singleplex':
             self.decoding_app = None
+            self.rounds = 1
+            self.channels = 1
         elif self.image_type == 'multiplex':
             if not decoding_kwargs:
                 self.decoding_app = None
                 warnings.warn('No spot decoding application instantiated.')
             else:
                 self.decoding_app = SpotDecoding(**decoding_kwargs)
+                self.rounds = decoding_kwargs['rounds']
+                self.channels = decoding_kwargs['channels']
+                if 'distribution' in decoding_kwargs.keys():
+                    self.distribution = decoding_kwargs['distribution']
+                else:
+                    self.distribution = 'Relaxed Bernoulli'
 
         valid_compartments = ['cytoplasm', 'nucleus', 'mesmer', 'no segmentation']
         if segmentation_type not in valid_compartments:
@@ -181,14 +192,56 @@ class Polaris(object):
             self.segmentation_app = None
             warnings.warn('No segmentation application instantiated.')
 
-    def _predict_spots_image(self, spots_image, threshold, clip):
-        """Iterate through all channels and generate model output (probability maps)
+    def _validate_prediction_input(self,
+                                   spots_image,
+                                   segmentation_image,
+                                   background_image,
+                                   threshold,
+                                   mask_threshold):
+        if self.image_type=='multiplex' and spots_image.shape[-1] != self.rounds * self.channels:
+            raise ValueError('Shape of channel dimension of spots_image should equal to '
+                             '(rounds x channels), but input segmentation_image had shape {} '
+                             '(b,x,y,c).'.format(spots_image.shape))
+        
+        if segmentation_image is not None:
+            if spots_image.shape[:-1] != segmentation_image.shape[:-1]:
+                raise ValueError('Batch, x, and y dimensions of spots_image '
+                                 'and segmentation_image must be the same. spots_image '
+                                 'has shape {} and segmentation_image has shape {}'
+                                 ''.format(spots_image.shape, segmentation_image.shape))
+
+            if segmentation_image.shape[-1] != 1:
+                raise ValueError('Shape of channel dimension of segmentation_image should equal '
+                                 'to zero, but input segmentation_image had shape {} (b,x,y,c).'
+                                 ''.format(segmentation_image.shape))
+
+        if background_image is not None:
+            if spots_image.shape[:-1] != background_image.shape[:-1]:
+                raise ValueError('Batch, x, and y dimensions of spots_image '
+                                 'and background_image must be the same. spots_image '
+                                 'has shape {} and segmentation_image has shape {}'
+                                 ''.format(spots_image.shape, background_image.shape))
+            
+            if background_image.shape[-1] > self.channels:
+                raise ValueError('Shape of channel dimension of background_image should be less '
+                                 'than or equal to the number of imaging channels, but input '
+                                 'segmentation_image had shape {} (b,x,y,c).'
+                                 ''.format(background_image.shape))
+
+        if threshold < 0 or threshold > 1:
+            raise ValueError('Input threshold was %s. Threshold value must be '
+                             'between 0 and 1.'.format())
+
+        if mask_threshold < 0 or mask_threshold > 1:
+            raise ValueError('Input mask_threshold was %s. Threshold value must be '
+                             'between 0 and 1.'.format())
+
+    def _predict_spots_image(self, spots_image, clip):
+        """Iterate through all channels and generate model output (probability maps).
 
         Args:
             spots_image (numpy.array): Input image for spot detection with shape
                 ``[batch, x, y, channel]``.
-            threshold (float): Probability threshold for a pixel to be
-                considered as a spot.
             clip (bool): Determines if pixel values will be clipped by percentile.
                 Defaults to True.
 
@@ -204,33 +257,74 @@ class Polaris(object):
             )['classification'][..., 1]
         return output_image
 
-    def predict(self,
-                spots_image,
-                segmentation_image=None,
-                image_mpp=None,
-                threshold=0.95,
-                clip=True,
-                maxpool_extra_pixel_num=0,
-                decoding_training_kwargs=None):
+    def _mask_spots(self, spots_locations, background_image, mask_threshold):
+        """Mask predicted spots in regions of high background intensity. If input background
+        image contains more than one channel, background mask will be maximum intensity projected
+        across channel axis.
+
+        Args:
+            spots_locations (list): A list of length ``batch`` containing arrays of spots
+                coordinates with shape ``[num_spots, 2]``.
+            background_image (numpy.array): Input image for masking bright background objects with
+                shape ``[batch, x, y, channel]``.
+            mask_threshold (float): Percentile of pixel values in background image used to
+                create a mask for bright background objects.
+
+        Returns:
+            array: Array with values 0 and 1, whether predicted spot is within a masked backround
+                object.
+        """
+        normalized_image = np.zeros(background_image.shape)
+        for i in range(background_image.shape[0]):
+            normalized_image[i] = min_max_normalize(background_image[i:i+1], clip=True)
+        mask = normalized_image > mask_threshold
+        mask = np.max(mask, axis=-1)
+
+        result = np.zeros(np.vstack(spots_locations).shape[0])
+        for i in range(len(spots_locations)):
+            for ii, spot in enumerate(spots_locations[i]):
+                if mask[i, int(spot[0]), int(spot[1])] == 1:
+                    if i == 0:
+                        spot_index = ii
+                    else:
+                        spot_index = np.vstack(spots_locations[:i]).shape[0] + ii
+                    result[spot_index] = 1
+
+        return(result)
+
+    def _predict(self,
+                 spots_image,
+                 segmentation_image,
+                 background_image,
+                 image_mpp,
+                 threshold,
+                 clip,
+                 mask_threshold,
+                 maxpool_extra_pixel_num,
+                 decoding_training_kwargs):
         """Generates prediction output consisting of a labeled cell segmentation image,
         detected spot locations, and a dictionary of spot locations assigned to labeled
         cells of the input.
 
-        Input images are required to have 4 dimensions
-        ``[batch, x, y, channel]``. Channel dimension should be 1.
-
-        Additional empty dimensions can be added using ``np.expand_dims``.
+        Input images are required to have 4 dimensions ``[batch, x, y, channel]``. Additional
+        empty dimensions can be added using ``np.expand_dims``.
 
         Args:
             spots_image (numpy.array): Input image for spot detection with shape
-                ``[batch, x, y, channel]``.
+                ``[batch, x, y, channel]``. Channel dimension should equal ``rounds x channels``.
             segmentation_image (numpy.array): Input image for cell segmentation with shape
-                ``[batch, x, y, channel]``. Defaults to None.
+                ``[batch, x, y, channel]``. Channel dimension should have a value of 1.
+                Defaults to None.
+            background_image (numpy.array): Input image for masking bright background objects with
+                shape ``[batch, x, y, channel]``. Channel dimension should less than or equal to
+                the number of imaging channels. Defaults to None.
             image_mpp (float): Microns per pixel for ``image``.
             threshold (float): Probability threshold for a pixel to be
                 considered as a spot.
             clip (bool): Determines if pixel values will be clipped by percentile.
                 Defaults to True.
+            mask_threshold (float): Percentile of pixel values in background image used to
+                create a mask for bright background objects.
             maxpool_extra_pixel_num (int): Number of extra pixel for max pooling. Defaults
                 to 0, means no max pooling. For any number t, there will be a pool with
                 shape ``[-t, t] x [-t, t]``.
@@ -246,19 +340,31 @@ class Polaris(object):
             df_intensities (pandas.DataFrame): Columns are channels and rows are spots.
             segmentation_result (numpy.array): Segmentation mask with shape ``[batch, x, y, 1]``.
         """
-        if threshold < 0 or threshold > 1:
-            raise ValueError('Threshold of %s was input. Threshold value must be '
-                             'between 0 and 1.'.format())
+        self._validate_prediction_input(spots_image, segmentation_image, background_image,
+                                        threshold, mask_threshold)
 
-        output_image = self._predict_spots_image(spots_image, threshold, clip)
+        output_image = self._predict_spots_image(spots_image, clip)
 
         clipped_output_image = np.clip(output_image, 0, 1)
         max_proj_images = np.max(clipped_output_image, axis=-1)
         spots_locations = max_cp_array_to_point_list_max(max_proj_images,
                                                          threshold=threshold, min_distance=1)
 
-        spots_intensities = extract_spots_prob_from_coords_maxpool(
-            clipped_output_image, spots_locations, extra_pixel_num=maxpool_extra_pixel_num)
+        if self.image_type == 'multiplex':
+            if self.distribution == 'Gaussian':
+                norm_spots_image = min_max_normalize(spots_image)
+                spots_intensities = extract_spots_prob_from_coords_maxpool(
+                    norm_spots_image, spots_locations, extra_pixel_num=maxpool_extra_pixel_num)
+            elif self.distribution == 'Relaxed Bernoulli':
+                spots_intensities = extract_spots_prob_from_coords_maxpool(
+                    clipped_output_image, spots_locations, extra_pixel_num=maxpool_extra_pixel_num)
+            elif self.distribution == 'Bernoulli':
+                spots_intensities = extract_spots_prob_from_coords_maxpool(
+                    clipped_output_image, spots_locations, extra_pixel_num=maxpool_extra_pixel_num)
+                spots_intensities = np.array(np.array(spots_intensities) > 0.5).astype('int')
+        else:
+            spots_intensities = extract_spots_prob_from_coords_maxpool(
+                    spots_image, spots_locations, extra_pixel_num=maxpool_extra_pixel_num)
         spots_intensities_vec = np.concatenate(spots_intensities)
         spots_locations_vec = np.concatenate([np.concatenate(
             [item, [[idx_batch]] * len(item)], axis=1)
@@ -281,9 +387,78 @@ class Polaris(object):
             decoding_result = self.decoding_app.predict(
                 spots_intensities_vec, **decoding_training_kwargs)
         else:
-            decoding_result = {'probability': None,
-                               'predicted_id': None, 'predicted_name': None}
+            decoding_result = {'spot_index': None,
+                               'probability': None,
+                               'predicted_id': None,
+                               'predicted_name': None,
+                               'source': None}
+
+        if background_image is not None:
+            decoding_result['masked'] = self._mask_spots(spots_locations,
+                                                         background_image,
+                                                         mask_threshold)
 
         df_spots = output_to_df(spots_locations_vec, spots_cell_assignments_vec, decoding_result)
         df_intensities = pd.DataFrame(spots_intensities_vec)
         return df_spots, df_intensities, segmentation_result
+
+    def predict(self,
+                spots_image,
+                segmentation_image=None,
+                background_image=None,
+                image_mpp=None,
+                threshold=0.95,
+                clip=True,
+                mask_threshold=0.5,
+                maxpool_extra_pixel_num=0,
+                decoding_training_kwargs={}):
+        """Generates prediction output consisting of a labeled cell segmentation image,
+        detected spot locations, and a dictionary of spot locations assigned to labeled
+        cells of the input.
+
+        Input images are required to have 4 dimensions ``[batch, x, y, channel]``. Additional
+        empty dimensions can be added using ``np.expand_dims``.
+
+        Args:
+            spots_image (numpy.array): Input image for spot detection with shape
+                ``[batch, x, y, channel]``. Channel dimension should equal ``rounds x channels``.
+            segmentation_image (numpy.array): Input image for cell segmentation with shape
+                ``[batch, x, y, channel]``. Channel dimension should have a value of 1.
+                Defaults to None.
+            background_image (numpy.array): Input image for masking bright background objects with
+                shape ``[batch, x, y, channel]``. Channel dimension should less than or equal to
+                the number of imaging channels. Defaults to None.
+            image_mpp (float): Microns per pixel for ``image``.
+            threshold (float): Probability threshold for a pixel to be
+                considered as a spot.
+            clip (bool): Determines if pixel values will be clipped by percentile.
+                Defaults to True.
+            mask_threshold (float): Percentile of pixel values in background image used to
+                create a mask for bright background objects.
+            maxpool_extra_pixel_num (int): Number of extra pixel for max pooling. Defaults
+                to 0, means no max pooling. For any number t, there will be a pool with
+                shape ``[-t, t] x [-t, t]``.
+            decoding_training_kwargs (dict): Including num_iter, batch_size, thres_prob.
+        Raises:
+            ValueError: Threshold value must be between 0 and 1.
+            ValueError: Segmentation application must be instantiated if segmentation
+                image is defined.
+
+        Returns:
+            df_spots (pandas.DataFrame): Columns are x, y, batch_id, cell_id, probability,
+                predicted_id, preicted_name. Cell_id = 0 means background.
+            df_intensities (pandas.DataFrame): Columns are channels and rows are spots.
+            segmentation_result (numpy.array): Segmentation mask with shape ``[batch, x, y, 1]``.
+        """
+
+        return self._predict(
+            spots_image=spots_image,
+            segmentation_image=segmentation_image,
+            background_image=background_image,
+            image_mpp=image_mpp,
+            threshold=threshold,
+            clip=clip,
+            mask_threshold=mask_threshold,
+            maxpool_extra_pixel_num=maxpool_extra_pixel_num,
+            decoding_training_kwargs=decoding_training_kwargs
+        )
