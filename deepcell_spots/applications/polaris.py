@@ -277,7 +277,7 @@ class Polaris:
             spots_image (numpy.array): Input image for spot detection with shape
                 ``[batch, x, y, channel]``.
             clip (bool): Determines if pixel values will be clipped by percentile.
-                Defaults to ``True``.
+                Defaults to `True`.
 
         Returns:
             numpy.array: Output probability map with shape ``[batch, x, y, channel]``.
