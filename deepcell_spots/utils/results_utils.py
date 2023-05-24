@@ -32,7 +32,7 @@ import plotly.graph_objects as go
 import numpy as np
 
 
-def filter_results(df_spots, batch_id=None, cell_id=None, gene_name=None, source=None):
+def filter_results(df_spots, batch_id=None, cell_id=None, gene_name=None, source=None, masked=False):
     """Filter Pandas DataFrame output from Polaris application by batch ID, cell ID,
     predicted gene name, or prediction source. If filter arguments are None, that column
     will not be filtered.
@@ -46,6 +46,7 @@ def filter_results(df_spots, batch_id=None, cell_id=None, gene_name=None, source
             result.
         source (list): List or array containing prediction sources to be included in the filtered
             result.
+        masked (bool): Whether to filter spots in regions of high background intensity.
 
     Raises:
         ValueError: If defined, `batch_id` must be a list or array.
@@ -79,6 +80,9 @@ def filter_results(df_spots, batch_id=None, cell_id=None, gene_name=None, source
         if not type(source) in [list, np.array]:
             raise ValueError('If defined, source must be a list or array.')
         output = output.loc[output.source.isin(source)]
+
+    if masked:
+        output = output.loc[output.masked == 0]
 
     output = output.reset_index(drop=True)
         
@@ -174,4 +178,5 @@ def spot_journey_plot(df):
       ))])
 
     fig.update_layout(title_text="Journey of detected spots", font_size=10)
-    fig.show()
+    
+    return(fig)
