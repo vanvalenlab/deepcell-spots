@@ -27,6 +27,7 @@
 """Utility functions for processing and visualizing Polaris predictions"""
 
 import skimage
+import plotly.graph_objects as go
 
 import numpy as np
 
@@ -96,6 +97,10 @@ def gene_visualization(df_spots, gene, image_dim, save_dir=None):
         image_dim (tuple): Dimensions `(x,y)` of image to be constructed, should match the dimensions
             of the image originally input to create predictions. 
         save_dir (str): Directory for saving image of gene expression visualization.
+
+    Returns:
+        numpy.array: Array containing image where pixel values correspond with locations of decoded 
+            genes.
     """
     
     df_filter = filter_results(df_spots, gene_name=[gene])
@@ -110,3 +115,63 @@ def gene_visualization(df_spots, gene, image_dim, save_dir=None):
         skimage.io.imsave(save_dir, gene_im)
         
     return(gene_im)
+
+def spot_journey_plot(df):
+    label = ['All spots']
+    
+    df_copy = df.copy()
+    
+    if 'masked' in list(df_copy.columns):
+        all_spots = len(df_copy)
+        df_copy = df_copy.loc[df_copy.masked == 0]
+        masked = all_spots - len(df_copy)
+    else:
+        masked = 0
+
+    sources = df_copy.source.unique()
+    s = len(sources)
+
+    genes = list(df_copy.predicted_name.unique())
+    genes.remove('Background')
+    genes.remove('Unknown')
+
+    source = np.zeros(s+s*3)
+    target = np.zeros(s+s*3)
+    target[:s] = np.arange(1,s+1)
+    value = np.zeros(s+s*3)
+
+    for i,item in enumerate(sources):
+        source[s*(i+1):s*(i+2)] = i+1
+        target[s*(i+1):s*(i+2)] = np.arange(s+1, 2*s+1)
+        label.append(item)
+
+        sub = len(filter_results(df_copy, source=[item]))
+        value[i] = sub
+        sub_genes = len(filter_results(df_copy, source=[item], gene_name=genes))
+        value[s*(i+1)] = sub_genes
+        sub_bkg = len(filter_results(df_copy, source=[item], gene_name=['Background']))
+        value[s*(i+1)+1] = sub_bkg
+        sub_unk = len(filter_results(df_copy, source=[item], gene_name=['Unknown']))
+        value[s*(i+1)+2] = sub_unk
+
+    label.extend(['genes', 'background', 'unknown', 'masked'])
+    source = np.append(source, [0])
+    target = np.append(target, [np.max(target)+1])
+    value = np.append(value, [masked])
+
+    fig = go.Figure(data=[go.Sankey(
+        node = dict(
+          pad = 15,
+          thickness = 20,
+          line = dict(color = "black", width = 0.5),
+          label = label,
+          color = ['dodgerblue', 'green'] + ['gold']*(s-1) + ['green', 'coral', 'coral', 'coral']
+        ),
+        link = dict(
+          source = source, 
+          target = target,
+          value = value
+      ))])
+
+    fig.update_layout(title_text="Journey of detected spots", font_size=10)
+    fig.show()
