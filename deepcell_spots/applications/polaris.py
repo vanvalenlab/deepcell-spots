@@ -381,8 +381,12 @@ class Polaris:
 
         Returns:
             df_spots (pandas.DataFrame): Columns are `x`, `y`, `batch_id`, `cell_id`,
-                `probability`, `predicted_id`, `predicted_name`. `cell_id = 0` means
-                the spot is outside the cells or tissue.
+                `probability`, `predicted_id`, `predicted_name`, `spot_index`, and `source`.
+                `cell_id = 0` means the spot is outside the cells or tissue. Rows with the same
+                `spot_index` resulted from a spot with two mixed barcodes. The values of `source`
+                can include `prediction` (result of `SpotDecoding`), `error rescue` (spots rescued
+                based on their Hamming distance to a gene in the code book), and `mixed rescue`
+                (spots rescued from a spot with two mixed barcodes).
             df_intensities (pandas.DataFrame): Columns are channels and rows are spots.
             segmentation_result (numpy.array): Segmentation mask with shape `[batch, x, y, 1]`.
         """
