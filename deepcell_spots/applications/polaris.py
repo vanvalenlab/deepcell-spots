@@ -432,20 +432,21 @@ class Polaris:
         if self.decoding_app is not None:
             decoding_result = self.decoding_app.predict(
                 spots_intensities_vec, **decoding_training_kwargs)
+            spots_locations_ext = spots_locations_vec[decoding_result['spot_index']]
         else:
             decoding_result = {'spot_index': None,
                                'probability': None,
                                'predicted_id': None,
                                'predicted_name': None,
                                'source': None}
-            spots_locations_vec = [spots_locations_vec]
+            spots_locations_ext = spots_locations_vec
 
         if background_image is not None:
             decoding_result['masked'] = self._mask_spots(spots_locations,
                                                          background_image,
                                                          mask_threshold)
 
-        df_spots = output_to_df(spots_locations_vec[decoding_result['spot_index']],
+        df_spots = output_to_df(spots_locations_ext,
                                 spots_cell_assignments_vec,
                                 decoding_result)
         df_intensities = pd.DataFrame(spots_intensities_vec)
