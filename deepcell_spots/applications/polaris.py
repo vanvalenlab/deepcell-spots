@@ -438,6 +438,7 @@ class Polaris:
                                'predicted_id': None,
                                'predicted_name': None,
                                'source': None}
+            spots_locations_vec = [spots_locations_vec]
 
         if background_image is not None:
             decoding_result['masked'] = self._mask_spots(spots_locations,
