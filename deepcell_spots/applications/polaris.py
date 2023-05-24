@@ -444,7 +444,9 @@ class Polaris:
                                                          background_image,
                                                          mask_threshold)
 
-        df_spots = output_to_df(spots_locations_vec, spots_cell_assignments_vec, decoding_result)
+        df_spots = output_to_df(spots_locations_vec[decoding_result['spot_index']],
+                                spots_cell_assignments_vec,
+                                decoding_result)
         df_intensities = pd.DataFrame(spots_intensities_vec)
         return df_spots, df_intensities, segmentation_result
 
