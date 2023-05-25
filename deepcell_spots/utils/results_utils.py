@@ -28,8 +28,12 @@
 
 import skimage
 import plotly.graph_objects as go
+import plotly.express as px
 
 import numpy as np
+import pandas as pd
+
+from scipy.spatial import distance
 
 
 def filter_results(df_spots, batch_id=None, cell_id=None, gene_name=None, source=None, masked=False):
@@ -178,5 +182,101 @@ def spot_journey_plot(df):
       ))])
 
     fig.update_layout(title_text="Journey of detected spots", font_size=10)
+    
+    return(fig)
+
+def expression_correlation(df_spots, df_control):
+    expr_dict = df_spots.predicted_name.value_counts()
+    
+    correlation_df = pd.DataFrame(columns=['gene', 'Log(Control Counts)', 'Log(FISH Counts)'])
+    
+    for gene in df_control.gene:
+        if gene in expr_dict.keys():
+            correlation_df.loc[len(correlation_df)] = [gene,
+                                                       np.log(df_control.loc[df_control.gene == gene].expression.values[0]+1),
+                                                       np.log(expr_dict[gene]+1)]
+        else:
+            correlation_df.loc[len(correlation_df)] = [gene,
+                                                       np.log(df_control.loc[df_control.gene == gene].expression.values[0]+1),
+                                                       float(0)]
+            
+    fig = px.scatter(correlation_df,
+                     x='Log(Control Counts)', y='Log(FISH Counts)', hover_data='gene',
+                     trendline='ols')
+    
+    return(fig)
+
+def hamming_dist_hist(df_spots, df_barcodes, gene_name=None):
+    
+    labels = {
+        'h_dist': 'Hamming distance'
+    }
+    title='Distribution of Hamming distances to assigned barcode'
+    
+    if gene_name is None:
+        gene_name = list(df_spots.predicted_name.unique())
+        if 'Unknown' in gene_name:
+            gene_name.remove('Unknown')
+        color=None
+        
+    else:
+        if not type(gene_name) in [list, np.array]:
+            raise ValueError('If defined, gene_name must be a list or array.')
+        color='predicted_name'
+
+    df_plot = filter_results(df_spots, gene_name=gene_name)
+        
+    dist_list = np.zeros(len(df_plot))
+    for gene in gene_name:
+        sub_df_plot = df_plot.loc[df_plot.predicted_name == gene]
+        sub_indices = sub_df_plot.index
+        sub_values = sub_df_plot.iloc[:,-20:].values
+        sub_values = np.round(sub_values)
+        barcode = df_barcodes.loc[df_barcodes.Gene == gene].values[0][1:]
+        barcode_len = len(barcode)
+
+        temp_dist_list = []
+        for i in range(len(sub_df_plot)):
+            temp_dist_list.append(distance.hamming(sub_values[i],
+                                                   barcode))
+
+        scaled_dist_list = np.array(temp_dist_list)*barcode_len
+        dist_list[sub_indices] = scaled_dist_list
+
+    df_plot['h_dist'] = dist_list
+
+    fig = px.histogram(df_plot, x='h_dist', color=color,
+                       barmode='overlay', histnorm='probability', labels=labels,
+                       title=title)
+    
+    return(fig)
+
+def probability_hist(df_spots, gene_name=None):
+    
+    labels = {
+        'Polaris prob': 'Prediction probability'
+    }
+    title='Distribution of prediction probabilities'
+    
+    if gene_name is not None:
+        if not type(gene_name) in [list, np.array]:
+            raise ValueError('If defined, gene_name must be a list or array.')
+
+        df_plot = filter_results(df_spots, gene_name=gene_name)
+        df_plot = df_plot.rename({'probability': 'Polaris prob'}, axis=1)
+        fig = px.histogram(df_plot, x='Polaris prob', color='predicted_name',
+                           barmode='overlay', histnorm='probability', labels=labels,
+                           title=title)
+            
+    else:
+        df_plot = df_spots.copy()
+        df_plot = df_plot.rename({'probability': 'Polaris prob'}, axis=1)
+        fig = px.histogram(df_plot, x='Polaris prob', histnorm='probability',
+                           labels=labels, title=title)
+        
+    fig.add_annotation(x=-0.65, y=0.02,
+            text="Probability of -1 results<br>from mixed rescue",
+            showarrow=False,
+            yshift=10)
     
     return(fig)
