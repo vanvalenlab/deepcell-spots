@@ -44,7 +44,7 @@ def filter_results(df_spots, batch_id=None, cell_id=None,
 
     Args:
         df_spots (pandas.DataFrame): Polaris result, columns are `x`, `y`, `batch_id`, `cell_id`,
-            `probability`, `predicted_id`, `predicted_name`, `spot_index`, and `source`.
+            `probability`, `predicted_id`, `predicted_name`, `spot_index`, `source`, and `masked`.
         batch_id (list): List or array containing batch IDs to be included in the filtered result.
         cell_id (list): List or array containing cell IDs to be included in the filtered result.
         gene_name (list): List or array containing gene names to be included in the filtered
