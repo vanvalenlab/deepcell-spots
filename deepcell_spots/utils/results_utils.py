@@ -46,12 +46,15 @@ def filter_results(df_spots, batch_id=None, cell_id=None,
         df_spots (pandas.DataFrame): Polaris result, columns are `x`, `y`, `batch_id`, `cell_id`,
             `probability`, `predicted_id`, `predicted_name`, `spot_index`, `source`, and `masked`.
         batch_id (list): List or array containing batch IDs to be included in the filtered result.
+            Defaults to None.
         cell_id (list): List or array containing cell IDs to be included in the filtered result.
+            Defaults to None.
         gene_name (list): List or array containing gene names to be included in the filtered
-            result.
+            result. Defaults to None.
         source (list): List or array containing prediction sources to be included in the filtered
-            result.
-        masked (bool): Whether to filter spots in regions of high background intensity.
+            result. Defaults to None.
+        masked (bool): Whether to filter spots in regions of high background intensity. Defaults to
+            False.
 
     Raises:
         ValueError: If defined, `batch_id` must be a list or array.
@@ -105,7 +108,8 @@ def gene_visualization(df_spots, gene, image_dim, save_dir=None):
             `df_spots`.
         image_dim (tuple): Dimensions `(x,y)` of image to be constructed, should match the
             dimensions of the image originally input to create predictions.
-        save_dir (str): Directory for saving image of gene expression visualization.
+        save_dir (str): Directory for saving image of gene expression visualization. Defaults to
+            None.
 
     Returns:
         numpy.array: Array containing image where pixel values correspond with locations of decoded
@@ -200,7 +204,12 @@ def spot_journey_plot(df_spots):
     return(fig)
 
 
-def expression_correlation(df_spots, df_control):
+def expression_correlation(df_spots,
+                           df_control,
+                           log=False,
+                           exclude_genes=[],
+                           exclude_zeros=False,
+                           eps=0.001):
     """Plot correlation between gene expression quantified by Polaris and a second control method.
 
     Args:
@@ -208,6 +217,13 @@ def expression_correlation(df_spots, df_control):
             `probability`, `predicted_id`, `predicted_name`, `spot_index`, and `source`.
         df_control (pandas.DataFrame): Control gene expression result, columns must include `gene`
             and `expression`.
+        log (bool): Whether to create the scatter plot in log space. Defaults to False.
+        exclude_genes (list): List of outlier genes to exclude from scatter plot. Defaults as
+            empty.
+        exclude_zeros (bool): Whether to exclude genes with zero counts in control or FISH
+            experiment. Defaults to False.
+        eps (float): Small epsilon value added to counts to errors in logarithm calculation. The
+            value should be small relative to the smallest count values. Defaults to 0.001.
 
     Returns:
         plotly.graph_objects.Figure: Scatter plot of gene expression from a control method vs.
@@ -219,25 +235,56 @@ def expression_correlation(df_spots, df_control):
     correlation_df = pd.DataFrame(columns=['gene', 'Log(Control Counts)', 'Log(FISH Counts)'])
 
     for gene in df_control.gene:
+        if gene in exclude_genes:
+            continue
+
+        control_expr = df_control.loc[df_control.gene == gene].expression.values[0]
+        if exclude_zeros and control_expr==0:
+            continue
         if gene in expr_dict.keys():
+            fish_expr = expr_dict[gene]
+        else:
+            if exclude_zeros:
+                continue
+            else:
+                fish_expr = 0
+
+        if log:
             correlation_df.loc[len(correlation_df)] = [
                 gene,
-                np.log(df_control.loc[df_control.gene == gene].expression.values[0]+1),
-                np.log(expr_dict[gene]+1)
+                np.log10(control_expr+eps),
+                np.log10(fish_expr+eps)
             ]
+        
         else:
             correlation_df.loc[len(correlation_df)] = [
                 gene,
-                np.log(df_control.loc[df_control.gene == gene].expression.values[0]+1),
-                float(0)
+                control_expr+eps,
+                fish_expr+eps
             ]
 
     fig = px.scatter(correlation_df,
                      x='Log(Control Counts)', y='Log(FISH Counts)',
+                     height=800, width=800,
+                     log_x=(not log), log_y=(not log),
                      hover_data='gene', text='gene',
                      trendline='ols',
                      title='Correlation with control counts')
     fig.update_traces(textposition='top center')
+
+    model = px.get_trendline_results(fig)
+    rsq = model.iloc[0]["px_fit_results"].rsquared
+    
+    if log:
+        y_loc = min(correlation_df['Log(FISH Counts)']) - 0.3
+    else:
+        y_loc = np.log10(min(correlation_df['Log(FISH Counts)']))-0.3
+    
+    fig.add_annotation(
+        y=y_loc,
+        text="r={}".format(np.round(np.sqrt(rsq), 3)),
+        showarrow=False,
+    )
 
     return(fig)
 
@@ -265,7 +312,7 @@ def hamming_dist_hist(df_spots, df_barcodes, gene_name=None):
                     Name: r9c0, dtype: int64
                     Name: r9c1, dtype: int64
         gene_name (list): List or array containing gene names to be included in the filtered
-            result.
+            result. Defaults to None.
 
     Returns:
         plotly.graph_objects.Figure: Histogram of the Hamming distances of pixels intensities to
@@ -324,7 +371,7 @@ def probability_hist(df_spots, gene_name=None):
         df_spots (pandas.DataFrame): Polaris result, columns are `x`, `y`, `batch_id`, `cell_id`,
             `probability`, `predicted_id`, `predicted_name`, `spot_index`, and `source`.
         gene_name (list): List or array containing gene names to be included in the filtered
-            result.
+            result. Defaults to None.
 
     Returns:
         plotly.graph_objects.Figure: Histogram of the prediction probabilities.
