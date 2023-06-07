@@ -244,11 +244,6 @@ class Polaris:
                                  'has shape {} and segmentation_image has shape {}'
                                  ''.format(spots_image.shape, segmentation_image.shape))
 
-            if segmentation_image.shape[-1] != 1:
-                raise ValueError('Shape of channel dimension of segmentation_image should equal '
-                                 'to zero, but input segmentation_image had shape {} (b,x,y,c).'
-                                 ''.format(segmentation_image.shape))
-
         if background_image is not None:
             if spots_image.shape[:-1] != background_image.shape[:-1]:
                 raise ValueError('Batch, x, and y dimensions of spots_image '
