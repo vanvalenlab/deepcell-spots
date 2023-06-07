@@ -130,6 +130,46 @@ def gene_visualization(df_spots, gene, image_dim, save_dir=None):
     return(gene_im)
 
 
+def gene_scatter(df_spots, gene_name=None, remove_errors=False):
+    """Create scatter plot of locations of decoded genes.
+
+    Args:
+        df_spots (pandas.DataFrame): Polaris result, columns are `x`, `y`, `batch_id`, `cell_id`,
+            `probability`, `predicted_id`, `predicted_name`, `spot_index`, and `source`. `source`
+            columns must include `'prediction'` entries.
+        gene_name (list): List of gene names to be included in scatter plot. If None, all gene
+            names will be included.
+        remove_errors (bool): Whether to exclude `'Background'` and `'Unknown'` assignments in
+            scatter plot.
+
+    Returns:
+        plotly.graph_objects.Figure: Scatter plot of locations of decoded genes.
+    """
+    if gene_name is not None:
+        if not type(gene_name) in [list, np.array]:
+            raise ValueError('If defined, gene_name must be a list or array.')
+        df_plot = filter_results(df_spots, gene_name=gene_name)
+        
+    elif remove_errors:
+        genes = list(df_spots.predicted_name.unique())
+        genes.remove('Background')
+        genes.remove('Unknown')
+        df_plot = filter_results(df_spots, gene_name=genes)
+        
+    else:
+        df_plot = df_spots.copy()
+        
+    
+    fig = px.scatter(df_plot,
+                     x='y', y='x',
+                     width=650, height=600,
+                     hover_data=['spot_index'],
+                     color='predicted_name',
+                     title='Predicted gene locations')
+    
+    return(fig)
+
+
 def spot_journey_plot(df_spots):
     """Plot Sankey diagram of predicted spot sources and assignments.
 
@@ -206,10 +246,14 @@ def spot_journey_plot(df_spots):
 
 def expression_correlation(df_spots,
                            df_control,
+                           expr_dict=None,
                            log=False,
                            exclude_genes=[],
                            exclude_zeros=False,
-                           eps=0.001):
+                           eps=0.001,
+                           title=None,
+                           xlabel=None,
+                           ylabel=None):
     """Plot correlation between gene expression quantified by Polaris and a second control method.
 
     Args:
@@ -217,6 +261,8 @@ def expression_correlation(df_spots,
             `probability`, `predicted_id`, `predicted_name`, `spot_index`, and `source`.
         df_control (pandas.DataFrame): Control gene expression result, columns must include `gene`
             and `expression`.
+        expr_dict (dict): Dictionary with gene names as keys and expression counts as values. This
+            argument is an alternative format for inputting expression data to `df_spots`.
         log (bool): Whether to create the scatter plot in log space. Defaults to False.
         exclude_genes (list): List of outlier genes to exclude from scatter plot. Defaults as
             empty.
@@ -224,15 +270,26 @@ def expression_correlation(df_spots,
             experiment. Defaults to False.
         eps (float): Small epsilon value added to counts to errors in logarithm calculation. The
             value should be small relative to the smallest count values. Defaults to 0.001.
+        title (str): Title of plot.
+        xlabel (str): Label for x-axis of plot.
+        ylabel (str): Label for y-axis of plot.
 
     Returns:
         plotly.graph_objects.Figure: Scatter plot of gene expression from a control method vs.
             Polaris. Points are labeled with gene names. A fit line calculated with ordinary
             least squares is included.
     """
-    expr_dict = df_spots.predicted_name.value_counts()
+    if expr_dict is None:
+        expr_dict = df_spots.predicted_name.value_counts()
+        
+    if title is None:
+        title = 'Correlation with control counts'
+    if xlabel is None:
+        xlabel = 'Log(Control Counts)'
+    if ylabel is None:
+        ylabel = 'Log(FISH Counts)'
 
-    correlation_df = pd.DataFrame(columns=['gene', 'Log(Control Counts)', 'Log(FISH Counts)'])
+    correlation_df = pd.DataFrame(columns=['gene', xlabel, ylabel])
 
     for gene in df_control.gene:
         if gene in exclude_genes:
@@ -264,26 +321,30 @@ def expression_correlation(df_spots,
             ]
 
     fig = px.scatter(correlation_df,
-                     x='Log(Control Counts)', y='Log(FISH Counts)',
+                     x=xlabel, y=ylabel,
                      height=800, width=800,
                      log_x=(not log), log_y=(not log),
                      hover_data='gene', text='gene',
                      trendline='ols',
-                     title='Correlation with control counts')
+                     title=title)
     fig.update_traces(textposition='top center')
+    fig.update_layout(font={'size':12})
 
     model = px.get_trendline_results(fig)
     rsq = model.iloc[0]["px_fit_results"].rsquared
     
     if log:
-        y_loc = min(correlation_df['Log(FISH Counts)']) - 0.3
+        x_loc = max((correlation_df[xlabel]))
+        y_loc = min(correlation_df[ylabel])
     else:
-        y_loc = np.log10(min(correlation_df['Log(FISH Counts)']))-0.3
+        x_loc = np.log10(max(correlation_df[xlabel]))
+        y_loc = np.log10(min(correlation_df[ylabel]))
     
     fig.add_annotation(
+        x=x_loc,
         y=y_loc,
         text="r={}".format(np.round(np.sqrt(rsq), 3)),
-        showarrow=False,
+        showarrow=False
     )
 
     return(fig)
