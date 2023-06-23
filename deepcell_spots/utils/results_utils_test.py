@@ -34,10 +34,31 @@ import numpy as np
 import pandas as pd
 from tensorflow.python.platform import test
 
-from deepcell_spots.utils.results_utils import filter_results, gene_visualization
+from deepcell_spots.utils.results_utils import (filter_results, gene_visualization,
+                                               get_cell_counts)
 
 
 class TestResultsUtils(test.TestCase):
+    
+    def test_get_cell_counts(self):
+        df_spots = pd.DataFrame(
+                [
+                    [10, 10, 0, 1, 0.95, 1, 'A', 0, 'prediction', 0],
+                    [10, 20, 0, 1, 0.95, 1, 'A', 1, 'prediction', 0],
+                    [10, 30, 0, 1, 0.95, 1, 'A', 2, 'prediction', 0],
+                    [20, 20, 0, 1, 0.95, 1, 'B', 3, 'error rescue', 1],
+                    [30, 30, 0, 1, 0.95, 1, 'C', 4, 'mixed rescue', 1]
+                ],
+                columns=['x', 'y', 'batch_id', 'cell_id', 'probability', 'predicted_id',
+                         'predicted_name', 'spot_index', 'source', 'masked']
+            )
+        segmentation_output = np.ones((1, 2048, 2048, 1))
+        df_cell_counts = get_cell_counts(df_spots, segmentation_output)
+        self.assertEqual(df_cell_counts.batch_id.values, [0]*5)
+        self.assertEqual(df_cell_counts.cell_id.values, [1]*5)
+        self.assertEqual(df_cell_counts.A.values, [3])
+        self.assertEqual(df_cell_counts.B.values, [1])
+        self.assertEqual(df_cell_counts.C.values, [1])
     
     def test_filter_results(self):
         df_spots = pd.DataFrame(
