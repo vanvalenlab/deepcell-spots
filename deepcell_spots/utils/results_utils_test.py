@@ -52,8 +52,7 @@ class TestResultsUtils(test.TestCase):
                 columns=['x', 'y', 'batch_id', 'cell_id', 'probability', 'predicted_id',
                          'predicted_name', 'spot_index', 'source', 'masked']
             )
-        segmentation_output = np.ones((1, 2048, 2048, 1))
-        df_cell_counts = get_cell_counts(df_spots, segmentation_output)
+        df_cell_counts = get_cell_counts(df_spots)
         self.assertAllEqual(df_cell_counts.batch_id.values[0], 0)
         self.assertAllEqual(df_cell_counts.cell_id.values[0], 1)
         self.assertAllEqual(df_cell_counts.A.values[0], 3)
