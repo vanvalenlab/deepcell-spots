@@ -54,11 +54,11 @@ class TestResultsUtils(test.TestCase):
             )
         segmentation_output = np.ones((1, 2048, 2048, 1))
         df_cell_counts = get_cell_counts(df_spots, segmentation_output)
-        self.assertEqual(df_cell_counts.batch_id.values, [0]*5)
-        self.assertEqual(df_cell_counts.cell_id.values, [1]*5)
-        self.assertEqual(df_cell_counts.A.values, [3])
-        self.assertEqual(df_cell_counts.B.values, [1])
-        self.assertEqual(df_cell_counts.C.values, [1])
+        self.assertAllEqual(df_cell_counts.batch_id.values[0], 0)
+        self.assertAllEqual(df_cell_counts.cell_id.values[0], 1)
+        self.assertAllEqual(df_cell_counts.A.values[0], 3)
+        self.assertAllEqual(df_cell_counts.B.values[0], 1)
+        self.assertAllEqual(df_cell_counts.C.values[0], 1)
     
     def test_filter_results(self):
         df_spots = pd.DataFrame(
