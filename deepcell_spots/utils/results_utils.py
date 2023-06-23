@@ -34,6 +34,51 @@ import numpy as np
 import pandas as pd
 
 from scipy.spatial import distance
+from tqdm import tqdm
+
+
+def get_cell_counts(df_spots):
+    """Converts Polaris outputs into a DataFrame containing gene expression counts per cell.
+    Detection assigned to the background (value of 0 in `segmentation_output`) are discarded.
+
+    Args:
+        df_spots (pandas.DataFrame): Polaris result, columns are `x`, `y`, `batch_id`, `cell_id`,
+            `probability`, `predicted_id`, `predicted_name`, `spot_index`, `source`, and `masked`.
+
+    Returns:
+        pandas.DataFrame: Gene expression counts per cell, columns are `batch_id`, `cell_id`, and
+            columns for each decoded gene in the sample.
+    """
+    genes = list(df_spots.predicted_name.unique())
+    if 'Background' in genes:
+        genes.remove('Background')
+    if 'Unknown' in genes:
+        genes.remove('Unknown')
+
+    genes = [item for item in genes if not('Blank' in item)]
+    df_cell_counts = pd.DataFrame(columns=['batch_id', 'cell_id'] + genes)
+
+    for fov in tqdm(df_spots.batch_id.unique()):
+        df_fov = df_spots.loc[df_spots.batch_id==fov]
+
+        for cell in range(1,np.max(df_fov.cell_id.values)+1):
+            df_cell = df_fov.loc[df_fov.cell_id==cell]
+            counts = dict(df_cell.predicted_name.value_counts())
+            data = {}
+            data['batch_id'] = [fov]
+            data['cell_id'] = [cell]
+
+            for gene in genes:
+                if gene in list(counts.keys()):
+                    data[gene] = [counts[gene]]
+                else:
+                    data[gene] = [0]
+            single_cell_counts = pd.DataFrame.from_dict(data)
+
+            df_cell_counts = pd.concat([df_cell_counts, single_cell_counts], axis=0)
+
+    df_cell_counts = df_cell_counts.reset_index(drop=True)
+    return(df_cell_counts)
 
 
 def filter_results(df_spots, batch_id=None, cell_id=None,
