@@ -63,7 +63,7 @@ def get_cell_counts(df_spots, segmentation_output):
     for fov in tqdm(df_spots.batch_id.unique()):
         df_fov = df_spots.loc[df_spots.batch_id==fov]
         seg = segmentation_output[fov,...,0]
-        for cell in range(1,np.max(df_fov.cell_id.values)):
+        for cell in range(1,np.max(df_fov.cell_id.values)+1):
             cell_inds = np.argwhere(seg==cell)
             x = np.mean(cell_inds[:,0])
             y = np.mean(cell_inds[:,1])
