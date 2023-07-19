@@ -179,6 +179,38 @@ class TestPolaris(test.TestCase):
                 _ = app.predict(spots_image=spots_image,
                                 segmentation_image=segmentation_image)
 
+            # test mask rounds
+            df_barcodes = pd.DataFrame(
+                [
+                    ["code1", 1, 1, 0, 0, 0, 0],
+                    ["code2", 0, 0, 1, 1, 0, 0],
+                    ["code3", 0, 0, 0, 0, 1, 0],
+                    ["code4", 1, 0, 0, 0, 1, 0],
+                    ["code5", 0, 0, 1, 0, 0, 0],
+                    ["code6", 0, 1, 0, 0, 1, 0],
+                    ["code7", 1, 0, 1, 0, 0, 0],
+                ],
+                columns=["Gene", "r0c0", "r0c1", "r0c2", "r1c0", "r1c1", "r1c2"],
+                index=np.arange(7) + 1,
+            )
+            decoding_kwargs = {'df_barcodes': df_barcodes, 'rounds': 2,
+                               'channels': 3, 'distribution': 'Relaxed Bernoulli',
+                               'params_mode': '2*R*C'}
+            app = Polaris(image_type='multiplex', decoding_kwargs=decoding_kwargs)
+
+            spots_image = np.random.rand(1, 128, 128, r*c) + 1
+            segmentation_image = np.random.rand(1, 128, 128, 1)
+            background_image = np.random.rand(1, 128, 128, 1)
+            pred = app.predict(spots_image=spots_image,
+                               segmentation_image=segmentation_image,
+                               background_image=background_image)
+            df_spots = pred[0]
+            df_intensities = pred[1]
+            segmentation_result = pred[2]
+
+            self.assertEqual(np.sum(df_intensities.values[:,-1]), 0)
+            self.assertAllGreater(np.sum(df_intensities.values[:,:-1], axis=0), 0)
+
             # test prediction type -- singleplex
             app = Polaris()
             spots_image = np.random.rand(1, 128, 128, 1)
