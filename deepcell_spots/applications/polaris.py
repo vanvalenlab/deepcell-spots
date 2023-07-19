@@ -172,6 +172,7 @@ class Polaris:
                 warnings.warn('No spot decoding application instantiated.')
             else:
                 self.decoding_app = SpotDecoding(**decoding_kwargs)
+                self.df_barcodes = decoding_kwargs['df_barcodes']
                 self.rounds = decoding_kwargs['rounds']
                 self.channels = decoding_kwargs['channels']
                 if 'distribution' in decoding_kwargs.keys():
@@ -265,7 +266,7 @@ class Polaris:
             raise ValueError('Input mask_threshold was %s. Threshold value must be '
                              'between 0 and 1.'.format())
 
-    def _predict_spots_image(self, spots_image, clip):
+    def _predict_spots_image(self, spots_image, clip, skip_round):
         """Iterate through all channels and generate model output (pixel-wise spot probability).
 
         Args:
@@ -273,15 +274,19 @@ class Polaris:
                 ``[batch, x, y, channel]``.
             clip (bool): Determines if pixel values will be clipped by percentile.
                 Defaults to `True`.
+            skip_round(list): List of boolean values for whether an imaging round is used in the
+                defined codebook.
 
         Returns:
             numpy.array: Output probability map with shape ``[batch, x, y, channel]``.
         """
 
         output_image = np.zeros_like(spots_image, dtype=np.float32)
-        for idx_channel in range(spots_image.shape[-1]):
-            output_image[..., idx_channel] = self.spots_app.predict(
-                image=spots_image[..., idx_channel:idx_channel+1],
+        for idx_round in range(spots_image.shape[-1]):
+            if skip_round[idx_round]:
+                continue
+            output_image[..., idx_round] = self.spots_app.predict(
+                image=spots_image[..., idx_round:idx_round+1],
                 clip=clip
             )['classification'][..., 1]
         return output_image
@@ -387,8 +392,11 @@ class Polaris:
         """
         self._validate_prediction_input(spots_image, segmentation_image, background_image,
                                         threshold, mask_threshold)
-
-        output_image = self._predict_spots_image(spots_image, clip)
+        if self.image_type == 'multiplex':
+            skip_round = np.array(np.sum(self.df_barcodes.iloc[:,1:], axis=0)==0)
+        else:
+            skip_round = [False]*np.shape(spots_image)[-1]
+        output_image = self._predict_spots_image(spots_image, clip, skip_round)
 
         clipped_output_image = np.clip(output_image, 0, 1)
         max_proj_images = np.max(clipped_output_image, axis=-1)

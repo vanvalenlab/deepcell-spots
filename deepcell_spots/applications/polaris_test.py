@@ -54,7 +54,6 @@ class TestPolaris(test.TestCase):
             'predicted_name': ['code1']*n
         }
         df = output_to_df(spots_locations_vec, cell_id_list, decoding_results)
-        print(df)
         self.assertEqual(len(df), n)
         self.assertAllEqual(
             df.columns,
