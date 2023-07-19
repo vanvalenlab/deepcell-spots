@@ -193,8 +193,10 @@ class TestPolaris(test.TestCase):
                 columns=["Gene", "r0c0", "r0c1", "r0c2", "r1c0", "r1c1", "r1c2"],
                 index=np.arange(7) + 1,
             )
-            decoding_kwargs = {'df_barcodes': df_barcodes, 'rounds': 2,
-                               'channels': 3, 'distribution': 'Relaxed Bernoulli',
+            r = 2
+            c = 3
+            decoding_kwargs = {'df_barcodes': df_barcodes, 'rounds': r,
+                               'channels': c, 'distribution': 'Relaxed Bernoulli',
                                'params_mode': '2*R*C'}
             app = Polaris(image_type='multiplex', decoding_kwargs=decoding_kwargs)
 
