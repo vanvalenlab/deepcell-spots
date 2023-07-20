@@ -37,7 +37,7 @@ from deepcell.model_zoo import PanopticNet
 from deepcell_spots.dotnet import dot_net_2D
 from deepcell_spots.applications.polaris import output_to_df, Polaris
 
-np.random.seed(0)
+np.random.seed(1)
 
 
 class TestPolaris(test.TestCase):
