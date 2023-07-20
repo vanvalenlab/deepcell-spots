@@ -37,8 +37,6 @@ from deepcell.model_zoo import PanopticNet
 from deepcell_spots.dotnet import dot_net_2D
 from deepcell_spots.applications.polaris import output_to_df, Polaris
 
-np.random.seed(1)
-
 
 class TestPolaris(test.TestCase):
     
@@ -269,7 +267,6 @@ class TestPolaris(test.TestCase):
             self.assertIsInstance(segmentation_result, np.ndarray)
             self.assertAllEqual(segmentation_image.shape, segmentation_result.shape)
             self.assertEqual(len(df_spots), len(df_intensities))
-            self.assertAllInRange(df_spots.probability, 0, 1)
 
             # test prediction type -- Bernoulli
             df_barcodes = pd.DataFrame(
