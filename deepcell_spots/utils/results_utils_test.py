@@ -35,7 +35,7 @@ import pandas as pd
 from tensorflow.python.platform import test
 
 from deepcell_spots.utils.results_utils import (filter_results, gene_visualization,
-                                               get_cell_counts)
+                                               get_cell_counts, assign_barcodes)
 
 
 class TestResultsUtils(test.TestCase):
@@ -53,11 +53,11 @@ class TestResultsUtils(test.TestCase):
                          'predicted_name', 'spot_index', 'source', 'masked']
             )
         df_cell_counts = get_cell_counts(df_spots)
-        self.assertAllEqual(df_cell_counts.batch_id.values[0], 0)
-        self.assertAllEqual(df_cell_counts.cell_id.values[0], 1)
-        self.assertAllEqual(df_cell_counts.A.values[0], 3)
-        self.assertAllEqual(df_cell_counts.B.values[0], 1)
-        self.assertAllEqual(df_cell_counts.C.values[0], 1)
+        self.assertEqual(df_cell_counts.batch_id.values[0], 0)
+        self.assertEqual(df_cell_counts.cell_id.values[0], 1)
+        self.assertEqual(df_cell_counts.A.values[0], 3)
+        self.assertEqual(df_cell_counts.B.values[0], 1)
+        self.assertEqual(df_cell_counts.C.values[0], 1)
     
     def test_filter_results(self):
         df_spots = pd.DataFrame(
@@ -115,6 +115,72 @@ class TestResultsUtils(test.TestCase):
         self.assertEqual(len(df_filter), 1)
         self.assertEqual(len(df_spots.columns), len(df_filter.columns))
 
+
+    def test_assign_barcodes(self):
+        # Test one spot example
+        df_spots = pd.DataFrame(
+                [
+                    [10, 10, 0, 1, 0.95, 1, 'A', 0, 'prediction', 0]
+                ],
+                columns=['x', 'y', 'batch_id', 'cell_id', 'probability', 'predicted_id',
+                         'predicted_name', 'spot_index', 'source', 'masked']
+            )
+        segmentation_results = np.ones((1, 20, 20, 1))
+        df_assignments = assign_barcodes(df_spots, segmentation_results)
+        self.assertEqual(len(df_assignments), 1)
+        self.assertEqual(df_assignments.predicted_name.values[0], 'A')
+        self.assertEqual(df_assignments.predicted_id.values[0], 1)
+        self.assertEqual(df_assignments.spot_counts.values[0], 1)
+        self.assertEqual(df_assignments.spot_fraction.values[0], 1)
+
+        # Test multi spot example
+        df_spots = pd.DataFrame(
+                [
+                    [8, 8, 0, 1, 0.95, 1, 'A', 0, 'prediction', 0],
+                    [9, 9, 0, 1, 0.95, 1, 'A', 0, 'prediction', 0],
+                    [10, 10, 0, 1, 0.95, 1, 'A', 0, 'prediction', 0],
+                    [11, 11, 0, 1, 0.9, 2, 'B', 0, 'prediction', 0],
+                    [12, 12, 0, 1, 0.9, 2, 'B', 0, 'prediction', 0]
+                ],
+                columns=['x', 'y', 'batch_id', 'cell_id', 'probability', 'predicted_id',
+                         'predicted_name', 'spot_index', 'source', 'masked']
+            )
+        segmentation_results = np.ones((1, 20, 20, 1))
+        df_assignments = assign_barcodes(df_spots, segmentation_results)
+        self.assertEqual(len(df_assignments), 1)
+        self.assertEqual(df_assignments.predicted_name.values[0], 'A')
+        self.assertEqual(df_assignments.predicted_id.values[0], 1)
+        self.assertEqual(df_assignments.spot_counts.values[0], 3)
+        self.assertEqual(df_assignments.spot_fraction.values[0], 0.6)
+
+        # Test cell with no spots/two cells
+        df_spots = pd.DataFrame(
+                [
+                    [8, 8, 0, 1, 0.95, 1, 'A', 0, 'prediction', 0],
+                    [9, 9, 0, 1, 0.95, 1, 'A', 0, 'prediction', 0],
+                    [10, 10, 0, 1, 0.95, 1, 'A', 0, 'prediction', 0],
+                    [11, 11, 0, 1, 0.9, 2, 'B', 0, 'prediction', 0],
+                    [12, 12, 0, 1, 0.9, 2, 'B', 0, 'prediction', 0]
+                ],
+                columns=['x', 'y', 'batch_id', 'cell_id', 'probability', 'predicted_id',
+                         'predicted_name', 'spot_index', 'source', 'masked']
+            )
+        segmentation_results = np.ones((1, 20, 20, 1))
+        segmentation_results[0,0] += 1
+        df_assignments = assign_barcodes(df_spots, segmentation_results)
+        self.assertEqual(len(df_assignments), 2)
+        self.assertEqual(df_assignments.predicted_name.values[1], 'None')
+        self.assertEqual(df_assignments.predicted_id.values[1], -1)
+        self.assertEqual(df_assignments.spot_counts.values[1], 0)
+        self.assertEqual(df_assignments.spot_fraction.values[1], 0)
+
+        # Test raises errors
+        segmentation_results = np.ones((1, 20, 20))
+        with self.assertRaises(ValueError):
+            _ = assign_barcodes(df_spots, segmentation_results)
+        segmentation_results = np.ones((2, 20, 20, 1))
+        with self.assertRaises(ValueError):
+            _ = assign_barcodes(df_spots, segmentation_results)
 
     def test_gene_visualization(self):
         df_spots = pd.DataFrame(

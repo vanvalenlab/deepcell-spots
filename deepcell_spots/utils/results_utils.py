@@ -81,6 +81,68 @@ def get_cell_counts(df_spots):
     return(df_cell_counts)
 
 
+def assign_barcodes(df_spots, segmentation_results):
+    """Assigns barcode identity to a cell for Polaris prediction for data from optical pooled
+    screens. This function does not support multi-batch inputs.
+
+    Args:
+        df_spots (pandas.DataFrame): Polaris result, columns are `x`, `y`, `batch_id`, `cell_id`,
+            `probability`, `predicted_id`, `predicted_name`, `spot_index`, `source`, and `masked`.
+            `batch_id` should only have one unique value.
+        segmentation_results (numpy.array): Segmentation result from Polaris with shape
+            `(1,x,y,1)`. Pixel values should match `cell_id` values in `df_spots`. The background
+            pixels are assumed to have the value 0.
+
+    Returns:
+        pandas.DataFrame: Barcode assignment for each cell, columns are `cell_id`, `x`, `y`,
+            `predicted_name`, `predicted_id`, `spot_counts`, `spot_fraction`. `x` and `y` are the
+            centroid of the cell with value `cell_id` in `segmentation_results`. `predicted_name`
+            and `predicted_id` correspond to the assigned barcode. `spot_counts` is the number of
+            spots detected in a cell with the assigned barcode. `spot_fraction` is the fraction
+            of detections in a cell with the assigned barcode.
+    """
+    df_assignments = pd.DataFrame(columns=['cell_id', 'x', 'y', 'predicted_name', 'predicted_id',
+                                           'spot_counts', 'spot_fraction'])
+    
+    if len(segmentation_results.shape) != 4:
+        raise ValueError('Input data must have {} dimensions. '
+                         'Input data only has {} dimensions'.format(
+                         4, len(segmentation_results.shape)))
+    if segmentation_results.shape[0] != 1:
+        raise ValueError('Input data must have a batch dimension of size 1. '
+                         'Input data only has a batch dimension of size {}.'.format(
+                         segmentation_results.shape[0]))
+    
+    for i in tqdm(range(1,np.max(segmentation_results).astype(int)+1)):
+        df_cell = df_spots.loc[df_spots.cell_id == i]
+        df_cell = df_cell.loc[~df_cell.predicted_name.isin(['Background', 'Unknown'])]
+        n_spots = len(df_cell)
+        
+        cell_pixels = np.argwhere(segmentation_results == i)
+        x = np.mean(cell_pixels[:,1])
+        y = np.mean(cell_pixels[:,2])
+
+        if n_spots > 0:
+            barcode_dict = {}
+            for barcode in df_cell.predicted_name.unique():
+                df_barcode = df_cell.loc[df_cell.predicted_name==barcode]
+                barcode_dict[barcode] = sum(df_barcode.probability)
+                assignment = max(barcode_dict, key=barcode_dict.get)
+                df_correct = df_cell.loc[df_cell.predicted_name==assignment]
+                assignment_id = df_correct.predicted_id.values[0]
+                counts = len(df_correct)
+                fraction = counts/n_spots
+        else:
+            assignment = 'None'
+            assignment_id = -1
+            counts = 0
+            fraction = 0
+            
+        df_assignments.loc[len(df_assignments)] = [i, x, y, assignment, assignment_id, counts, fraction]
+        
+    return(df_assignments)
+
+
 def filter_results(df_spots, batch_id=None, cell_id=None,
                    gene_name=None, source=None, masked=False):
     """Filter Pandas DataFrame output from Polaris application by batch ID, cell ID,
