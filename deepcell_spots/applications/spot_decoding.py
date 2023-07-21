@@ -220,7 +220,7 @@ class SpotDecoding:
             'prediction', len(decoded_dict['probability'])).astype('U25')
         return decoded_dict
 
-    def _threshold_unknown_by_prob(self, decoded_dict, unknown_index, pred_prob_thresh=0.5):
+    def _threshold_unknown_by_prob(self, decoded_dict, unknown_index, pred_prob_thresh=0.95):
         """Threshold the decoded spots to identify unknown. If the highest probability
         if below a certain threshold, the spot will be classfied as Unknown.
 
@@ -451,7 +451,7 @@ class SpotDecoding:
                 spots_intensities_vec,
                 num_iter=500,
                 batch_size=1000,
-                pred_prob_thresh=0.5,
+                pred_prob_thresh=0.95,
                 rescue_errors=True,
                 rescue_mixed=False):
         """Predict the gene assignment of each spot.
@@ -461,7 +461,7 @@ class SpotDecoding:
                 `[num_spots, (rounds * channels)]`.
             num_iter (int): Number of iterations for training. Defaults to 500.
             batch_size (int): Size of batches for training. Defaults to 1000.
-            pred_prob_thresh (float): The threshold of unknown category, within [0,1]. Defaults to 0.5.
+            pred_prob_thresh (float): The threshold of unknown category, within [0,1]. Defaults to 0.95.
             rescue_errors (bool): Whether to check if `'Background'`-  and `'Unknown'`-assigned
                 spots have a Hamming distance of 1 to other barcodes.
             rescue_mixed (bool): Whether to check if low probability predictions are the result of
