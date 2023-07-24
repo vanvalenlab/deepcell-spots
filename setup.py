@@ -68,6 +68,8 @@ setup(
         'deepcell~=0.12.0',
         'tqdm',
         'trackpy~=0.4.2',
+        'plotly',
+        'statsmodels',
         'torch',
         'torchvision',
         'pyro-ppl'

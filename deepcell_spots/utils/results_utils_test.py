@@ -35,7 +35,9 @@ import pandas as pd
 from tensorflow.python.platform import test
 
 from deepcell_spots.utils.results_utils import (filter_results, gene_visualization,
-                                               get_cell_counts, assign_barcodes)
+                                                get_cell_counts, assign_barcodes,
+                                                gene_scatter, spot_journey_plot,
+                                                expression_correlation, probability_hist)
 
 
 class TestResultsUtils(test.TestCase):
@@ -198,3 +200,64 @@ class TestResultsUtils(test.TestCase):
         gene_im = gene_visualization(df_spots, gene, image_dim)
         self.assertEqual(gene_im.shape, (100, 100))
         self.assertEqual(gene_im[10, 10], 1)
+
+    def test_gene_scatter(self):
+        df_spots = pd.DataFrame(
+                [
+                    [10, 10, 0, 0.95, 0, 'A', 0, 'prediction'],
+                    [20, 20, 0, 0.95, 1, 'B', 1, 'error rescue'],
+                    [30, 30, 0, 0.95, 2, 'C', 2, 'mixed rescue']
+                ],
+                columns=['x', 'y', 'batch_id', 'probability', 'predicted_id', 'predicted_name',
+                         'spot_index', 'source']
+            )
+        fig = gene_scatter(df_spots)
+        self.assertIsNotNone(fig)
+
+    def test_spot_journey_plot(self):
+        df_spots = pd.DataFrame(
+                [
+                    [10, 10, 0, 0.95, 0, 'A', 0, 'prediction'],
+                    [20, 20, 0, 0.95, 1, 'B', 1, 'error rescue'],
+                    [30, 30, 0, 0.95, 2, 'C', 2, 'mixed rescue']
+                ],
+                columns=['x', 'y', 'batch_id', 'probability', 'predicted_id', 'predicted_name',
+                         'spot_index', 'source']
+            )
+        fig = spot_journey_plot(df_spots)
+        self.assertIsNotNone(fig)
+
+    def test_expression_correlation(self):
+        df_spots = pd.DataFrame(
+                [
+                    [10, 10, 0, 0.95, 0, 'A', 0, 'prediction'],
+                    [20, 20, 0, 0.95, 1, 'B', 1, 'error rescue'],
+                    [30, 30, 0, 0.95, 2, 'C', 2, 'mixed rescue']
+                ],
+                columns=['x', 'y', 'batch_id', 'probability', 'predicted_id', 'predicted_name',
+                         'spot_index', 'source']
+            )
+        df_control = pd.DataFrame(
+            [
+                ['A', 1],
+                ['B', 1],
+                ['C', 1]
+            ],
+            columns=['gene', 'expression']
+        )
+        fig = expression_correlation(df_spots, df_control)
+        self.assertIsNotNone(fig)
+
+    def test_probability_hist(self):
+        df_spots = pd.DataFrame(
+                [
+                    [10, 10, 0, 0.95, 0, 'A', 0, 'prediction'],
+                    [20, 20, 0, 0.95, 1, 'B', 1, 'error rescue'],
+                    [30, 30, 0, 0.95, 2, 'C', 2, 'mixed rescue']
+                ],
+                columns=['x', 'y', 'batch_id', 'probability', 'predicted_id', 'predicted_name',
+                         'spot_index', 'source']
+            )
+        fig = probability_hist(df_spots)
+        self.assertIsNotNone(fig)
+        
