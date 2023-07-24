@@ -305,8 +305,10 @@ def spot_journey_plot(df_spots):
     s = len(sources)
 
     genes = list(df_copy.predicted_name.unique())
-    genes.remove('Background')
-    genes.remove('Unknown')
+    if 'Background' in genes:
+        genes.remove('Background')
+    if 'Unknown' in genes:
+        genes.remove('Unknown')
 
     source = np.zeros(s+s*3)
     target = np.zeros(s+s*3)
@@ -453,80 +455,6 @@ def expression_correlation(df_spots,
         text="r={}".format(np.round(np.sqrt(rsq), 3)),
         showarrow=False
     )
-
-    return(fig)
-
-
-def hamming_dist_hist(df_spots, df_barcodes, gene_name=None):
-    """Plot a histogram of the Hamming distance of pixel intensities for a subset of predicted
-    genes or all genes to their predicted barcode.
-    
-    Args:
-        df_spots (pandas.DataFrame): Polaris result, columns are `x`, `y`, `batch_id`, `cell_id`,
-            `probability`, `predicted_id`, `predicted_name`, `spot_index`, and `source`.
-        df_barcodes (pandas.DataFrame): Codebook, the first column is gene names (`'Gene'`),
-                the rest are binary barcodes, encoded using 1 and 0. Index should start at 1.
-                For exmaple, for a (rounds=10, channels=2) codebook, it should look like::
-            
-                Index:
-                    RangeIndex (starting from 1)
-                Columns:
-                    Name: Gene, dtype: object
-                    Name: r0c0, dtype: int64
-                    Name: r0c1, dtype: int64
-                    Name: r1c0, dtype: int64
-                    Name: r1c1, dtype: int64
-                    ...
-                    Name: r9c0, dtype: int64
-                    Name: r9c1, dtype: int64
-        gene_name (list): List or array containing gene names to be included in the filtered
-            result. Defaults to None.
-
-    Returns:
-        plotly.graph_objects.Figure: Histogram of the Hamming distances of pixels intensities to
-            predicted barcodes.
-    """
-
-    labels = {
-        'h_dist': 'Hamming distance'
-    }
-    title = 'Distribution of Hamming distances to assigned barcode'
-
-    if gene_name is None:
-        gene_name = list(df_spots.predicted_name.unique())
-        if 'Unknown' in gene_name:
-            gene_name.remove('Unknown')
-        color = None
-
-    else:
-        if not type(gene_name) in [list, np.array]:
-            raise ValueError('If defined, gene_name must be a list or array.')
-        color = 'predicted_name'
-
-    df_plot = filter_results(df_spots, gene_name=gene_name)
-
-    dist_list = np.zeros(len(df_plot))
-    for gene in gene_name:
-        sub_df_plot = df_plot.loc[df_plot.predicted_name == gene]
-        sub_indices = sub_df_plot.index
-        sub_values = sub_df_plot.iloc[:, -20:].values
-        sub_values = np.round(sub_values)
-        barcode = df_barcodes.loc[df_barcodes.Gene == gene].values[0][1:]
-        barcode_len = len(barcode)
-
-        temp_dist_list = []
-        for i in range(len(sub_df_plot)):
-            temp_dist_list.append(distance.hamming(sub_values[i],
-                                                   barcode))
-
-        scaled_dist_list = np.array(temp_dist_list)*barcode_len
-        dist_list[sub_indices] = scaled_dist_list
-
-    df_plot['h_dist'] = dist_list
-
-    fig = px.histogram(df_plot, x='h_dist', color=color,
-                       barmode='overlay', histnorm='probability', labels=labels,
-                       title=title)
 
     return(fig)
 
