@@ -69,6 +69,7 @@ setup(
         'tqdm',
         'trackpy~=0.4.2',
         'plotly',
+        'statsmodels',
         'torch',
         'torchvision',
         'pyro-ppl'
