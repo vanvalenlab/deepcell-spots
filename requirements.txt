@@ -11,6 +11,7 @@ deepcell~=0.12.0
 trackpy~=0.4.2
 tqdm
 plotly
+statsmodels
 --extra-index-url https://download.pytorch.org/whl/cpu # install the cpu only version of torch and torchvision
 torch
 torchvision
