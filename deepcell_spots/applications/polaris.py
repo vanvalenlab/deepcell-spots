@@ -353,8 +353,7 @@ class Polaris:
                 shape `[batch, x, y, channel]`. Channel dimension should less than or equal to
                 the number of imaging channels. Defaults to None.
             image_mpp (float): Microns per pixel for `spots_image`.
-            threshold (float): Probability threshold for a pixel to be
-                considered as a spot.
+            threshold (float): Probability threshold for a pixel to be decoded.
             clip (bool): Determines if pixel values will be clipped by percentile.
                 Defaults to `True`.
             mask_threshold (float): Percentile of pixel values in background image used to
@@ -400,8 +399,7 @@ class Polaris:
 
         clipped_output_image = np.clip(output_image, 0, 1)
         max_proj_images = np.max(clipped_output_image, axis=-1)
-        spots_locations = max_cp_array_to_point_list_max(max_proj_images,
-                                                         threshold=threshold, min_distance=1)
+        spots_locations = [np.argwhere(max_proj_images[i]>threshold) for i in range(max_proj_images.shape[0])]
 
         if self.image_type == 'multiplex':
             if self.distribution == 'Gaussian':
@@ -457,14 +455,44 @@ class Polaris:
                                 spots_cell_assignments_vec,
                                 decoding_result)
         df_intensities = pd.DataFrame(spots_intensities_vec)
-        return df_spots, df_intensities, segmentation_result
+        df_results = pd.concat([df_spots, df_intensities], axis=1)
+
+        if self.image_type == 'multiplex':
+            dec_prob_im = np.zeros((spots_image.shape[:3]))
+
+            for i in range(len(df_results)):
+                gene = df_results.loc[i, 'predicted_name']
+                if gene in ['Background', 'Unknown']:
+                    continue
+                if 'Blank' in gene:
+                    continue
+                
+                x = df_results.loc[i, 'x']
+                y = df_results.loc[i, 'y']
+                b = df_results.loc[i, 'batch_id']
+                prob = max_proj_images[b, x, y]
+                
+                dec_prob_im[b, x, y] = prob
+
+            decoded_spots_locations = max_cp_array_to_point_list_max(dec_prob_im,
+                                                                    threshold=None, min_distance=1)
+            mask = []
+            for i in range(np.shape(decoded_spots_locations)[1]):
+                x = decoded_spots_locations[0][i, 0]
+                y = decoded_spots_locations[0][i, 1]
+
+                mask.append(df_results.loc[(df_results.x==x) & (df_results.y==y)].index[0])
+                
+            df_results = df_results.loc[mask]
+
+        return df_results, segmentation_result
 
     def predict(self,
                 spots_image,
                 segmentation_image=None,
                 background_image=None,
                 image_mpp=None,
-                threshold=0.95,
+                threshold=0.01,
                 clip=True,
                 mask_threshold=0.5,
                 maxpool_extra_pixel_num=0,
