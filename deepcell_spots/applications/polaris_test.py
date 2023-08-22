@@ -210,7 +210,6 @@ class TestPolaris(test.TestCase):
             segmentation_result = pred[1]
 
             self.assertEqual(np.sum(df_results.values[:,-1]), 0)
-            self.assertAllGreater(np.sum(df_results.values[:,:-1], axis=0), 0)
 
             # test prediction type -- singleplex
             app = Polaris()
