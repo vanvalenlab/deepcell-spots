@@ -206,12 +206,10 @@ class TestPolaris(test.TestCase):
             pred = app.predict(spots_image=spots_image,
                                segmentation_image=segmentation_image,
                                background_image=background_image)
-            df_spots = pred[0]
-            df_intensities = pred[1]
-            segmentation_result = pred[2]
+            df_results = pred[0]
+            segmentation_result = pred[1]
 
-            self.assertEqual(np.sum(df_intensities.values[:,-1]), 0)
-            self.assertAllGreater(np.sum(df_intensities.values[:,:-1], axis=0), 0)
+            self.assertEqual(np.sum(df_results.values[:,-1]), 0)
 
             # test prediction type -- singleplex
             app = Polaris()
@@ -221,17 +219,14 @@ class TestPolaris(test.TestCase):
             pred = app.predict(spots_image=spots_image,
                                segmentation_image=segmentation_image,
                                background_image=background_image)
-            df_spots = pred[0]
-            df_intensities = pred[1]
-            segmentation_result = pred[2]
-            self.assertIsInstance(df_spots, pd.DataFrame)
-            self.assertIsInstance(df_intensities, pd.DataFrame)
+            df_results = pred[0]
+            segmentation_result = pred[1]
+            self.assertIsInstance(df_results, pd.DataFrame)
             self.assertIsInstance(segmentation_result, np.ndarray)
             self.assertAllEqual(segmentation_image.shape, segmentation_result.shape)
-            self.assertEqual(len(df_spots), len(df_intensities))
-            self.assertAllEqual(df_spots.probability, [None]*len(df_spots))
-            self.assertAllEqual(df_spots.predicted_id, [None]*len(df_spots))
-            self.assertAllEqual(df_spots.predicted_name, [None]*len(df_spots))
+            self.assertAllEqual(df_results.probability, [None]*len(df_results))
+            self.assertAllEqual(df_results.predicted_id, [None]*len(df_results))
+            self.assertAllEqual(df_results.predicted_name, [None]*len(df_results))
 
             # test prediction type -- multivariate Gaussian
             df_barcodes = pd.DataFrame(
@@ -259,14 +254,11 @@ class TestPolaris(test.TestCase):
             pred = app.predict(spots_image=spots_image,
                                segmentation_image=segmentation_image,
                                background_image=background_image)
-            df_spots = pred[0]
-            df_intensities = pred[1]
-            segmentation_result = pred[2]
-            self.assertIsInstance(df_spots, pd.DataFrame)
-            self.assertIsInstance(df_intensities, pd.DataFrame)
+            df_results = pred[0]
+            segmentation_result = pred[1]
+            self.assertIsInstance(df_results, pd.DataFrame)
             self.assertIsInstance(segmentation_result, np.ndarray)
             self.assertAllEqual(segmentation_image.shape, segmentation_result.shape)
-            self.assertEqual(len(df_spots), len(df_intensities))
 
             # test prediction type -- Bernoulli
             df_barcodes = pd.DataFrame(
@@ -294,12 +286,9 @@ class TestPolaris(test.TestCase):
             pred = app.predict(spots_image=spots_image,
                                segmentation_image=segmentation_image,
                                background_image=background_image)
-            df_spots = pred[0]
-            df_intensities = pred[1]
-            segmentation_result = pred[2]
-            self.assertIsInstance(df_spots, pd.DataFrame)
-            self.assertIsInstance(df_intensities, pd.DataFrame)
+            df_results = pred[0]
+            segmentation_result = pred[1]
+            self.assertIsInstance(df_results, pd.DataFrame)
             self.assertIsInstance(segmentation_result, np.ndarray)
             self.assertAllEqual(segmentation_image.shape, segmentation_result.shape)
-            self.assertEqual(len(df_spots), len(df_intensities))
-            self.assertAllInRange(df_spots.probability, 0, 1)
+            self.assertAllInRange(df_results.probability, 0, 1)
