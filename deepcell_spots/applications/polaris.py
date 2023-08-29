@@ -456,6 +456,7 @@ class Polaris:
                                 decoding_result)
         df_intensities = pd.DataFrame(spots_intensities_vec)
         df_results = pd.concat([df_spots, df_intensities], axis=1)
+        df_results = df_results.reset_index(drop=True)
 
         if self.image_type == 'multiplex':
             dec_prob_im = np.zeros((spots_image.shape[:3]))
