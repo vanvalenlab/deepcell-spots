@@ -32,15 +32,18 @@ import os
 import timeit
 
 import tensorflow as tf
+from pathlib import Path
 from deepcell.applications import Application
+from deepcell.utils import fetch_data, extract_archive
 
 from deepcell_spots.dotnet_losses import DotNetLosses
 from deepcell_spots.utils.postprocessing_utils import y_annotations_to_point_list_max
 from deepcell_spots.utils.preprocessing_utils import min_max_normalize
 
 
-MODEL_PATH = ('https://deepcell-data.s3-us-west-1.amazonaws.com/'
-              'saved-models/SpotDetection-7.tar.gz')
+MODEL_KEY = 'models/SpotDetection-7.tar.gz'
+MODEL_NAME = 'SpotDetection'
+MODEL_HASH = 'f52d473ad7e4ce33472f1a9a9cae2d85'
 
 
 def output_to_dictionary(output_images, output_names):
@@ -107,13 +110,17 @@ class SpotDetection(Application):
 
     def __init__(self, model=None):
 
+        cache_subdir = "models"
+        model_dir = Path.home() / ".deepcell" / "models"  # TODO: is .deepcell right?
+
         if model is None:
-            archive_path = tf.keras.utils.get_file(
-                'SpotDetection.tgz', MODEL_PATH,
-                file_hash='f52d473ad7e4ce33472f1a9a9cae2d85',
-                extract=True, cache_subdir='models'
+            archive_path = fetch_data(
+                asset_key=MODEL_KEY,
+                cache_subdir=cache_subdir,
+                file_hash=MODEL_HASH
             )
-            model_path = os.path.splitext(archive_path)[0]
+            extract_archive(archive_path, model_dir)
+            model_path = model_dir / MODEL_NAME
             model = tf.keras.models.load_model(
                 model_path, custom_objects={
                     'regression_loss': DotNetLosses.regression_loss,
