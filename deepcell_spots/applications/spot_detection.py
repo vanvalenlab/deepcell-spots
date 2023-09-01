@@ -110,10 +110,10 @@ class SpotDetection(Application):
 
     def __init__(self, model=None):
 
-        cache_subdir = "models"
-        model_dir = Path.home() / ".deepcell" / "models"  # TODO: is .deepcell right?
-
         if model is None:
+            cache_subdir = "models"
+            model_dir = Path.home() / ".deepcell" / "models"
+
             archive_path = fetch_data(
                 asset_key=MODEL_KEY,
                 cache_subdir=cache_subdir,
