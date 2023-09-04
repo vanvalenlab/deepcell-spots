@@ -57,7 +57,7 @@ class TestSpotDetection(test.TestCase):
             self.assertEqual(len(shape[1]), 4)
 
             # test threshold error
-            app = SpotDetection()
+            app = SpotDetection(model=model)
             spots_image = np.random.rand(1, 128, 128, 1)
             with self.assertRaises(ValueError):
                 _ = app.predict(image=spots_image, threshold=1.1)
