@@ -104,14 +104,14 @@ class TestPolaris(test.TestCase):
 
             # test image type error
             with self.assertRaises(ValueError):
-                _ = Polaris(image_type='x')
+                _ = Polaris(spots_model=spots_model, image_type='x')
 
             # test segmentation type error
             with self.assertRaises(ValueError):
-                _ = Polaris(segmentation_type='x')
+                _ = Polaris(spots_model=spots_model, segmentation_type='x')
 
             # test threshold error
-            app = Polaris()
+            app = Polaris(spots_model=spots_model)
             spots_image = np.random.rand(1, 128, 128, 1)
             with self.assertRaises(ValueError):
                 _ = app.predict(spots_image=spots_image, threshold=1.1)
@@ -123,7 +123,7 @@ class TestPolaris(test.TestCase):
                 _ = app.predict(spots_image=spots_image, mask_threshold=-1.1)
 
             # test segmentation app error
-            app = Polaris(segmentation_type='no segmentation')
+            app = Polaris(spots_model=spots_model, segmentation_type='no segmentation')
             spots_image = np.random.rand(1, 128, 128, 1)
             segmentation_image = np.random.rand(1, 128, 128, 1)
             with self.assertRaises(ValueError):
@@ -131,7 +131,8 @@ class TestPolaris(test.TestCase):
                                 segmentation_image=segmentation_image)
 
             # test multiplex image type
-            app = Polaris(image_type='multiplex', segmentation_type='mesmer')
+            app = Polaris(spots_model=spots_model, image_type='multiplex',
+                          segmentation_type='mesmer')
             self.assertIsNone(app.decoding_app)
 
             df_barcodes = pd.DataFrame(
@@ -150,7 +151,8 @@ class TestPolaris(test.TestCase):
             decoding_kwargs = {'df_barcodes': df_barcodes, 'rounds': 2,
                                'channels': 3, 'distribution': 'Relaxed Bernoulli',
                                'params_mode': '2*R*C'}
-            app = Polaris(image_type='multiplex', decoding_kwargs=decoding_kwargs)
+            app = Polaris(spots_model=spots_model, image_type='multiplex',
+                          decoding_kwargs=decoding_kwargs)
             self.assertIsNotNone(app.decoding_app)
 
             with self.assertRaises(ValueError):
@@ -198,7 +200,8 @@ class TestPolaris(test.TestCase):
             decoding_kwargs = {'df_barcodes': df_barcodes, 'rounds': r,
                                'channels': c, 'distribution': 'Relaxed Bernoulli',
                                'params_mode': '2*R*C'}
-            app = Polaris(image_type='multiplex', decoding_kwargs=decoding_kwargs)
+            app = Polaris(spots_model=spots_model, image_type='multiplex',
+                          decoding_kwargs=decoding_kwargs)
 
             spots_image = np.random.rand(1, 128, 128, r*c) + 1
             segmentation_image = np.random.rand(1, 128, 128, 1)
@@ -212,7 +215,7 @@ class TestPolaris(test.TestCase):
             self.assertEqual(np.sum(df_results.values[:,-1]), 0)
 
             # test prediction type -- singleplex
-            app = Polaris()
+            app = Polaris(spots_model=spots_model)
             spots_image = np.random.rand(1, 128, 128, 1)
             segmentation_image = np.random.rand(1, 128, 128, 1)
             background_image = np.random.rand(1, 128, 128, 1)
@@ -246,7 +249,8 @@ class TestPolaris(test.TestCase):
             c = 3
             decoding_kwargs = {'df_barcodes': df_barcodes, 'rounds': r,
                                'channels': c, 'distribution': 'Gaussian'}
-            app = Polaris(image_type='multiplex', decoding_kwargs=decoding_kwargs)
+            app = Polaris(spots_model=spots_model, image_type='multiplex',
+                          decoding_kwargs=decoding_kwargs)
 
             spots_image = np.random.rand(1, 128, 128, r*c) + 1
             segmentation_image = np.random.rand(1, 128, 128, 1)
@@ -278,7 +282,8 @@ class TestPolaris(test.TestCase):
             c = 3
             decoding_kwargs = {'df_barcodes': df_barcodes, 'rounds': r,
                                'channels': c, 'distribution': 'Bernoulli'}
-            app = Polaris(image_type='multiplex', decoding_kwargs=decoding_kwargs)
+            app = Polaris(spots_model=spots_model, image_type='multiplex',
+                          decoding_kwargs=decoding_kwargs)
 
             spots_image = np.random.rand(1, 128, 128, r*c) + 1
             segmentation_image = np.random.rand(1, 128, 128, 1)
