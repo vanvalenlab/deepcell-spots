@@ -35,10 +35,12 @@ Build and run a local docker container, similarly to the instructions for deepce
 
 ### Build a local docker container, specifying the deepcell version with DEEPCELL_VERSION
 
+The deepcell-spots Docker image is built using the deepcell-tf Docker images as a base image, so a ``DEEPCELL_VERSION`` must be specified in the build command.
+
 ```bash
 git clone https://github.com/vanvalenlab/deepcell-spots.git
 cd deepcell-spots
-docker build --build-arg DEEPCELL_VERSION=0.12.0-gpu -t $USER/deepcell-spots . 
+docker build --build-arg DEEPCELL_VERSION=0.12.9-gpu -t $USER/deepcell-spots . 
 ```
 
 ### Run the new docker image
