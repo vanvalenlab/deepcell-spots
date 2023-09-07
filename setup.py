@@ -63,7 +63,7 @@ setup(
         'opencv-python-headless<5',
         'deepcell>=0.12.7',
         'tqdm',
-        'trackpy~=0.4.2',
+        'trackpy',
         'plotly',
         'statsmodels',
         'torch',
