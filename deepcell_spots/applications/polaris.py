@@ -32,6 +32,8 @@ import warnings
 import numpy as np
 import pandas as pd
 
+from tqdm import tqdm
+
 from deepcell.applications import CytoplasmSegmentation, NuclearSegmentation
 from deepcell.applications import Mesmer
 from deepcell_spots.applications import SpotDetection, SpotDecoding
@@ -264,7 +266,7 @@ class Polaris:
         """
 
         output_image = np.zeros_like(spots_image, dtype=np.float32)
-        for idx_round in range(spots_image.shape[-1]):
+        for idx_round in tqdm(range(spots_image.shape[-1])):
             if skip_round[idx_round]:
                 continue
             output_image[..., idx_round] = self.spots_app.predict(
@@ -358,7 +360,10 @@ class Polaris:
             df_intensities (pandas.DataFrame): Columns are channels and rows are spots.
             segmentation_result (numpy.array): Segmentation mask with shape `[batch, x, y, 1]`.
         """
+        print('Validating inputs.')
         self._validate_prediction_input(spots_image, segmentation_image, mask, threshold)
+
+        print('Predicting spot locations.')
         if self.image_type == 'multiplex':
             skip_round = np.array(np.sum(self.df_barcodes.iloc[:,1:], axis=0)==0)
         else:
@@ -390,6 +395,7 @@ class Polaris:
             for idx_batch, item in enumerate(spots_locations)])
 
         if segmentation_image is not None:
+            print('Segmenting cells.')
             if not self.segmentation_app:
                 raise ValueError('Segmentation application must be instantiated if '
                                  'segmentation image is defined.')
@@ -403,6 +409,7 @@ class Polaris:
             spots_cell_assignments_vec = None
 
         if self.decoding_app is not None:
+            print('Decoding gene identities.')
             decoding_result = self.decoding_app.predict(
                 spots_intensities_vec, **decoding_training_kwargs)
             spots_locations_ext = spots_locations_vec[decoding_result['spot_index']]
@@ -426,6 +433,7 @@ class Polaris:
         df_results = df_results.reset_index(drop=True)
 
         if self.image_type == 'multiplex':
+            print('Refining spot locations.')
             dec_prob_im = np.zeros((spots_image.shape[:3]))
 
             for i in range(len(df_results)):
