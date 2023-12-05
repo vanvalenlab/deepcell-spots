@@ -358,7 +358,7 @@ class Polaris:
             df_intensities (pandas.DataFrame): Columns are channels and rows are spots.
             segmentation_result (numpy.array): Segmentation mask with shape `[batch, x, y, 1]`.
         """
-        self._validate_prediction_input(spots_image, segmentation_image, threshold)
+        self._validate_prediction_input(spots_image, segmentation_image, mask, threshold)
         if self.image_type == 'multiplex':
             skip_round = np.array(np.sum(self.df_barcodes.iloc[:,1:], axis=0)==0)
         else:
