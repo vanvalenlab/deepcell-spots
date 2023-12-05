@@ -36,6 +36,8 @@ import pandas as pd
 from scipy.spatial import distance
 from tqdm import tqdm
 
+from deepcell_spots.utils.preprocessing_utils import min_max_normalize
+
 
 def get_cell_counts(df_spots):
     """Converts Polaris outputs into a DataFrame containing gene expression counts per cell.
@@ -500,3 +502,28 @@ def probability_hist(df_spots, gene_name=None):
                        yshift=10)
 
     return(fig)
+
+def mask_spots(background_image, mask_threshold):
+    """Mask predicted spots in regions of high background intensity. If input background
+    image contains more than one channel, background mask will be maximum intensity projected
+    across channel axis.
+
+    Args:
+        spots_locations (list): A list of length `batch` containing arrays of spots
+            coordinates with shape `[num_spots, 2]`.
+        background_image (numpy.array): Input image for masking bright background objects with
+            shape `[batch, x, y, channel]`.
+        mask_threshold (float): Percentile of pixel values in background image used to
+            create a mask for bright background objects.
+
+    Returns:
+        array: Array with values 0 and 1, whether predicted spot is within a masked backround
+            object.
+    """
+    normalized_image = np.zeros(background_image.shape)
+    for i in range(background_image.shape[0]):
+        normalized_image[i] = min_max_normalize(background_image[i:i+1], clip=True)
+    mask = normalized_image > mask_threshold
+    mask = np.max(mask, axis=-1)
+
+    return(mask)

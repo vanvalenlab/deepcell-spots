@@ -201,9 +201,8 @@ class Polaris:
     def _validate_prediction_input(self,
                                    spots_image,
                                    segmentation_image,
-                                   background_image,
-                                   threshold,
-                                   mask_threshold):
+                                   mask,
+                                   threshold):
         """Validate shape and values of prediction input.
 
         Args:
@@ -212,13 +211,10 @@ class Polaris:
             segmentation_image (numpy.array): Input image for cell segmentation with shape
                 `[batch, x, y, channel]`. Channel dimension should have a value of 1.
                 Defaults to None.
-            background_image (numpy.array): Input image for masking bright background objects with
-                shape `[batch, x, y, channel]`. Channel dimension should less than or equal to
-                the number of imaging channels. Defaults to None.
+            mask (numpy.array): Input image for masking bright background objects with
+                shape `[batch, x, y]`. Defaults to None.
             threshold (float): Probability threshold for a pixel to be
                 considered as a spot.
-            mask_threshold (float): Percentile of pixel values in background image used to
-                create a mask for bright background objects.
 
         Raises:
             ValueError: The size of the channel dimension of `spots_image` must equal
@@ -226,12 +222,9 @@ class Polaris:
             ValueError: The size of `spots_image` and `segmentation_image` must be the same, 
                 excluding the channel dimension.
             ValueError: The channel dimension of `segmentation_image` must be 1.
-            ValueError: The size of `spots_image` and `background_image` must be the same, 
+            ValueError: The size of `spots_image` and `mask` must be the same, 
                 excluding the channel dimension.
-            ValueError: The channel dimension of `background_image` must be less than or equal to
-                `channels`.
             ValueError: `threshold` must be between 0 and 1.
-            ValueError: `mask_threshold` must be between 0 and 1.
         """
         if self.image_type=='multiplex' and spots_image.shape[-1] != self.rounds * self.channels:
             raise ValueError('Shape of channel dimension of spots_image should equal to '
@@ -244,26 +237,15 @@ class Polaris:
                                  'and segmentation_image must be the same. spots_image '
                                  'has shape {} and segmentation_image has shape {}'
                                  ''.format(spots_image.shape, segmentation_image.shape))
-
-        if background_image is not None:
-            if spots_image.shape[:-1] != background_image.shape[:-1]:
-                raise ValueError('Batch, x, and y dimensions of spots_image '
-                                 'and background_image must be the same. spots_image '
-                                 'has shape {} and segmentation_image has shape {}'
-                                 ''.format(spots_image.shape, background_image.shape))
             
-            if background_image.shape[-1] > self.channels:
-                raise ValueError('Shape of channel dimension of background_image should be less '
-                                 'than or equal to the number of imaging channels, but input '
-                                 'segmentation_image had shape {} (b,x,y,c).'
-                                 ''.format(background_image.shape))
+        if mask is not None:
+            if spots_image.shape[:-1] != mask.shape:
+                raise ValueError('Batch, x, and y dimensions of spots_image '
+                                 'and mask must be the same. spots_image has shape {} '
+                                 'and mask has shape {}'.format(spots_image.shape, mask.shape))
 
         if threshold < 0 or threshold > 1:
             raise ValueError('Input threshold was %s. Threshold value must be '
-                             'between 0 and 1.'.format())
-
-        if mask_threshold < 0 or mask_threshold > 1:
-            raise ValueError('Input mask_threshold was %s. Threshold value must be '
                              'between 0 and 1.'.format())
 
     def _predict_spots_image(self, spots_image, clip, skip_round):
@@ -290,29 +272,20 @@ class Polaris:
                 clip=clip
             )['classification'][..., 1]
         return output_image
-
-    def _mask_spots(self, spots_locations, background_image, mask_threshold):
-        """Mask predicted spots in regions of high background intensity. If input background
-        image contains more than one channel, background mask will be maximum intensity projected
-        across channel axis.
+    
+    def _mask_spots(self, spots_locations, mask):
+        """Mask predicted spots in regions of high background intensity.
 
         Args:
             spots_locations (list): A list of length `batch` containing arrays of spots
                 coordinates with shape `[num_spots, 2]`.
-            background_image (numpy.array): Input image for masking bright background objects with
-                shape `[batch, x, y, channel]`.
-            mask_threshold (float): Percentile of pixel values in background image used to
-                create a mask for bright background objects.
+            mask (numpy.array): Binary image for masking bright background objects with
+                shape `[batch, x, y]`.
 
         Returns:
             array: Array with values 0 and 1, whether predicted spot is within a masked backround
                 object.
         """
-        normalized_image = np.zeros(background_image.shape)
-        for i in range(background_image.shape[0]):
-            normalized_image[i] = min_max_normalize(background_image[i:i+1], clip=True)
-        mask = normalized_image > mask_threshold
-        mask = np.max(mask, axis=-1)
 
         result = np.zeros(np.vstack(spots_locations).shape[0])
         for i in range(len(spots_locations)):
@@ -329,11 +302,10 @@ class Polaris:
     def _predict(self,
                  spots_image,
                  segmentation_image,
-                 background_image,
                  image_mpp,
                  threshold,
                  clip,
-                 mask_threshold,
+                 mask,
                  maxpool_extra_pixel_num,
                  decoding_training_kwargs):
         """Generates prediction output consisting of a labeled cell segmentation image,
@@ -349,15 +321,12 @@ class Polaris:
             segmentation_image (numpy.array): Input image for cell segmentation with shape
                 `[batch, x, y, channel]`. Channel dimension should have a value of 1.
                 Defaults to None.
-            background_image (numpy.array): Input image for masking bright background objects with
-                shape `[batch, x, y, channel]`. Channel dimension should less than or equal to
-                the number of imaging channels. Defaults to None.
             image_mpp (float): Microns per pixel for `spots_image`.
             threshold (float): Probability threshold for a pixel to be decoded.
             clip (bool): Determines if pixel values will be clipped by percentile.
                 Defaults to `True`.
-            mask_threshold (float): Percentile of pixel values in background image used to
-                create a mask for bright background objects.
+            mask (numpy.array): Binary image for masking bright background objects with
+                shape `[batch, x, y, 1]`.
             maxpool_extra_pixel_num (int): Number of extra pixel for max pooling. Defaults
                 to 0, means no max pooling. For any number t, there will be a pool with
                 shape `[-t, t] x [-t, t]`.
@@ -389,8 +358,7 @@ class Polaris:
             df_intensities (pandas.DataFrame): Columns are channels and rows are spots.
             segmentation_result (numpy.array): Segmentation mask with shape `[batch, x, y, 1]`.
         """
-        self._validate_prediction_input(spots_image, segmentation_image, background_image,
-                                        threshold, mask_threshold)
+        self._validate_prediction_input(spots_image, segmentation_image, threshold)
         if self.image_type == 'multiplex':
             skip_round = np.array(np.sum(self.df_barcodes.iloc[:,1:], axis=0)==0)
         else:
@@ -446,10 +414,9 @@ class Polaris:
                                'source': None}
             spots_locations_ext = spots_locations_vec
 
-        if background_image is not None:
+        if mask is not None:
             decoding_result['masked'] = self._mask_spots(spots_locations,
-                                                         background_image,
-                                                         mask_threshold)
+                                                         mask)
 
         df_spots = output_to_df(spots_locations_ext,
                                 spots_cell_assignments_vec,
@@ -495,11 +462,10 @@ class Polaris:
     def predict(self,
                 spots_image,
                 segmentation_image=None,
-                background_image=None,
                 image_mpp=None,
                 threshold=0.01,
                 clip=True,
-                mask_threshold=0.5,
+                mask=None,
                 maxpool_extra_pixel_num=0,
                 decoding_training_kwargs={}):
         """Generates prediction output consisting of a labeled cell segmentation image,
@@ -515,16 +481,12 @@ class Polaris:
             segmentation_image (numpy.array): Input image for cell segmentation with shape
                 `[batch, x, y, channel]`. Channel dimension should have a value of 1.
                 Defaults to None.
-            background_image (numpy.array): Input image for masking bright background objects with
-                shape `[batch, x, y, channel]`. Channel dimension should less than or equal to
-                the number of imaging channels. Defaults to None.
             image_mpp (float): Microns per pixel for `spots_image`.
-            threshold (float): Probability threshold for a pixel to be
-                considered as a spot.
+            threshold (float): Probability threshold for a pixel to be decoded.
             clip (bool): Determines if pixel values will be clipped by percentile.
                 Defaults to `True`.
-            mask_threshold (float): Percentile of pixel values in background image used to
-                create a mask for bright background objects.
+            mask (numpy.array): Binary image for masking bright background objects with
+                shape `[batch, x, y, 1]`.
             maxpool_extra_pixel_num (int): Number of extra pixel for max pooling. Defaults
                 to 0, means no max pooling. For any number t, there will be a pool with
                 shape `[-t, t] x [-t, t]`.
@@ -536,10 +498,8 @@ class Polaris:
             ValueError: The size of `spots_image` and `segmentation_image` must be the same, 
                 excluding the channel dimension.
             ValueError: The channel dimension of `segmentation_image` must be 1.
-            ValueError: The size of `spots_image` and `background_image` must be the same, 
-                excluding the channel dimension.
-            ValueError: The channel dimension of `background_image` must be less than or equal to
-                `channels`.
+            ValueError: The size of `spots_image` and `mask` must be the same, excluding the
+                channel dimension.
             ValueError: `threshold` must be between 0 and 1.
             ValueError: `mask_threshold` must be between 0 and 1.
             ValueError: Segmentation application must be instantiated if segmentation
@@ -556,11 +516,10 @@ class Polaris:
         return self._predict(
             spots_image=spots_image,
             segmentation_image=segmentation_image,
-            background_image=background_image,
             image_mpp=image_mpp,
             threshold=threshold,
             clip=clip,
-            mask_threshold=mask_threshold,
+            mask=mask,
             maxpool_extra_pixel_num=maxpool_extra_pixel_num,
             decoding_training_kwargs=decoding_training_kwargs
         )
