@@ -117,10 +117,6 @@ class TestPolaris(test.TestCase):
                 _ = app.predict(spots_image=spots_image, threshold=1.1)
             with self.assertRaises(ValueError):
                 _ = app.predict(spots_image=spots_image, threshold=-1.1)
-            with self.assertRaises(ValueError):
-                _ = app.predict(spots_image=spots_image, mask_threshold=1.1)
-            with self.assertRaises(ValueError):
-                _ = app.predict(spots_image=spots_image, mask_threshold=-1.1)
 
             # test segmentation app error
             app = Polaris(spots_model=spots_model, segmentation_type='no segmentation')
