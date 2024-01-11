@@ -41,9 +41,9 @@ from deepcell_spots.utils.postprocessing_utils import y_annotations_to_point_lis
 from deepcell_spots.utils.preprocessing_utils import min_max_normalize
 
 
-MODEL_KEY = 'models/SpotDetection-7.tar.gz'
+MODEL_KEY = 'models/SpotDetection-8.tar.gz'
 MODEL_NAME = 'SpotDetection'
-MODEL_HASH = 'f52d473ad7e4ce33472f1a9a9cae2d85'
+MODEL_HASH = 'a6164e48ef8872a9524b4ec6726859d7'
 
 
 def output_to_dictionary(output_images, output_names):
