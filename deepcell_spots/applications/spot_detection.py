@@ -104,8 +104,8 @@ class SpotDetection(Application):
         'lr': 0.01,
         'lr_decay': 0.99,
         'training_seed': 0,
-        'n_epochs': 10,
-        'training_steps_per_epoch': 552
+        'n_epochs': 50,
+        'training_steps_per_epoch': 849
     }
 
     def __init__(self, model=None):
