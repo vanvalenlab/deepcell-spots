@@ -59,7 +59,6 @@ def train_model_dot(model,
                     model_name=None,
                     focal=False,
                     sigma=3.0,
-                    alpha=0.25,
                     gamma=0.5,
                     lr_sched=rate_scheduler(lr=0.01, decay=0.95),
                     rotation_range=0,
@@ -87,7 +86,6 @@ def train_model_dot(model,
             model_name (str): Name of the model (and name of output file).
             focal (bool): If true, uses focal loss.
             sigma (float): The point where the loss changes from L2 to L1.
-            alpha (float): Scale the focal weight with alpha.
             gamma (float): Parameter for focal loss (Take the power of the focal
                 weight with gamma.).
             optimizer (object): Pre-initialized optimizer object (SGD, Adam, etc.).
@@ -137,7 +135,7 @@ def train_model_dot(model,
     print('Training on {} GPUs'.format(num_gpus))
 
     losses = dotnet_losses.DotNetLosses(
-        sigma=sigma, alpha=alpha, gamma=gamma, focal=focal)
+        sigma=sigma, gamma=gamma, focal=focal)
 
     loss = {
         'offset_regression': losses.regression_loss,
