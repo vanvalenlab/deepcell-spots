@@ -137,7 +137,7 @@ def train_model_dot(model,
     print('Training on {} GPUs'.format(num_gpus))
 
     losses = dotnet_losses.DotNetLosses(
-        sigma=sigma, alpha=alpha, gamma=gamma, focal=focal)
+        sigma=sigma, gamma=gamma, focal=focal)
 
     loss = {
         'offset_regression': losses.regression_loss,
