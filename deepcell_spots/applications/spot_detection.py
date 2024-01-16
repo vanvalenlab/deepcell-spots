@@ -42,7 +42,7 @@ from deepcell_spots.utils.preprocessing_utils import min_max_normalize
 
 
 MODEL_KEY = 'models/SpotDetection-8.tar.gz'
-MODEL_NAME = 'SpotDetection'
+MODEL_NAME = 'SpotDetection-8'
 MODEL_HASH = 'a6164e48ef8872a9524b4ec6726859d7'
 
 
