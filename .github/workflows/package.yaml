@@ -3,7 +3,7 @@ name: Build Python package
 on: [push, pull_request]
 
 jobs:
-  build-package:
+  dry-run:
 
     runs-on: ubuntu-latest
 
