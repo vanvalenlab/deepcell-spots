@@ -26,11 +26,7 @@
 import os
 
 from codecs import open
-
-try:
-    from setuptools import setup, find_packages
-except ImportError:
-    from distutils.core import setup, find_packages
+from setuptools import setup, find_packages
 
 
 here = os.path.abspath(os.path.dirname(__file__))
@@ -65,7 +61,7 @@ setup(
         'jupyter>=1.0.0,<2',
         'networkx>=2.1',
         'opencv-python-headless<5',
-        'deepcell~=0.12.0',
+        'deepcell>=0.12.7',
         'tqdm',
         'trackpy~=0.4.2',
         'plotly',
