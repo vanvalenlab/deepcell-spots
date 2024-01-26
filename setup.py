@@ -65,7 +65,7 @@ setup(
         'jupyter>=1.0.0,<2',
         'networkx>=2.1',
         'opencv-python-headless<5',
-        'deepcell~=0.12.0',
+        'deepcell>=0.12.7',
         'tqdm',
         'trackpy~=0.4.2',
         'plotly',
