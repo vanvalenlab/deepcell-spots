@@ -1,6 +1,6 @@
 pandas<2
 numpy>=1.16.6
-scipy>=1.2.3,<2
+scipy<2
 scikit-image>=0.19.3
 scikit-learn
 tensorflow~=2.8.0  # manually matched to deepcell-tf
