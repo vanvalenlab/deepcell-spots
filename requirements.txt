@@ -1,5 +1,5 @@
 pandas<2
-numpy>=1.16.6
+numpy
 scipy<2
 scikit-image>=0.19.3
 scikit-learn

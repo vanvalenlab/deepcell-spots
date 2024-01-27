@@ -53,8 +53,8 @@ setup(
     long_description_content_type='text/markdown',
     install_requires=[
         'pandas<2',
-        'numpy>=1.16.6',
-        'scipy>=1.2.3,<2',
+        'numpy',
+        'scipy<2',
         'scikit-image>=0.19.3',
         'scikit-learn',
         'tensorflow~=2.8.0',
