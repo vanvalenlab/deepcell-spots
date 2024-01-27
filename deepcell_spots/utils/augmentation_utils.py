@@ -29,7 +29,7 @@
 import numpy as np
 from keras_preprocessing.image.affine_transformations import \
     transform_matrix_offset_center
-from scipy.ndimage.morphology import distance_transform_edt
+from scipy.ndimage import distance_transform_edt
 
 
 def subpixel_distance_transform(point_list, image_shape, dy=1, dx=1):
