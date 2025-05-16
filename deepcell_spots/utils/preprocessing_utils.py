@@ -29,6 +29,7 @@
 import logging
 
 import numpy as np
+import cv2 as cv
 
 
 def mean_std_normalize(image, epsilon=1e-07):
@@ -91,3 +92,51 @@ def min_max_normalize(image, clip=False):
 
             image[batch, ..., channel] = normal_image
     return image
+
+
+def blurred_laplacian_of_gaussian(images, clip=False):
+    """
+    Applies a combination of bilateral filtering, Gaussian blurring, and Laplacian of Gaussian. 
+    First denoises the images using a bilateral filter, then applies a Gaussian blur, 
+    and finally enhances spots using the Laplacian of Gaussian method. 
+    
+    Currently, this function only supports single-channel images.
+    
+    Args:
+        image (numpy.array): 4D numpy array of image data.
+        clip (boolean): Defaults to false. Determines if pixel
+            values are clipped by percentile.
+
+    Returns:
+        numpy.array: preprocessed image data.
+    """
+    # Combination: Bilateral denoising to preserve edges, then Laplacian of Gaussian for spot enhancement
+    processed_images_list = []
+    
+    if not np.issubdtype(images.dtype, np.floating):
+        logging.info('Converting image dtype to float')
+
+    if not len(np.shape(images)) == 4:
+        raise ValueError('Image must be 4D, input image shape was'
+                         ' {}.'.format(np.shape(images)))
+        
+    for img_array in images:
+        img = np.copy(img_array)
+        
+        if clip:
+            img = np.clip(img, a_min=np.percentile(img, 0.01), a_max=np.percentile(img, 99.9))
+                
+        if img.ndim == 3 and img.shape[2] == 1:
+            img = img[:, :, 0]
+        img_float32 = cv.normalize(img, None, 0, 1, cv.NORM_MINMAX).astype(np.float32)
+        # Bilateral filter to denoise while maintaining spot edges
+        bilateral = cv.bilateralFilter(img_float32, d=5, sigmaColor=0.09, sigmaSpace=9)
+        # Slight Gaussian blur before Laplacian
+        gauss = cv.GaussianBlur(bilateral, (3,3), 0)
+        lap = cv.Laplacian(gauss, cv.CV_32F, ksize=3)
+        abs_lap = np.abs(lap)
+        lap_norm = cv.normalize(abs_lap, None, 0, 1, cv.NORM_MINMAX).astype(np.float32)
+        if img_array.ndim == 3 and img_array.shape[2] == 1:
+            lap_norm = lap_norm[:, :, np.newaxis]
+        processed_images_list.append(lap_norm)
+    return np.array(processed_images_list, dtype=np.float32)
