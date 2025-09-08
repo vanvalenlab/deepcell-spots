@@ -31,6 +31,7 @@ from __future__ import absolute_import, division, print_function
 import warnings
 import numpy as np
 import pandas as pd
+from collections import defaultdict
 
 from tqdm import tqdm
 
@@ -449,12 +450,9 @@ class Polaris:
 
 
             # Pre-create a dictionary for fast lookups
-            lookup_dict = {}
+            lookup_dict = defaultdict(list)
             for idx, row in df_results.iterrows():
-                key = (row['batch_id'], row['x'], row['y'])
-                if key not in lookup_dict:
-                    lookup_dict[key] = []
-                lookup_dict[key].append(idx)
+                lookup_dict[(row['batch_id'], row['x'], row['y'])].append(idx)
 
             mask = []
             for b in range(spots_image.shape[0]):
