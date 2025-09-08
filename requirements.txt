@@ -8,11 +8,11 @@ jupyter>=1.0.0,<2
 networkx>=2.1
 opencv-python-headless<5
 deepcell>=0.12.7
-trackpy
+trackpy~=0.6.0
 tqdm
 plotly
-statsmodels
+statsmodels~=0.14.0
 --extra-index-url https://download.pytorch.org/whl/cpu # install the cpu only version of torch and torchvision
-torch
+torch~=2.3.0
 torchvision
-pyro-ppl
+pyro-ppl>=1.8.0

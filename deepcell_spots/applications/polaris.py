@@ -31,6 +31,7 @@ from __future__ import absolute_import, division, print_function
 import warnings
 import numpy as np
 import pandas as pd
+from collections import defaultdict
 
 from tqdm import tqdm
 
@@ -436,19 +437,22 @@ class Polaris:
             print('Refining spot locations.')
             dec_prob_im = np.zeros((spots_image.shape[:3]))
 
-            for i in range(len(df_results)):
-                gene = df_results.loc[i, 'predicted_name']
-                if gene in ['Background', 'Unknown']:
-                    continue
-                if 'Blank' in gene:
-                    continue
-                
-                x = df_results.loc[i, 'x']
-                y = df_results.loc[i, 'y']
-                b = df_results.loc[i, 'batch_id']
-                prob = max_proj_images[b, x, y]
-                
-                dec_prob_im[b, x, y] = prob
+            # Mask out unwanted genes
+            mask_valid = ~df_results['predicted_name'].isin(['Background', 'Unknown']) & \
+                         ~df_results['predicted_name'].str.contains('Blank', na=False)
+            valid_df = df_results[mask_valid]
+
+            b = valid_df['batch_id'].to_numpy()
+            x = valid_df['x'].to_numpy()
+            y = valid_df['y'].to_numpy()
+
+            dec_prob_im[b, x, y] = max_proj_images[b, x, y]
+
+
+            # Pre-create a dictionary for fast lookups
+            lookup_dict = defaultdict(list)
+            for idx, row in df_results.iterrows():
+                lookup_dict[(row['batch_id'], row['x'], row['y'])].append(idx)
 
             mask = []
             for b in range(spots_image.shape[0]):
@@ -459,10 +463,10 @@ class Polaris:
                     x = decoded_spots_locations[0][i, 0]
                     y = decoded_spots_locations[0][i, 1]
 
-                    mask.append(df_results.loc[(df_results.x==x) & 
-                                               (df_results.y==y) & 
-                                               (df_results.batch_id==b)].index[0])
-                
+                    key = (b, x, y)
+                    if key in lookup_dict:
+                        mask.append(lookup_dict[key][0])
+
             df_results = df_results.loc[mask]
 
         return df_results, segmentation_result
